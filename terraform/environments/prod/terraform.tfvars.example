@@ -1,0 +1,5 @@
+proxmox_endpoint  = "https://192.168.40.10:8006/"
+proxmox_api_token = "terraform-prov@pve!terraform=REPLACE-ME"
+proxmox_node      = "pve"
+template_id       = 9000
+ssh_public_key    = "ssh-ed25519 AAAA... user@host"

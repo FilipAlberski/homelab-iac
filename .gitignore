@@ -1,0 +1,34 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+.terraform.lock.hcl.bak
+
+# Ansible
+*.retry
+ansible/inventories/*/hosts.generated
+ansible/.vault_pass
+
+# SSH / secrets
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+
+# Editors
+.vscode/
+.idea/
+*.swp
+.DS_Store

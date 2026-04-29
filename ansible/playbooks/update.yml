@@ -1,0 +1,77 @@
+---
+- name: System update
+  hosts: all
+  become: true
+  serial: "50%"            # rolling — never update everything at once
+  any_errors_fatal: false
+  gather_facts: true
+
+  tasks:
+    - name: Detect package manager family
+      ansible.builtin.set_fact:
+        is_rhel_like: "{{ ansible_facts['os_family'] in ['RedHat', 'Rocky'] }}"
+        is_debian_like: "{{ ansible_facts['os_family'] == 'Debian' }}"
+
+    - name: Upgrade all packages (RHEL / Rocky / Alma)
+      when: is_rhel_like
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+      register: dnf_result
+
+    - name: Autoremove unused packages (RHEL / Rocky / Alma)
+      when: is_rhel_like
+      ansible.builtin.dnf:
+        autoremove: true
+
+    - name: Upgrade all packages (Debian / Ubuntu)
+      when: is_debian_like
+      ansible.builtin.apt:
+        upgrade: dist
+        update_cache: true
+        cache_valid_time: 3600
+        autoremove: true
+        autoclean: true
+      register: apt_result
+
+    - name: Check if reboot is required (RHEL / Rocky)
+      when: is_rhel_like
+      ansible.builtin.command: needs-restarting -r
+      register: rhel_needs_reboot
+      changed_when: false
+      failed_when: rhel_needs_reboot.rc not in [0, 1]
+
+    - name: Check if reboot is required (Debian / Ubuntu)
+      when: is_debian_like
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: deb_needs_reboot
+
+    - name: Compute reboot decision
+      ansible.builtin.set_fact:
+        reboot_required: >-
+          {{
+            (is_rhel_like and rhel_needs_reboot.rc == 1)
+            or
+            (is_debian_like and deb_needs_reboot.stat.exists | default(false))
+          }}
+
+    - name: Reboot host (policy={{ reboot_policy }})
+      when:
+        - reboot_policy != 'never'
+        - (reboot_policy == 'always') or (reboot_policy == 'if-needed' and reboot_required)
+      ansible.builtin.reboot:
+        msg: "Reboot triggered by Ansible update playbook"
+        connect_timeout: 30
+        reboot_timeout: "{{ reboot_timeout }}"
+        post_reboot_delay: 30
+        test_command: uptime
+
+    - name: Final report
+      ansible.builtin.debug:
+        msg:
+          - "host:           {{ inventory_hostname }}"
+          - "os_family:      {{ ansible_facts['os_family'] }}"
+          - "reboot_needed:  {{ reboot_required }}"
+          - "reboot_policy:  {{ reboot_policy }}"
