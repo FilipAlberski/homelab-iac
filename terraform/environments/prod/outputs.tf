@@ -24,16 +24,21 @@ output "ansible_inventory" {
       "ansible_user=homelab",
       "ansible_python_interpreter=/usr/bin/python3",
       "",
+      "[all]",
+    ],
+    [
+      for k, v in module.vms :
+      "${v.name} ansible_host=${v.ipv4_address}"
     ],
     flatten([
       for tag in distinct(flatten([for v in module.vms : v.tags])) : tag == "terraform" ? [] : concat(
+        [""],
         ["[${replace(tag, "-", "_")}]"],
         [
           for k, v in module.vms :
           "${v.name} ansible_host=${v.ipv4_address}"
           if contains(v.tags, tag)
         ],
-        [""],
       )
     ]),
   ))

@@ -28,10 +28,6 @@ locals {
   network_prefix = "192.168.40"
   network_cidr   = "/24"
 
-  storage = {
-    boot = "local-lvm"
-  }
-
   # Single source of truth for every VM in this environment.
   # Add a new entry here to declare a new VM.
   vms = {

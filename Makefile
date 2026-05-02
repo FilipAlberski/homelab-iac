@@ -43,7 +43,7 @@ output:    ## terraform output
 	$(TF) output
 
 ##@ Ansible
-.PHONY: inventory ping update update-check
+.PHONY: inventory ping update update-check lint
 inventory: ## Regenerate Ansible inventory from Terraform output
 	@mkdir -p $(dir $(INVENTORY))
 	$(TF) output -raw ansible_inventory > $(INVENTORY)
@@ -58,6 +58,11 @@ update:    ## Run system updates (reboot if needed)
 
 update-check: ## Dry-run system updates
 	$(ANSIBLE) playbooks/update.yml --check --diff
+
+lint:      ## Lint Terraform + Ansible playbooks
+	terraform fmt -check -recursive terraform/
+	$(TF) validate
+	cd $(ANSIBLE_DIR) && ansible-lint playbooks/
 
 ##@ Lifecycle
 .PHONY: up

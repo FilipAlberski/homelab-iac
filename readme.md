@@ -38,6 +38,7 @@ So VMID `101` → `192.168.40.101`, VMID `142` → `192.168.40.142`. No lookup n
 | `local`     | ISOs + cloud-init snippets                 |
 | `local-lvm` | OS / boot disks                            |
 | `datav1`    | Large data volumes (models, media, etc.)   |
+| `storage-01`| Shared or cold storage                     |
 | `vm-backups`| PBS / vzdump target (not used live)        |
 
 ## Quickstart

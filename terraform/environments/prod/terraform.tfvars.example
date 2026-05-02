@@ -3,3 +3,9 @@ proxmox_api_token = "terraform-prov@pve!terraform=REPLACE-ME"
 proxmox_node      = "pve"
 template_id       = 9000
 ssh_public_key    = "ssh-ed25519 AAAA... user@host"
+
+# --- Optional (defaults shown) ---
+network_cidr    = "192.168.40.0/24"
+network_gateway = "192.168.40.1"
+dns_servers     = ["192.168.40.1", "1.1.1.1"]
+search_domain   = "homelab.local"
