@@ -35,12 +35,20 @@
         autoclean: true
       register: apt_result
 
+    - name: Locate needs-restarting binary (RHEL / Rocky)
+      when: is_rhel_like
+      ansible.builtin.shell: |
+        command -v needs-restarting || echo "/usr/sbin/needs-restarting"
+      register: rhel_nr_bin
+      changed_when: false
+      failed_when: false
+
     - name: Check if reboot is required (RHEL / Rocky)
       when: is_rhel_like
-      ansible.builtin.command: needs-restarting -r
+      ansible.builtin.command: "{{ rhel_nr_bin.stdout }} -r"
       register: rhel_needs_reboot
       changed_when: false
-      failed_when: rhel_needs_reboot.rc not in [0, 1]
+      failed_when: false
 
     - name: Check if reboot is required (Debian / Ubuntu)
       when: is_debian_like

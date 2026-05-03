@@ -39,7 +39,7 @@ locals {
         {
           datastore_id = "local-lvm"
           size         = 50
-          interface    = "scsi0"
+          interface    = "virtio0"
         },
       ]
       tags = ["terraform", "ai", "assistant"]

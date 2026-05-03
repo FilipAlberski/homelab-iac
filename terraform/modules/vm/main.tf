@@ -17,8 +17,9 @@ resource "proxmox_virtual_environment_vm" "this" {
   }
 
   clone {
-    vm_id = var.template_id
-    full  = false
+    vm_id        = var.template_id
+    full         = true
+    datastore_id = var.disks[0].datastore_id
   }
 
   cpu {
@@ -32,7 +33,7 @@ resource "proxmox_virtual_environment_vm" "this" {
   }
 
   dynamic "disk" {
-    for_each = var.disks
+    for_each = slice(var.disks, 1, length(var.disks))
     content {
       datastore_id = disk.value.datastore_id
       interface    = disk.value.interface

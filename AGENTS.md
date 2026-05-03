@@ -18,7 +18,7 @@ Infrastructure-as-Code for a single-node Proxmox VE homelab.
 | Terraform  | >= 1.0 (uses `bpg/proxmox` ~> 0.104)   |
 | Ansible    | Core / ansible-playbook                |
 | Proxmox VE | Single node, API token auth            |
-| Cloud-init | Rocky 10 template (VMID 9000)          |
+| Cloud-init | Rocky 10 template (VMID 9000+)       |
 | Language   | HCL, YAML, Make                        |
 
 ## Project structure
@@ -172,6 +172,20 @@ make ping         # verify
 2. Keep variables in `ansible/group_vars/all.yml` if they are global.
 3. Add a Makefile target only if it is a recurring high-level workflow.
 4. Do **not** modify `hosts.generated`.
+
+### Recreating the cloud-init template
+>If template 9000 references a dead storage (`datav1`), clone will fail. Create a fresh Rocky 9 template on `local-lvm`:
+
+```bash
+# On the Proxmox host (as root)
+bash scripts/proxmox-create-rocky-template.sh 9001 rocky9-cloud-template local-lvm
+```
+
+Then update `terraform.tfvars`:
+```hcl
+template_id = 9001
+```
+and `make fmt plan apply`.
 
 ### Style
 - Terraform: 2-space indentation, snake_case variables.
