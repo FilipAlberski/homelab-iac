@@ -1,0 +1,9 @@
+---
+- name: Deploy Pi-hole on dns-01
+  hosts: dns
+  become: true
+  gather_facts: true
+
+  roles:
+    - docker
+    - pihole

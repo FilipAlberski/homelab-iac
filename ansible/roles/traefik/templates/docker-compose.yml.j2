@@ -1,0 +1,23 @@
+---
+services:
+  traefik:
+    container_name: traefik
+    image: traefik:v3.1
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.homelab.local`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+    restart: unless-stopped
+
+networks:
+  proxy:
+    name: proxy
+    driver: bridge

@@ -43,7 +43,7 @@ output:    ## terraform output
 	$(TF) output
 
 ##@ Ansible
-.PHONY: inventory ping update update-check lint
+.PHONY: inventory ping update update-check lint dns proxy
 inventory: ## Regenerate Ansible inventory from Terraform output
 	@mkdir -p $(dir $(INVENTORY))
 	$(TF) output -raw ansible_inventory > $(INVENTORY)
@@ -58,6 +58,12 @@ update:    ## Run system updates (reboot if needed)
 
 update-check: ## Dry-run system updates
 	$(ANSIBLE) playbooks/update.yml --check --diff
+
+dns:       ## Deploy Pi-hole on dns hosts
+	$(ANSIBLE) playbooks/dns.yml
+
+proxy:     ## Deploy Traefik on proxy hosts
+	$(ANSIBLE) playbooks/proxy.yml
 
 lint:      ## Lint Terraform + Ansible playbooks
 	terraform fmt -check -recursive terraform/

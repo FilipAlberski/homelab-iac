@@ -1,0 +1,35 @@
+---
+- name: Create Traefik directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: homelab
+    group: homelab
+    mode: '0755'
+  loop:
+    - /opt/traefik
+    - /opt/traefik/config
+
+- name: Deploy Traefik static config
+  ansible.builtin.template:
+    src: traefik.yml.j2
+    dest: /opt/traefik/traefik.yml
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart traefik
+
+- name: Deploy Traefik Docker Compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /opt/traefik/docker-compose.yml
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart traefik
+
+- name: Ensure Traefik compose is running
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: /opt/traefik
+  changed_when: true

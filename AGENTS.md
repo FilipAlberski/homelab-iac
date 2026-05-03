@@ -43,8 +43,8 @@ Infrastructure-as-Code for a single-node Proxmox VE homelab.
 │
 ├── ansible/
 │   ├── ansible.cfg
-│   ├── group_vars/all.yml          # Reboot policy, default user
 │   ├── inventories/prod/           # hosts.generated (auto-built from Terraform)
+│   │   └── group_vars/all.yml      # Reboot policy, default user
 │   └── playbooks/
 │       ├── ping.yml
 │       └── update.yml
@@ -169,7 +169,7 @@ make ping         # verify
 
 ### Adding a new Ansible playbook
 1. Create a `.yml` file under `ansible/playbooks/`.
-2. Keep variables in `ansible/group_vars/all.yml` if they are global.
+2. Keep variables in `ansible/inventories/prod/group_vars/all.yml` if they are global.
 3. Add a Makefile target only if it is a recurring high-level workflow.
 4. Do **not** modify `hosts.generated`.
 

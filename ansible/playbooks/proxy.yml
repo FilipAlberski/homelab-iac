@@ -1,0 +1,9 @@
+---
+- name: Deploy Traefik on proxy-01
+  hosts: proxy
+  become: true
+  gather_facts: true
+
+  roles:
+    - docker
+    - traefik

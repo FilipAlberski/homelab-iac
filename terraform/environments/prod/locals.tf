@@ -44,5 +44,31 @@ locals {
       ]
       tags = ["terraform", "ai", "assistant"]
     }
+    dns-01 = {
+      vm_id     = 141
+      cpu_cores = 2
+      memory_mb = 2048
+      disks = [
+        {
+          datastore_id = "local-lvm"
+          size         = 30
+          interface    = "virtio0"
+        },
+      ]
+      tags = ["terraform", "network", "dns"]
+    }
+    proxy-01 = {
+      vm_id     = 142
+      cpu_cores = 2
+      memory_mb = 2048
+      disks = [
+        {
+          datastore_id = "local-lvm"
+          size         = 30
+          interface    = "virtio0"
+        },
+      ]
+      tags = ["terraform", "network", "proxy"]
+    }
   }
 }

@@ -1,0 +1,27 @@
+---
+- name: Create Pi-hole directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: homelab
+    group: homelab
+    mode: '0755'
+  loop:
+    - /opt/pihole
+    - /opt/pihole/etc-pihole
+    - /opt/pihole/etc-dnsmasq.d
+
+- name: Deploy Pi-hole Docker Compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /opt/pihole/docker-compose.yml
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart pihole
+
+- name: Ensure Pi-hole compose is running
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: /opt/pihole
+  changed_when: true

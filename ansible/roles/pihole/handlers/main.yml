@@ -1,0 +1,6 @@
+---
+- name: Restart pihole
+  ansible.builtin.shell: |
+    cd /opt/pihole && docker compose down && docker compose up -d
+  args:
+    chdir: /opt/pihole
