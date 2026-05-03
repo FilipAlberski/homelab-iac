@@ -10,10 +10,50 @@
     - /opt/traefik
     - /opt/traefik/config
 
+- name: Open firewall ports for Traefik
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop:
+    - 80/tcp
+    - 8080/tcp
+  become: true
+
+- name: Open firewall ports for Traefik
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop:
+    - 80/tcp
+    - 8080/tcp
+  become: true
+
 - name: Deploy Traefik static config
   ansible.builtin.template:
     src: traefik.yml.j2
     dest: /opt/traefik/traefik.yml
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart traefik
+
+- name: Deploy Traefik dynamic config
+  ansible.builtin.template:
+    src: dynamic.yml.j2
+    dest: /opt/traefik/config/dynamic.yml
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart traefik
+
+- name: Deploy Traefik dynamic config
+  ansible.builtin.template:
+    src: dynamic.yml.j2
+    dest: /opt/traefik/config/dynamic.yml
     owner: homelab
     group: homelab
     mode: '0644'

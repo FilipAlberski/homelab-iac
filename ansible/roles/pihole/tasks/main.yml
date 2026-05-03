@@ -11,6 +11,39 @@
     - /opt/pihole/etc-pihole
     - /opt/pihole/etc-dnsmasq.d
 
+- name: Open firewall ports for Pi-hole
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop:
+    - 53/tcp
+    - 53/udp
+    - 80/tcp
+  become: true
+
+- name: Open firewall ports for Pi-hole
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop:
+    - 53/tcp
+    - 53/udp
+    - 80/tcp
+  become: true
+
+- name: Deploy Pi-hole custom DNS list
+  ansible.builtin.template:
+    src: custom.list.j2
+    dest: /opt/pihole/etc-pihole/custom.list
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart pihole
+
 - name: Deploy Pi-hole Docker Compose
   ansible.builtin.template:
     src: docker-compose.yml.j2

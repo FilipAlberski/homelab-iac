@@ -1,0 +1,25 @@
+---
+http:
+  routers:
+    kuma:
+      rule: Host(`kuma.lab`)
+      service: kuma
+      entryPoints:
+        - web
+
+    homepage:
+      rule: Host(`homepage.lab`)
+      service: homepage
+      entryPoints:
+        - web
+
+  services:
+    kuma:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:3001"
+
+    homepage:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:3000"

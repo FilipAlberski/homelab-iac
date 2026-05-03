@@ -11,6 +11,12 @@ services:
       TZ: 'Europe/Warsaw'
       WEBPASSWORD: '{{ pihole_webpassword | default("changeme") }}'
       FTLCONF_LOCAL_IPV4: '{{ ansible_default_ipv4.address | default("127.0.0.1") }}'
+      FTLCONF_dns_hosts: |-
+        192.168.40.141 pihole.lab
+        192.168.40.142 traefik.lab
+        192.168.40.142 kuma.lab
+        192.168.40.142 homepage.lab
+      FTLCONF_dns_listeningMode: ALL
     volumes:
       - './etc-pihole:/etc/pihole'
       - './etc-dnsmasq.d:/etc/dnsmasq.d'

@@ -1,0 +1,52 @@
+---
+- Sieć:
+    - Pi-hole:
+        icon: pi-hole
+        href: http://pihole.lab
+        description: DNS sinkhole & blocker
+        widget:
+          type: pihole
+          url: http://{{ hostvars['dns-01']['ansible_host'] | default('192.168.40.141') }}
+          key: {{ pihole_api_key | default('') }}
+          version: 5
+
+    - Traefik:
+        icon: traefik
+        href: http://traefik.lab
+        description: Reverse proxy & load balancer
+        widget:
+          type: traefik
+          url: http://{{ hostvars['proxy-01']['ansible_host'] | default('192.168.40.142') }}:8080
+
+- Monitoring:
+    - Uptime Kuma:
+        icon: uptime-kuma
+        href: http://kuma.lab
+        description: Monitoring uptime usług
+        widget:
+          type: uptimekuma
+          url: http://{{ ansible_host }}:3001
+
+    - Portainer:
+        icon: portainer
+        href: https://{{ ansible_host }}:9443
+        description: Zarządzanie kontenerami Docker
+
+- Aplikacje:
+    - Homepage:
+        icon: homepage
+        href: http://homepage.lab
+        description: Ten dashboard
+
+- Infrastruktura:
+    - Assistant-01:
+        icon: si-openai
+        href: "#"
+        description: AI / assistants VM
+        statusStyle: basic
+
+    - Proxmox:
+        icon: proxmox
+        href: https://192.168.40.1:8006
+        description: Proxmox VE
+        statusStyle: basic

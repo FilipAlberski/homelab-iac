@@ -1,0 +1,9 @@
+---
+- name: Deploy Homelab apps on app-01
+  hosts: apps
+  become: true
+  gather_facts: true
+
+  roles:
+    - docker
+    - homelab-apps

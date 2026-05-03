@@ -1,0 +1,114 @@
+---
+- name: Create Uptime Kuma directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: homelab
+    group: homelab
+    mode: '0755'
+  loop:
+    - /opt/uptime-kuma
+    - /opt/uptime-kuma/data
+
+- name: Create Portainer directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: homelab
+    group: homelab
+    mode: '0755'
+  loop:
+    - /opt/portainer
+    - /opt/portainer/data
+
+- name: Create Homepage directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: homelab
+    group: homelab
+    mode: '0755'
+  loop:
+    - /opt/homepage
+    - /opt/homepage/config
+
+- name: Deploy Uptime Kuma Docker Compose
+  ansible.builtin.template:
+    src: uptime-kuma.yml.j2
+    dest: /opt/uptime-kuma/docker-compose.yml
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart uptime-kuma
+
+- name: Ensure Uptime Kuma compose is running
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: /opt/uptime-kuma
+  changed_when: true
+
+- name: Deploy Portainer Docker Compose
+  ansible.builtin.template:
+    src: portainer.yml.j2
+    dest: /opt/portainer/docker-compose.yml
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart portainer
+
+- name: Deploy Homepage Docker Compose
+  ansible.builtin.template:
+    src: homepage.yml.j2
+    dest: /opt/homepage/docker-compose.yml
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart homepage
+
+- name: Deploy Homepage settings
+  ansible.builtin.template:
+    src: homepage-settings.yaml.j2
+    dest: /opt/homepage/config/settings.yaml
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart homepage
+
+- name: Deploy Homepage services
+  ansible.builtin.template:
+    src: homepage-services.yaml.j2
+    dest: /opt/homepage/config/services.yaml
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart homepage
+
+- name: Deploy Homepage widgets
+  ansible.builtin.template:
+    src: homepage-widgets.yaml.j2
+    dest: /opt/homepage/config/widgets.yaml
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart homepage
+
+- name: Deploy Homepage bookmarks
+  ansible.builtin.template:
+    src: homepage-bookmarks.yaml.j2
+    dest: /opt/homepage/config/bookmarks.yaml
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart homepage
+
+- name: Ensure Homepage compose is running
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: /opt/homepage
+  changed_when: true
+
+- name: Ensure Portainer compose is running
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: /opt/portainer
+  changed_when: true

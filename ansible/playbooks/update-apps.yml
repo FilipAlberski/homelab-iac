@@ -1,0 +1,30 @@
+---
+- name: Pull latest images and recreate app containers
+  hosts: apps
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Pull Uptime Kuma images
+      ansible.builtin.command: docker compose pull
+      args:
+        chdir: /opt/uptime-kuma
+      changed_when: true
+
+    - name: Recreate Uptime Kuma containers
+      ansible.builtin.command: docker compose up -d
+      args:
+        chdir: /opt/uptime-kuma
+      changed_when: true
+
+    - name: Pull Portainer images
+      ansible.builtin.command: docker compose pull
+      args:
+        chdir: /opt/portainer
+      changed_when: true
+
+    - name: Recreate Portainer containers
+      ansible.builtin.command: docker compose up -d
+      args:
+        chdir: /opt/portainer
+      changed_when: true

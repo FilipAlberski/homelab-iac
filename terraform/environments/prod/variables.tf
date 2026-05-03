@@ -47,5 +47,5 @@ variable "dns_servers" {
 variable "search_domain" {
   description = "DNS search domain"
   type        = string
-  default     = "homelab.local"
+  default     = "lab"
 }

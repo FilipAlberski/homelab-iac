@@ -8,4 +8,4 @@ ssh_public_key    = "ssh-ed25519 AAAA... user@host"
 network_cidr    = "192.168.40.0/24"
 network_gateway = "192.168.40.1"
 dns_servers     = ["192.168.40.1", "1.1.1.1"]
-search_domain   = "homelab.local"
+search_domain   = "lab"
