@@ -39,7 +39,7 @@ locals {
         {
           datastore_id = "local-lvm"
           size         = 50
-          interface    = "virtio0"
+          interface    = "scsi0"
         },
       ]
       tags = ["terraform", "ai", "assistant"]
@@ -52,7 +52,7 @@ locals {
         {
           datastore_id = "local-lvm"
           size         = 30
-          interface    = "virtio0"
+          interface    = "scsi0"
         },
       ]
       tags = ["terraform", "network", "dns"]
@@ -65,7 +65,7 @@ locals {
         {
           datastore_id = "local-lvm"
           size         = 30
-          interface    = "virtio0"
+          interface    = "scsi0"
         },
       ]
       tags = ["terraform", "network", "proxy"]
@@ -78,7 +78,7 @@ locals {
         {
           datastore_id = "local-lvm"
           size         = 30
-          interface    = "virtio0"
+          interface    = "scsi0"
         },
       ]
       tags = ["terraform", "apps"]

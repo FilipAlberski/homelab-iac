@@ -7,13 +7,13 @@ Terraform provisions VMs from a cloud-init template; Ansible handles post-provis
 
 ```
 terraform/
-  modules/vm/              reusable VM module (bpg/proxmox, cloud-init, multi-disk)
-  environments/prod/       declarative VM list — single source of truth
+  modules/vm/               reusable VM module (bpg/proxmox, cloud-init, multi-disk)
+  environments/prod/        declarative VM list — single source of truth
 ansible/
-  inventories/prod/        hosts.generated (auto-built from terraform output)
-  playbooks/               update.yml, ping.yml
-  group_vars/              defaults
-Makefile                   thin wrapper around terraform + ansible
+  inventories/prod/         hosts.generated (auto-built from terraform output)
+  playbooks/                update.yml, ping.yml
+  group_vars/               defaults
+Makefile                    thin wrapper around terraform + ansible
 ```
 
 ## Numbering scheme
@@ -86,6 +86,10 @@ Then `make plan && make apply && make inventory`.
 
 ## Current inventory
 
-| Name          | VMID | IP               | Purpose       |
-| ------------- | ---- | ---------------- | ------------- |
-| assistant-01  | 101  | 192.168.40.101   | Open WebUI    |
+| Name         | VMID | IP             | Purpose          | Tags                  |
+| ------------ | ---- | -------------- | ---------------- | --------------------- |
+| assistant-01 | 101  | 192.168.40.101 | AI / Assistants  | `ai`, `assistant`     |
+| dns-01       | 141  | 192.168.40.141 | DNS sinkhole     | `network`, `dns`      |
+| proxy-01     | 142  | 192.168.40.142 | Traefik / Proxy  | `network`, `proxy`    |
+| app-01       | 143  | 192.168.40.143 | Homelab apps     | `apps`                |
+
