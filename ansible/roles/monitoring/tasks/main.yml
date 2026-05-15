@@ -1,0 +1,114 @@
+---
+- name: Create monitoring directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: homelab
+    group: homelab
+    mode: '0755'
+  loop:
+    - "{{ monitoring_data_dir }}"
+    - "{{ monitoring_data_dir }}/prometheus-data"
+    - "{{ monitoring_data_dir }}/grafana-data"
+    - "{{ monitoring_data_dir }}/loki-data"
+    - "{{ monitoring_data_dir }}/alertmanager-data"
+
+- name: Deploy monitoring Docker Compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ monitoring_data_dir }}/docker-compose.yml"
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart monitoring
+
+- name: Deploy Prometheus config
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ monitoring_data_dir }}/prometheus.yml"
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart monitoring
+
+- name: Deploy Prometheus alerts
+  ansible.builtin.template:
+    src: alerts.yml.j2
+    dest: "{{ monitoring_data_dir }}/alerts.yml"
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart monitoring
+
+- name: Deploy Alertmanager config
+  ansible.builtin.template:
+    src: alertmanager.yml.j2
+    dest: "{{ monitoring_data_dir }}/alertmanager.yml"
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart monitoring
+
+- name: Deploy Loki config
+  ansible.builtin.template:
+    src: loki-config.yml.j2
+    dest: "{{ monitoring_data_dir }}/loki-config.yml"
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart monitoring
+
+- name: Deploy Grafana datasources provisioning
+  ansible.builtin.template:
+    src: grafana-datasources.yml.j2
+    dest: "{{ monitoring_data_dir }}/grafana-datasources.yml"
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart monitoring
+
+- name: Deploy Grafana dashboards provisioning
+  ansible.builtin.template:
+    src: grafana-dashboards.yml.j2
+    dest: "{{ monitoring_data_dir }}/grafana-dashboards.yml"
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart monitoring
+
+- name: Copy Valheim dashboard JSON
+  ansible.builtin.copy:
+    src: dashboards/valheim-homelab.json
+    dest: "{{ monitoring_data_dir }}/valheim-homelab.json"
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart monitoring
+
+- name: Open monitoring firewall ports
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+    zone: public
+  loop:
+    - 9090/tcp
+    - 3000/tcp
+    - 9093/tcp
+    - 3100/tcp
+
+- name: Fix monitoring directory permissions
+  ansible.builtin.file:
+    path: "{{ monitoring_data_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+    recurse: true
+
+- name: Ensure monitoring compose is running
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: "{{ monitoring_data_dir }}"
+  changed_when: true

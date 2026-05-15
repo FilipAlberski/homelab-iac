@@ -1,0 +1,23 @@
+---
+- name: Ensure cadvisor is running
+  ansible.builtin.command: >
+    docker run -d --name=cadvisor --restart=unless-stopped
+    --volume=/:/rootfs:ro
+    --volume=/var/run:/var/run:ro
+    --volume=/sys:/sys:ro
+    --volume=/var/lib/docker/:/var/lib/docker:ro
+    --volume=/dev/disk/:/dev/disk:ro
+    --publish={{ cadvisor_port }}:8080
+    --device=/dev/kmsg
+    gcr.io/cadvisor/cadvisor:{{ cadvisor_version }}
+  register: cadvisor_run
+  changed_when: cadvisor_run.rc == 0
+  failed_when: cadvisor_run.rc != 0 and 'Conflict' not in cadvisor_run.stderr
+
+- name: Open cadvisor firewall port
+  ansible.posix.firewalld:
+    port: "{{ cadvisor_port }}/tcp"
+    permanent: true
+    state: enabled
+    immediate: true
+    zone: public

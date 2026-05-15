@@ -1,0 +1,34 @@
+---
+- name: Create promtail directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: homelab
+    group: homelab
+    mode: '0755'
+  loop:
+    - /opt/promtail
+    - /opt/promtail/positions
+
+- name: Deploy promtail config
+  ansible.builtin.template:
+    src: promtail-config.yml.j2
+    dest: /opt/promtail/promtail-config.yml
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart promtail
+
+- name: Ensure promtail is running
+  ansible.builtin.command: >
+    docker run -d --name=promtail --restart=unless-stopped
+    --volume=/opt/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+    --volume=/opt/promtail/positions:/positions
+    --volume=/var/lib/docker/containers:/var/lib/docker/containers:ro
+    --volume=/var/log:/var/log:ro
+    --publish={{ promtail_port }}:9080
+    grafana/promtail:{{ promtail_version }}
+    -config.file=/etc/promtail/config.yml
+  register: promtail_run
+  changed_when: promtail_run.rc == 0
+  failed_when: promtail_run.rc != 0 and 'Conflict' not in promtail_run.stderr

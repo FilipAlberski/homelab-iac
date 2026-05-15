@@ -19,6 +19,32 @@
           url: http://{{ hostvars['proxy-01']['ansible_host'] | default('192.168.40.142') }}:8080
 
 - Monitoring:
+    - Grafana:
+        icon: grafana
+        href: http://grafana.lab
+        description: Dashboardy i metryki
+        widget:
+          type: grafana
+          url: http://{{ hostvars['monitor-01']['ansible_host'] | default('192.168.40.145') }}:3000
+          username: admin
+          password: changeme
+
+    - Prometheus:
+        icon: prometheus
+        href: http://prometheus.lab
+        description: Zbieranie metryk
+        widget:
+          type: prometheus
+          url: http://{{ hostvars['monitor-01']['ansible_host'] | default('192.168.40.145') }}:9090
+
+    - Alertmanager:
+        icon: alertmanager
+        href: http://alertmanager.lab
+        description: Zarządzanie alertami
+        widget:
+          type: alertmanager
+          url: http://{{ hostvars['monitor-01']['ansible_host'] | default('192.168.40.145') }}:9093
+
     - Uptime Kuma:
         icon: uptime-kuma
         href: http://kuma.lab

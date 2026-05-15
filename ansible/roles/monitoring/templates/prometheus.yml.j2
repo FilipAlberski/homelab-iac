@@ -1,0 +1,42 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node'
+    static_configs:
+      - targets:
+        - 192.168.40.101:9100
+        - 192.168.40.141:9100
+        - 192.168.40.142:9100
+        - 192.168.40.143:9100
+        - 192.168.40.145:9100
+        - 192.168.40.221:9100
+        labels:
+          env: homelab
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets:
+        - 192.168.40.142:9280
+        - 192.168.40.143:9280
+        - 192.168.40.221:9280
+        labels:
+          env: homelab
+
+  - job_name: 'promtail'
+    static_configs:
+      - targets:
+        - 192.168.40.221:9080

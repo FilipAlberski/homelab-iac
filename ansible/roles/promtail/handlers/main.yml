@@ -1,0 +1,4 @@
+---
+- name: Restart promtail
+  ansible.builtin.command: docker restart promtail
+  changed_when: true

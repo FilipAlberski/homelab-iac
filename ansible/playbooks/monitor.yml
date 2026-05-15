@@ -1,6 +1,6 @@
 ---
-- name: Harden and deploy Valheim server on games-01
-  hosts: gaming
+- name: Deploy monitoring stack on monitor-01
+  hosts: monitoring
   become: true
   gather_facts: true
 
@@ -8,4 +8,4 @@
     - lvm-resize
     - server-hardening
     - docker
-    - valheim-server
+    - monitoring

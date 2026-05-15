@@ -80,6 +80,15 @@ apps:      ## Deploy apps on app-01
 games:     ## Deploy Valheim server on games-01
 	$(ANSIBLE) playbooks/games.yml
 
+monitor:   ## Deploy monitoring stack on monitor-01
+	$(ANSIBLE) playbooks/monitor.yml
+
+monitor-agents: ## Deploy monitoring agents on all hosts
+	$(ANSIBLE) playbooks/monitor-agents.yml
+
+resize:    ## Resize root filesystem on all VMs (LVM growpart)
+	$(ANSIBLE) playbooks/resize.yml
+
 paperless: ## Deploy Paperless-ngx on app-01
 	$(ANSIBLE) playbooks/paperless.yml
 

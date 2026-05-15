@@ -1,0 +1,17 @@
+---
+monitoring_data_dir: /opt/monitoring
+monitoring_version_prometheus: v3.3.1
+monitoring_version_grafana: 12.0.0
+monitoring_version_alertmanager: v0.28.1
+monitoring_version_loki: 3.5.0
+
+monitoring_grafana_admin_user: admin
+monitoring_grafana_admin_password: "{{ vault_monitoring_grafana_password | default('changeme') }}"
+
+# Retention
+monitoring_prometheus_retention: 30d
+
+# Telegram placeholder (fill in later)
+monitoring_alertmanager_telegram_enabled: true
+monitoring_alertmanager_telegram_bot_token: ""
+monitoring_alertmanager_telegram_chat_id: ""

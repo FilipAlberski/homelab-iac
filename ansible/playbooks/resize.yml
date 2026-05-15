@@ -1,0 +1,8 @@
+---
+- name: Resize root filesystem on all VMs
+  hosts: all
+  become: true
+  gather_facts: true
+
+  roles:
+    - lvm-resize

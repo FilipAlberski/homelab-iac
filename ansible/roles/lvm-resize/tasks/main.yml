@@ -1,0 +1,134 @@
+---
+# Auto-detect root disk layout and resize if physical disk > partition/LVM
+
+- name: Ensure growpart is installed
+  ansible.builtin.package:
+    name: cloud-utils-growpart
+    state: present
+
+- name: Find root filesystem device
+  ansible.builtin.command: findmnt -n -o SOURCE /
+  register: root_device
+  changed_when: false
+
+- name: Check if root is on LVM
+  ansible.builtin.set_fact:
+    root_is_lvm: "{{ '/mapper/' in root_device.stdout }}"
+
+- name: Detect LVM root layout
+  when: root_is_lvm | bool
+  block:
+    - name: Get volume group name
+      ansible.builtin.shell: >
+        lvs --noheadings -o vg_name "{{ root_device.stdout }}" | awk '{print $1}'
+      register: vg_name
+      changed_when: false
+
+    - name: Get physical volume device
+      ansible.builtin.shell: >
+        pvs --noheadings -o pv_name | awk '{print $1}' | head -1
+      register: pv_device
+      changed_when: false
+
+    - name: Get base disk
+      ansible.builtin.shell: >
+        lsblk -n -o PKNAME "{{ pv_device.stdout }}" | awk '{print $1}' | head -1
+      register: base_disk
+      changed_when: false
+
+    - name: Get partition number
+      ansible.builtin.shell: >
+        basename "{{ pv_device.stdout }}" | grep -o '[0-9]*$'
+      register: part_number
+      changed_when: false
+
+    - name: Set disk and partition facts (LVM)
+      ansible.builtin.set_fact:
+        resize_disk: "/dev/{{ base_disk.stdout }}"
+        resize_part_num: "{{ part_number.stdout }}"
+
+- name: Detect non-LVM root layout
+  when: not (root_is_lvm | bool)
+  block:
+    - name: Get root partition device
+      ansible.builtin.shell: >
+        findmnt -n -o SOURCE /
+      register: part_dev
+      changed_when: false
+
+    - name: Get base disk (non-LVM)
+      ansible.builtin.shell: >
+        lsblk -n -o PKNAME "{{ part_dev.stdout }}"
+      register: base_disk_nolvm
+      changed_when: false
+
+    - name: Get partition number (non-LVM)
+      ansible.builtin.shell: >
+        basename "{{ part_dev.stdout }}" | grep -o '[0-9]*$'
+      register: part_num_nolvm
+      changed_when: false
+
+    - name: Set disk and partition facts (non-LVM)
+      ansible.builtin.set_fact:
+        resize_disk: "/dev/{{ base_disk_nolvm.stdout }}"
+        resize_part_num: "{{ part_num_nolvm.stdout }}"
+
+- name: Check if partition can grow (dry-run)
+  ansible.builtin.command: >
+    growpart --dry-run {{ resize_disk }} {{ resize_part_num }}
+  register: growpart_dry
+  changed_when: false
+  failed_when: false
+
+- name: Show growpart dry-run output
+  ansible.builtin.debug:
+    msg: "{{ growpart_dry.stdout }}"
+
+- name: Grow partition
+  ansible.builtin.command: >
+    growpart {{ resize_disk }} {{ resize_part_num }}
+  when: "'NOCHANGE' not in growpart_dry.stdout"
+  register: growpart_result
+
+- name: Resize physical volume (LVM only)
+  ansible.builtin.command: >
+    pvresize {{ pv_device.stdout }}
+  when:
+    - root_is_lvm | bool
+    - growpart_result is changed
+  changed_when: true
+
+- name: Extend logical volume to 100% free (LVM only)
+  ansible.builtin.command: >
+    lvextend -l +100%FREE {{ root_device.stdout }}
+  when:
+    - root_is_lvm | bool
+    - growpart_result is changed
+  register: lvextend_result
+  changed_when: "'matches existing size' not in lvextend_result.stdout"
+  failed_when: lvextend_result.rc != 0 and 'matches existing size' not in lvextend_result.stdout
+
+- name: Grow filesystem (XFS)
+  ansible.builtin.command: >
+    xfs_growfs /
+  when:
+    - growpart_result is changed
+    - ansible_mounts | selectattr('mount', 'equalto', '/') | map(attribute='fstype') | first == 'xfs'
+  changed_when: true
+
+- name: Grow filesystem (ext4)
+  ansible.builtin.command: >
+    resize2fs {{ root_device.stdout }}
+  when:
+    - growpart_result is changed
+    - ansible_mounts | selectattr('mount', 'equalto', '/') | map(attribute='fstype') | first == 'ext4'
+  changed_when: true
+
+- name: Verify new root size
+  ansible.builtin.command: df -h /
+  changed_when: false
+  register: df_output
+
+- name: Show root size
+  ansible.builtin.debug:
+    msg: "{{ df_output.stdout }}"

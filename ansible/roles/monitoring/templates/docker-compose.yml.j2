@@ -1,0 +1,61 @@
+services:
+  prometheus:
+    image: prom/prometheus:{{ monitoring_version_prometheus }}
+    container_name: prometheus
+    user: "0:0"
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time={{ monitoring_prometheus_retention }}'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:{{ monitoring_version_grafana }}
+    container_name: grafana
+    user: "0:0"
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER={{ monitoring_grafana_admin_user }}
+      - GF_SECURITY_ADMIN_PASSWORD={{ monitoring_grafana_admin_password }}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://192.168.40.145:3000
+    volumes:
+      - ./grafana-data:/var/lib/grafana
+      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./valheim-homelab.json:/var/lib/grafana/dashboards/valheim-homelab.json:ro
+    ports:
+      - "3000:3000"
+
+  alertmanager:
+    image: prom/alertmanager:{{ monitoring_version_alertmanager }}
+    container_name: alertmanager
+    user: "0:0"
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./alertmanager-data:/alertmanager
+    ports:
+      - "9093:9093"
+
+  loki:
+    image: grafana/loki:{{ monitoring_version_loki }}
+    container_name: loki
+    user: "0:0"
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki-config.yml:/etc/loki/local-config.yaml:ro
+      - ./loki-data:/loki
+    ports:
+      - "3100:3100"

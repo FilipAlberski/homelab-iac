@@ -1,0 +1,80 @@
+{% raw %}
+groups:
+  - name: valheim
+    interval: 30s
+    rules:
+      - alert: ValheimContainerDown
+        expr: time() - container_last_seen{instance="192.168.40.221:8080",name="valheim"} > 120
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Valheim server container is down"
+          description: "Valheim container on games-01 has not been seen for more than 2 minutes."
+
+      - alert: ValheimHighCPU
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle",instance="192.168.40.221:9100"}[5m])) * 100) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Valheim server high CPU usage"
+          description: "games-01 CPU usage is above 90% for more than 5 minutes."
+
+      - alert: ValheimHighRAM
+        expr: 100 * (1 - ((node_memory_MemAvailable_bytes{instance="192.168.40.221:9100"} or node_memory_MemFree_bytes{instance="192.168.40.221:9100"}) / node_memory_MemTotal_bytes{instance="192.168.40.221:9100"})) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Valheim server high RAM usage"
+          description: "games-01 RAM usage is above 90% for more than 5 minutes."
+
+      - alert: ValheimDiskFull
+        expr: 100 - ((node_filesystem_avail_bytes{instance="192.168.40.221:9100",mountpoint="/"} * 100) / node_filesystem_size_bytes{instance="192.168.40.221:9100",mountpoint="/"}) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Valheim server disk almost full"
+          description: "games-01 root filesystem is above 85% full."
+
+  - name: homelab
+    interval: 30s
+    rules:
+      - alert: InstanceDown
+        expr: up{job="node"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance {{ $labels.instance }} down"
+          description: "Node exporter on {{ $labels.instance }} has been down for more than 2 minutes."
+
+      - alert: HighCPU
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU on {{ $labels.instance }}"
+          description: "CPU usage on {{ $labels.instance }} is above 90% for more than 5 minutes."
+
+      - alert: HighRAM
+        expr: 100 * (1 - ((node_memory_MemAvailable_bytes or node_memory_MemFree_bytes) / node_memory_MemTotal_bytes)) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High RAM on {{ $labels.instance }}"
+          description: "RAM usage on {{ $labels.instance }} is above 90% for more than 5 minutes."
+
+      - alert: DiskFull
+        expr: 100 - ((node_filesystem_avail_bytes{mountpoint="/"} * 100) / node_filesystem_size_bytes{mountpoint="/"}) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk almost full on {{ $labels.instance }}"
+          description: "Root filesystem on {{ $labels.instance }} is above 85% full."
+{% endraw %}

@@ -1,0 +1,24 @@
+---
+- name: Deploy monitoring agents on all hosts
+  hosts: all
+  become: true
+  gather_facts: true
+
+  roles:
+    - node-exporter
+
+- name: Deploy cadvisor on Docker hosts
+  hosts: docker
+  become: true
+  gather_facts: true
+
+  roles:
+    - cadvisor
+
+- name: Deploy promtail on Valheim host
+  hosts: gaming
+  become: true
+  gather_facts: true
+
+  roles:
+    - promtail

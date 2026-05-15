@@ -68,7 +68,7 @@ locals {
           interface    = "scsi0"
         },
       ]
-      tags = ["terraform", "network", "proxy"]
+      tags = ["terraform", "network", "proxy", "docker"]
     }
     app-01 = {
       vm_id     = 143
@@ -86,7 +86,7 @@ locals {
           interface    = "scsi1"
         },
       ]
-      tags = ["terraform", "apps"]
+      tags = ["terraform", "apps", "docker"]
     }
     games-01 = {
       vm_id     = 221
@@ -99,7 +99,25 @@ locals {
           interface    = "scsi0"
         },
       ]
-      tags = ["terraform", "gaming", "valheim"]
+      tags = ["terraform", "gaming", "valheim", "docker"]
+    }
+    monitor-01 = {
+      vm_id     = 145
+      cpu_cores = 4
+      memory_mb = 8192
+      disks = [
+        {
+          datastore_id = "local-lvm"
+          size         = 50
+          interface    = "scsi0"
+        },
+        {
+          datastore_id = "datav1"
+          size         = 100
+          interface    = "scsi1"
+        },
+      ]
+      tags = ["terraform", "infra", "monitoring", "docker"]
     }
   }
 }
