@@ -30,6 +30,8 @@ services:
       - ./grafana-data:/var/lib/grafana
       - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
       - ./grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./grafana-alerting.yml:/etc/grafana/provisioning/alerting/alerting.yml:ro
+      - ./grafana-alert-rules.yml:/etc/grafana/provisioning/alerting/rules.yml:ro
       - ./valheim-homelab.json:/var/lib/grafana/dashboards/valheim-homelab.json:ro
       - ./homelab-overview.json:/var/lib/grafana/dashboards/homelab-overview.json:ro
       - ./traefik-overview.json:/var/lib/grafana/dashboards/traefik-overview.json:ro

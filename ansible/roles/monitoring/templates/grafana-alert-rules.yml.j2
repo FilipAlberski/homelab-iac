@@ -1,0 +1,49 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: valheim-logs
+    folder: Valheim
+    interval: 30s
+    rules:
+      - uid: valheim-player-joined
+        title: Player Joined Valheim
+        condition: B
+        data:
+          - refId: A
+            queryType: range
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: loki
+            model:
+              expr: '{job="valheim"} |= "Player joined server"'
+          - refId: B
+            queryType: ""
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: "-100"
+            model:
+              type: classic_conditions
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+        noDataState: NoData
+        execErrState: Error
+        for: 0s
+        annotations:
+          summary: Player joined PORTPOLSKA Valheim server
+          description: "Player connection detected in server logs"
+        labels:
+          severity: info
+        isPaused: false

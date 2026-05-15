@@ -1,0 +1,12 @@
+groups:
+  - name: valheim-logs
+    rules:
+      - alert: ValheimPlayerJoined
+        expr: |
+          sum(rate({job="valheim"} |= "Player joined server" [1m])) > 0
+        for: 0m
+        labels:
+          severity: info
+        annotations:
+          summary: "Player joined Valheim server"
+          description: "A player just connected to the Valheim server PORTPOLSKA."
