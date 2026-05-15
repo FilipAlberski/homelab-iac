@@ -36,6 +36,13 @@ scrape_configs:
         labels:
           env: homelab
 
+  - job_name: 'traefik'
+    static_configs:
+      - targets:
+        - 192.168.40.142:8080
+        labels:
+          env: homelab
+
   - job_name: 'promtail'
     static_configs:
       - targets:

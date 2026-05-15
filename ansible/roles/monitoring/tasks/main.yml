@@ -76,13 +76,17 @@
     mode: '0644'
   notify: Restart monitoring
 
-- name: Copy Valheim dashboard JSON
+- name: Copy dashboard JSONs
   ansible.builtin.copy:
-    src: dashboards/valheim-homelab.json
-    dest: "{{ monitoring_data_dir }}/valheim-homelab.json"
+    src: "{{ item }}"
+    dest: "{{ monitoring_data_dir }}/{{ item | basename }}"
     owner: homelab
     group: homelab
     mode: '0644'
+  loop:
+    - dashboards/valheim-homelab.json
+    - dashboards/homelab-overview.json
+    - dashboards/traefik-overview.json
   notify: Restart monitoring
 
 - name: Open monitoring firewall ports

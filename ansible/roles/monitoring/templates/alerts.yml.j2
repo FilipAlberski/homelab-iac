@@ -12,34 +12,7 @@ groups:
           summary: "Valheim server container is down"
           description: "Valheim container on games-01 has not been seen for more than 2 minutes."
 
-      - alert: ValheimHighCPU
-        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle",instance="192.168.40.221:9100"}[5m])) * 100) > 90
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Valheim server high CPU usage"
-          description: "games-01 CPU usage is above 90% for more than 5 minutes."
-
-      - alert: ValheimHighRAM
-        expr: 100 * (1 - ((node_memory_MemAvailable_bytes{instance="192.168.40.221:9100"} or node_memory_MemFree_bytes{instance="192.168.40.221:9100"}) / node_memory_MemTotal_bytes{instance="192.168.40.221:9100"})) > 90
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Valheim server high RAM usage"
-          description: "games-01 RAM usage is above 90% for more than 5 minutes."
-
-      - alert: ValheimDiskFull
-        expr: 100 - ((node_filesystem_avail_bytes{instance="192.168.40.221:9100",mountpoint="/"} * 100) / node_filesystem_size_bytes{instance="192.168.40.221:9100",mountpoint="/"}) > 85
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Valheim server disk almost full"
-          description: "games-01 root filesystem is above 85% full."
-
-  - name: homelab
+  - name: infrastructure
     interval: 30s
     rules:
       - alert: InstanceDown
@@ -77,4 +50,51 @@ groups:
         annotations:
           summary: "Disk almost full on {{ $labels.instance }}"
           description: "Root filesystem on {{ $labels.instance }} is above 85% full."
+
+      - alert: DiskWillFillIn4Hours
+        expr: predict_linear(node_filesystem_avail_bytes{mountpoint="/"}[1h], 4 * 3600) < 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk will fill in 4 hours on {{ $labels.instance }}"
+          description: "Root filesystem on {{ $labels.instance }} is filling rapidly — predicted to run out in ~4h based on 1h trend."
+
+      - alert: DataDiskFull
+        expr: 100 - ((node_filesystem_avail_bytes{mountpoint="/srv/data"} * 100) / node_filesystem_size_bytes{mountpoint="/srv/data"}) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Data disk almost full on {{ $labels.instance }}"
+          description: "/srv/data on {{ $labels.instance }} is above 85% full."
+
+      - alert: SystemdFailed
+        expr: node_systemd_unit_state{state="failed"} == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Failed systemd unit on {{ $labels.instance }}"
+          description: "Unit {{ $labels.name }} is in failed state on {{ $labels.instance }}."
+
+      - alert: HostOOMKill
+        expr: increase(node_vmstat_oom_kill[10m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "OOM kill on {{ $labels.instance }}"
+          description: "Out-of-memory killer was triggered on {{ $labels.instance }} in the last 10 minutes."
+
+  - name: containers
+    interval: 30s
+    rules:
+      - alert: ContainerRestarting
+        expr: resets(container_cpu_usage_seconds_total[30m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} restarting frequently"
+          description: "Container {{ $labels.name }} on {{ $labels.instance }} has restarted more than 3 times in the last 30 minutes."
 {% endraw %}

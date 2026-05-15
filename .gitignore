@@ -19,6 +19,7 @@ terraform.rc
 *.retry
 ansible/inventories/*/hosts.generated
 ansible/.vault_pass
+ansible/collections/
 
 # SSH / secrets
 *.pem
