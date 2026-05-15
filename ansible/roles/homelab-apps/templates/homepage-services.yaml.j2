@@ -33,6 +33,14 @@
         description: Zarządzanie kontenerami Docker
 
 - Aplikacje:
+    - Paperless:
+        icon: paperless-ngx
+        href: http://paperless.lab
+        description: Zarządzanie dokumentami
+        widget:
+          type: paperlessngx
+          url: http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:8001
+
     - Homepage:
         icon: homepage
         href: http://homepage.lab

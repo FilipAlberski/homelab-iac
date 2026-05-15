@@ -13,6 +13,12 @@ http:
       entryPoints:
         - web
 
+    paperless:
+      rule: Host(`paperless.lab`)
+      service: paperless
+      entryPoints:
+        - web
+
   services:
     kuma:
       loadBalancer:
@@ -23,3 +29,8 @@ http:
       loadBalancer:
         servers:
           - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:3000"
+
+    paperless:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:8001"

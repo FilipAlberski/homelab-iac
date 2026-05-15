@@ -80,8 +80,26 @@ locals {
           size         = 30
           interface    = "scsi0"
         },
+        {
+          datastore_id = "datav1"
+          size         = 200
+          interface    = "scsi1"
+        },
       ]
       tags = ["terraform", "apps"]
+    }
+    games-01 = {
+      vm_id     = 221
+      cpu_cores = 4
+      memory_mb = 24576
+      disks = [
+        {
+          datastore_id = "local-lvm"
+          size         = 100
+          interface    = "scsi0"
+        },
+      ]
+      tags = ["terraform", "gaming", "valheim"]
     }
   }
 }

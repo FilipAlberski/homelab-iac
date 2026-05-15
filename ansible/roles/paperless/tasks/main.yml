@@ -1,0 +1,119 @@
+---
+- name: Check if data disk exists
+  ansible.builtin.stat:
+    path: /dev/sdb
+  register: data_disk
+
+- name: Ensure data disk is formatted
+  when:
+    - data_disk.stat.exists
+    - data_disk.stat.isblk
+  block:
+    - name: Check filesystem on data disk
+      ansible.builtin.command: blkid -s TYPE -o value /dev/sdb
+      register: blkid_sdb
+      changed_when: false
+      ignore_errors: true
+
+    - name: Format data disk with ext4
+      ansible.builtin.filesystem:
+        dev: /dev/sdb
+        fstype: ext4
+      when: blkid_sdb.rc != 0
+
+- name: Create data mount point
+  ansible.builtin.file:
+    path: /srv/data
+    state: directory
+    owner: homelab
+    group: homelab
+    mode: '0755'
+
+- name: Mount data disk
+  ansible.posix.mount:
+    path: /srv/data
+    src: /dev/sdb
+    fstype: ext4
+    opts: defaults
+    state: mounted
+
+- name: Create Paperless directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: homelab
+    group: homelab
+    mode: '0755'
+  loop:
+    - /opt/paperless
+    - /srv/data/paperless
+    - /srv/data/paperless/media
+    - /srv/data/paperless/consume
+    - /srv/data/paperless/export
+    - /srv/data/paperless/pgdata
+    - /srv/data/paperless/redis
+
+- name: Check if Paperless credentials exist
+  ansible.builtin.stat:
+    path: /opt/paperless/.credentials
+  register: paperless_creds_file
+
+- name: Generate Paperless credentials
+  when: not paperless_creds_file.stat.exists
+  block:
+    - name: Generate secret key
+      ansible.builtin.shell: python3 -c "import secrets; print(secrets.token_urlsafe(64))"
+      register: gen_key
+      changed_when: false
+
+    - name: Generate DB password
+      ansible.builtin.shell: python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+      register: gen_dbpass
+      changed_when: false
+
+    - name: Save credentials
+      ansible.builtin.copy:
+        content: |
+          PAPERLESS_SECRET_KEY={{ gen_key.stdout }}
+          PAPERLESS_DBPASS={{ gen_dbpass.stdout }}
+        dest: /opt/paperless/.credentials
+        owner: homelab
+        group: homelab
+        mode: '0600'
+
+- name: Read Paperless credentials
+  ansible.builtin.shell: grep '^PAPERLESS_SECRET_KEY=' /opt/paperless/.credentials | cut -d= -f2-
+  register: paperless_key_read
+  changed_when: false
+
+- name: Read Paperless DB password
+  ansible.builtin.shell: grep '^PAPERLESS_DBPASS=' /opt/paperless/.credentials | cut -d= -f2-
+  register: paperless_dbpass_read
+  changed_when: false
+
+- name: Set Paperless credentials
+  ansible.builtin.set_fact:
+    paperless_secret_key: "{{ paperless_key_read.stdout }}"
+    paperless_db_password: "{{ paperless_dbpass_read.stdout }}"
+
+- name: Deploy Paperless Docker Compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /opt/paperless/docker-compose.yml
+    owner: homelab
+    group: homelab
+    mode: '0640'
+  notify: Restart paperless
+
+- name: Open firewall port for Paperless
+  ansible.posix.firewalld:
+    port: 8001/tcp
+    permanent: true
+    state: enabled
+    immediate: true
+
+- name: Ensure Paperless compose is running
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: /opt/paperless
+  changed_when: true

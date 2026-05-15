@@ -6,6 +6,7 @@ ENV          ?= prod
 TF_DIR       := terraform/environments/$(ENV)
 ANSIBLE_DIR  := ansible
 INVENTORY    := $(ANSIBLE_DIR)/inventories/$(ENV)/hosts.generated
+PVE          ?= root@192.168.40.10
 
 TF       := terraform -chdir=$(TF_DIR)
 ANSIBLE  := cd $(ANSIBLE_DIR) && ansible-playbook -i inventories/$(ENV)/hosts.generated
@@ -18,6 +19,14 @@ help:  ## Show this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage: make \033[36m<target>\033[0m\n"} \
 	/^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2 } \
 	/^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) }' $(MAKEFILE_LIST)
+
+##@ Setup (Proxmox host)
+.PHONY: datastore
+datastore: ## Create datav1 storage on Proxmox host (idempotent)
+	@ssh $(PVE) 'pvesm list datav1 > /dev/null 2>&1 || pvesm add dir datav1 --path /mnt/pve/datav1 --content images,backup'
+	@ssh $(PVE) 'grep -q datav1 /etc/fstab || echo "/dev/sda1 /mnt/pve/datav1 ext4 defaults 0 0" >> /etc/fstab'
+	@ssh $(PVE) 'pvesm status | grep datav1 || true'
+	@echo "✓ datav1 storage is ready"
 
 ##@ Terraform
 .PHONY: init fmt validate plan apply destroy output
@@ -43,7 +52,7 @@ output:    ## terraform output
 	$(TF) output
 
 ##@ Ansible
-.PHONY: inventory ping update update-check lint dns proxy apps update-apps
+.PHONY: inventory ping update update-check lint dns proxy apps paperless update-apps
 inventory: ## Regenerate Ansible inventory from Terraform output
 	@mkdir -p $(dir $(INVENTORY))
 	$(TF) output -raw ansible_inventory > $(INVENTORY)
@@ -67,6 +76,12 @@ proxy:     ## Deploy Traefik on proxy hosts
 
 apps:      ## Deploy apps on app-01
 	$(ANSIBLE) playbooks/apps.yml
+
+games:     ## Deploy Valheim server on games-01
+	$(ANSIBLE) playbooks/games.yml
+
+paperless: ## Deploy Paperless-ngx on app-01
+	$(ANSIBLE) playbooks/paperless.yml
 
 update-apps: ## Pull latest images & recreate app containers
 	$(ANSIBLE) playbooks/update-apps.yml

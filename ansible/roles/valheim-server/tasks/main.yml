@@ -1,0 +1,38 @@
+---
+- name: Create Valheim directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: homelab
+    group: homelab
+    mode: '0755'
+  loop:
+    - /opt/valheim
+    - /opt/valheim/config
+    - /opt/valheim/data
+    - /opt/valheim/backups
+
+- name: Ensure Valheim firewall ports are open
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+    zone: public
+  loop:
+    - 2456-2458/udp
+
+- name: Deploy Valheim Docker Compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /opt/valheim/docker-compose.yml
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart valheim
+
+- name: Ensure Valheim compose is running
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: /opt/valheim
+  changed_when: true

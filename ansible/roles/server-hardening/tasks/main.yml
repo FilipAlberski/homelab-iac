@@ -1,0 +1,115 @@
+---
+- name: Enable EPEL repository
+  ansible.builtin.dnf:
+    name: epel-release
+    state: present
+
+- name: Ensure essential security packages are installed
+  ansible.builtin.dnf:
+    name:
+      - fail2ban
+      - dnf-automatic
+    state: present
+
+- name: Enable and start fail2ban
+  ansible.builtin.systemd:
+    name: fail2ban
+    enabled: true
+    state: started
+
+- name: Configure fail2ban ssh jail
+  ansible.builtin.template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart fail2ban
+
+- name: Configure dnf-automatic for security updates
+  ansible.builtin.template:
+    src: automatic.conf.j2
+    dest: /etc/dnf/automatic.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart dnf-automatic
+
+- name: Enable dnf-automatic timer
+  ansible.builtin.systemd:
+    name: dnf-automatic.timer
+    enabled: true
+    state: started
+
+- name: Harden SSH configuration
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^{{ item.key }}\b'
+    line: '{{ item.key }} {{ item.value }}'
+    state: present
+    validate: /usr/sbin/sshd -t -f %s
+  loop:
+    - { key: 'PermitRootLogin', value: 'no' }
+    - { key: 'PasswordAuthentication', value: 'no' }
+    - { key: 'PubkeyAuthentication', value: 'yes' }
+    - { key: 'MaxAuthTries', value: '3' }
+    - { key: 'ClientAliveInterval', value: '300' }
+    - { key: 'ClientAliveCountMax', value: '2' }
+    - { key: 'LoginGraceTime', value: '60' }
+    - { key: 'X11Forwarding', value: 'no' }
+  notify: Restart sshd
+
+- name: Apply kernel sysctl hardening
+  ansible.posix.sysctl:
+    name: '{{ item.name }}'
+    value: '{{ item.value }}'
+    sysctl_set: true
+    state: present
+    reload: true
+  loop:
+    - { name: 'net.ipv4.conf.all.rp_filter', value: '1' }
+    - { name: 'net.ipv4.conf.default.rp_filter', value: '1' }
+    - { name: 'net.ipv4.tcp_syncookies', value: '1' }
+    - { name: 'net.ipv4.icmp_echo_ignore_broadcasts', value: '1' }
+    - { name: 'net.ipv4.conf.all.accept_redirects', value: '0' }
+    - { name: 'net.ipv4.conf.default.accept_redirects', value: '0' }
+
+- name: Ensure firewalld is running
+  ansible.builtin.systemd:
+    name: firewalld
+    enabled: true
+    state: started
+
+- name: Query enabled services in public zone
+  ansible.builtin.command: firewall-cmd --zone=public --list-services
+  register: public_services
+  changed_when: false
+  check_mode: false
+
+- name: Remove unnecessary services from public zone
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: true
+    state: disabled
+    immediate: true
+    zone: public
+  loop:
+    - dhcpv6-client
+    - cockpit
+    - mdns
+    - samba-client
+  when: item in public_services.stdout
+
+- name: Ensure SSH is allowed in public zone
+  ansible.posix.firewalld:
+    service: ssh
+    permanent: true
+    state: enabled
+    immediate: true
+    zone: public
+
+- name: Ensure chronyd is enabled for time sync
+  ansible.builtin.systemd:
+    name: chronyd
+    enabled: true
+    state: started

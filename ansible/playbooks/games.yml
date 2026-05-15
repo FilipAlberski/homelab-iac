@@ -1,0 +1,10 @@
+---
+- name: Harden and deploy Valheim server on games-01
+  hosts: gaming
+  become: true
+  gather_facts: true
+
+  roles:
+    - server-hardening
+    - docker
+    - valheim-server

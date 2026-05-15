@@ -1,0 +1,53 @@
+---
+services:
+  broker:
+    image: docker.io/library/redis:7
+    restart: unless-stopped
+    volumes:
+      - /srv/data/paperless/redis:/data
+
+  db:
+    image: docker.io/library/postgres:16
+    restart: unless-stopped
+    volumes:
+      - /srv/data/paperless/pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: {{ paperless_db_password }}
+
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:8
+    restart: unless-stopped
+    command:
+      - "gotenberg"
+      - "--chromium-disable-routes=true"
+
+  tika:
+    image: docker.io/apache/tika:latest
+    restart: unless-stopped
+
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    restart: unless-stopped
+    depends_on:
+      - db
+      - broker
+      - gotenberg
+      - tika
+    ports:
+      - "8001:8000"
+    volumes:
+      - /srv/data/paperless/media:/usr/src/paperless/media
+      - /srv/data/paperless/consume:/usr/src/paperless/consume
+      - /srv/data/paperless/export:/usr/src/paperless/export
+    environment:
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_DBHOST: db
+      PAPERLESS_DBUSER: paperless
+      PAPERLESS_DBPASS: {{ paperless_db_password }}
+      PAPERLESS_SECRET_KEY: {{ paperless_secret_key }}
+      PAPERLESS_TIME_ZONE: Europe/Warsaw
+      PAPERLESS_OCR_LANGUAGE: pol+eng
+      PAPERLESS_OCR_LANGUAGES: pol
+      PAPERLESS_URL: http://paperless.lab

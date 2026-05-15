@@ -1,0 +1,8 @@
+---
+- name: Deploy Paperless-ngx on app-01
+  hosts: apps
+  become: true
+  gather_facts: true
+
+  roles:
+    - paperless

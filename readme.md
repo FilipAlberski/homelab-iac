@@ -26,6 +26,7 @@ Makefile                    thin wrapper around terraform + ansible
 | 160–179    | Storage / backup         |
 | 180–199    | Dev / sandbox            |
 | 200–219    | Kubernetes nodes         |
+| 220–239    | Gaming servers           |
 | 9000+      | Templates                |
 
 **IP rule:** the last octet of the VM IP equals the VMID itself (range is kept ≤ 219 to fit `/24`).
@@ -92,4 +93,5 @@ Then `make plan && make apply && make inventory`.
 | dns-01       | 141  | 192.168.40.141 | DNS sinkhole     | `network`, `dns`      |
 | proxy-01     | 142  | 192.168.40.142 | Traefik / Proxy  | `network`, `proxy`    |
 | app-01       | 143  | 192.168.40.143 | Homelab apps     | `apps`                |
+| games-01     | 221  | 192.168.40.221 | Gaming / Valheim | `gaming`, `valheim`   |
 
