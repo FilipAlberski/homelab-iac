@@ -19,6 +19,24 @@ http:
       entryPoints:
         - web
 
+    grafana:
+      rule: Host(`grafana.lab`)
+      service: grafana
+      entryPoints:
+        - web
+
+    prometheus:
+      rule: Host(`prometheus.lab`)
+      service: prometheus
+      entryPoints:
+        - web
+
+    alertmanager:
+      rule: Host(`alertmanager.lab`)
+      service: alertmanager
+      entryPoints:
+        - web
+
   services:
     kuma:
       loadBalancer:
@@ -34,3 +52,18 @@ http:
       loadBalancer:
         servers:
           - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:8001"
+
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['monitor-01']['ansible_host'] | default('192.168.40.145') }}:3000"
+
+    prometheus:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['monitor-01']['ansible_host'] | default('192.168.40.145') }}:9090"
+
+    alertmanager:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['monitor-01']['ansible_host'] | default('192.168.40.145') }}:9093"
