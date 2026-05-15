@@ -8,7 +8,7 @@ groups:
     rules:
       - uid: valheim-player-joined
         title: Player Joined Valheim
-        condition: B
+        condition: C
         data:
           - refId: A
             queryType: range
@@ -19,31 +19,34 @@ groups:
             model:
               expr: '{job="valheim"} |= "Player joined server"'
           - refId: B
-            queryType: ""
             relativeTimeRange:
               from: 0
               to: 0
-            datasourceUid: "-100"
+            datasourceUid: __expr__
             model:
-              type: classic_conditions
+              type: reduce
+              expression: A
+              reducer: count
+              settings:
+                mode: strict
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
               conditions:
                 - evaluator:
                     params: [0]
                     type: gt
-                  operator:
-                    type: and
-                  query:
-                    params: [A]
-                  reducer:
-                    params: []
-                    type: last
-                  type: query
         noDataState: NoData
         execErrState: Error
-        for: 0s
+        for: 1m
         annotations:
           summary: Player joined PORTPOLSKA Valheim server
-          description: "Player connection detected in server logs"
+          description: "Someone connected to the Valheim server"
         labels:
           severity: info
         isPaused: false
