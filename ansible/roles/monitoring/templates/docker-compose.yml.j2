@@ -60,6 +60,7 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - ./loki-config.yml:/etc/loki/local-config.yaml:ro
+      - ./loki-rules.yml:/loki/rules/fake/valheim.yml:ro
       - ./loki-data:/loki
     ports:
       - "3100:3100"

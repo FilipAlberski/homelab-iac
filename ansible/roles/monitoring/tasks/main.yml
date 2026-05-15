@@ -76,7 +76,7 @@
     mode: '0644'
   notify: Restart monitoring
 
-- name: Deploy Grafana alert rules
+- name: Deploy Grafana alert rules (empty — Valheim alerts removed)
   ansible.builtin.template:
     src: grafana-alert-rules.yml.j2
     dest: "{{ monitoring_data_dir }}/grafana-alert-rules.yml"

@@ -33,5 +33,14 @@ schema_config:
         prefix: index_
         period: 24h
 
+ruler:
+  alertmanager_url: http://alertmanager:9093
+  enable_api: true
+  enable_alertmanager_v2: true
+  ring:
+    kvstore:
+      store: inmemory
+  rule_path: /etc/loki/rules
+
 analytics:
   reporting_enabled: false

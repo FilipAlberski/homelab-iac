@@ -1,15 +1,22 @@
 ---
+- name: Stop old cadvisor if running without Docker socket
+  ansible.builtin.command: docker rm -f cadvisor
+  register: cadvisor_removed
+  changed_when: false
+  failed_when: false
+
 - name: Ensure cadvisor is running
   ansible.builtin.command: >
     docker run -d --name=cadvisor --restart=unless-stopped
     --volume=/:/rootfs:ro
-    --volume=/var/run:/var/run:ro
+    --volume=/run/docker.sock:/var/run/docker.sock:ro
     --volume=/sys:/sys:ro
     --volume=/var/lib/docker/:/var/lib/docker:ro
     --volume=/dev/disk/:/dev/disk:ro
     --publish={{ cadvisor_port }}:8080
     --device=/dev/kmsg
     gcr.io/cadvisor/cadvisor:{{ cadvisor_version }}
+    --docker_only=true
   register: cadvisor_run
   changed_when: cadvisor_run.rc == 0
   failed_when: cadvisor_run.rc != 0 and 'Conflict' not in cadvisor_run.stderr
