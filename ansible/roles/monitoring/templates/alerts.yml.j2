@@ -4,7 +4,7 @@ groups:
     interval: 30s
     rules:
       - alert: ValheimContainerDown
-        expr: time() - container_last_seen{instance="192.168.40.221:9280",name="valheim"} > 120
+        expr: time() - container_last_seen{instance="192.168.40.221:9280",image=~".*valheim-server.*"} > 120
         for: 1m
         labels:
           severity: critical

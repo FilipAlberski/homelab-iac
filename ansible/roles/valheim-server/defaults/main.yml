@@ -1,13 +1,15 @@
 ---
+valheim_image: "mbround18/valheim:3"
 valheim_server_name: "PORTPOLSKA"
 valheim_world_name: "PORTPOLSKA"
 valheim_server_password: "CPK0000"
 valheim_server_port: 2456
 valheim_server_public: true
-valheim_public_test: true
-valheim_crossplay: true
+valheim_crossplay: false
 valheim_timezone: "Europe/Warsaw"
-valheim_update_cron: "*/15 * * * *"
+valheim_update_cron: "0 1 * * *"
 valheim_backups_cron: "5 * * * *"
 valheim_backups_max_age: 3
-valheim_backups_max_count: 0
+valheim_adminlist_ids:
+  - "76561198209272507"
+  - "76561199698265485"

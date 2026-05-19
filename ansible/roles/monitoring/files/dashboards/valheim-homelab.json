@@ -96,7 +96,7 @@
       "pluginVersion": "12.0.0",
       "targets": [
         {
-          "expr": "time() - container_last_seen{instance=\"192.168.40.221:9280\",name=\"valheim\"}",
+          "expr": "time() - container_last_seen{instance=\"192.168.40.221:9280\",image=~\".*valheim-server.*\"}",
           "refId": "A"
         }
       ],

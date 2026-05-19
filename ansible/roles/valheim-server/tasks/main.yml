@@ -8,8 +8,9 @@
     mode: '0755'
   loop:
     - /opt/valheim
-    - /opt/valheim/config
-    - /opt/valheim/data
+    - /opt/valheim/saves
+    - /opt/valheim/saves/worlds_local
+    - /opt/valheim/server
     - /opt/valheim/backups
 
 - name: Ensure Valheim firewall ports are open
@@ -21,6 +22,18 @@
     zone: public
   loop:
     - 2456-2458/udp
+
+- name: Deploy adminlist.txt
+  ansible.builtin.copy:
+    content: |
+      // List admin players ID  ONE per line
+      {% for id in valheim_adminlist_ids %}
+      {{ id }}
+      {% endfor %}
+    dest: /opt/valheim/saves/adminlist.txt
+    owner: homelab
+    group: homelab
+    mode: '0644'
 
 - name: Deploy Valheim Docker Compose
   ansible.builtin.template:
@@ -35,4 +48,5 @@
   ansible.builtin.command: docker compose up -d
   args:
     chdir: /opt/valheim
+  become_user: homelab
   changed_when: true

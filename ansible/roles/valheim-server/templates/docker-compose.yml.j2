@@ -1,29 +1,33 @@
 services:
   valheim:
-    image: ghcr.io/community-valheim-tools/valheim-server:latest
+    image: {{ valheim_image }}
     container_name: valheim
-    cap_add:
-      - sys_nice
-    stop_grace_period: 120s
+    user: "1000:1000"
+    stop_signal: SIGINT
     ports:
-      - "2456-2458:2456-2458/udp"
+      - "2456:2456/udp"
+      - "2457:2457/udp"
+      - "2458:2458/udp"
+      - "3000:3000/tcp"
     volumes:
-      - /opt/valheim/config:/config
-      - /opt/valheim/data:/opt/valheim
-      - /opt/valheim/backups:/config/backups
+      - /opt/valheim/saves:/home/steam/.config/unity3d/IronGate/Valheim
+      - /opt/valheim/server:/home/steam/valheim
+      - /opt/valheim/backups:/home/steam/backups
     environment:
-      - SERVER_NAME={{ valheim_server_name }}
-      - WORLD_NAME={{ valheim_world_name }}
-      - SERVER_PASS={{ valheim_server_password }}
-      - SERVER_PORT={{ valheim_server_port }}
-      - SERVER_PUBLIC={{ valheim_server_public | string | lower }}
-      - PUBLIC_TEST={{ valheim_public_test | string | lower }}
-      - CROSSPLAY={{ valheim_crossplay | string | lower }}
+      - PORT={{ valheim_server_port }}
+      - NAME={{ valheim_server_name }}
+      - WORLD={{ valheim_world_name }}
+      - PASSWORD={{ valheim_server_password }}
       - TZ={{ valheim_timezone }}
-      - UPDATE_CRON={{ valheim_update_cron }}
-      - BACKUPS_CRON={{ valheim_backups_cron }}
-      - BACKUPS_DIRECTORY=/config/backups
-      - BACKUPS_MAX_AGE={{ valheim_backups_max_age }}
-      - BACKUPS_MAX_COUNT={{ valheim_backups_max_count }}
-      - BACKUPS_ZIP=true
+      - PUBLIC={{ 1 if valheim_server_public else 0 }}
+      - ENABLE_CROSSPLAY={{ 1 if valheim_crossplay else 0 }}
+      - USE_PUBLIC_BETA=1
+      - HTTP_PORT=3000
+      - AUTO_UPDATE=1
+      - AUTO_UPDATE_SCHEDULE={{ valheim_update_cron }}
+      - AUTO_BACKUP=1
+      - AUTO_BACKUP_SCHEDULE={{ valheim_backups_cron }}
+      - AUTO_BACKUP_DAYS_TO_LIVE={{ valheim_backups_max_age }}
+      - AUTO_BACKUP_REMOVE_OLD=1
+      - AUTO_BACKUP_ON_SHUTDOWN=1
     restart: unless-stopped

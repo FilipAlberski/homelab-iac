@@ -47,3 +47,10 @@ scrape_configs:
     static_configs:
       - targets:
         - 192.168.40.221:9080
+
+  - job_name: 'valheim'
+    static_configs:
+      - targets:
+        - 192.168.40.221:3000
+        labels:
+          env: homelab
