@@ -1,3 +1,70 @@
 apiVersion: 1
 
-# No Grafana alert rules defined — Valheim player alerts removed
+groups:
+  - orgId: 1
+    name: valheim
+    folder: Valheim
+    interval: 10s
+    rules:
+      - uid: valheim-player-joined
+        title: Valheim - Gracz dołączył
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 120
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: valheim_current_player_count > 0
+        noDataState: OK
+        execErrState: Error
+        for: 30s
+        annotations:
+          summary: "Gracz dołączył do PORTPOLSKA"
+          description: "Graczy online: {{ $values.A.Value }}"
+        labels:
+          severity: info
+          game: valheim
+
+      - uid: valheim-all-left
+        title: Valheim - Wszyscy wyszli
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 120
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: valheim_current_player_count == 0
+        noDataState: OK
+        execErrState: Error
+        for: 1m
+        annotations:
+          summary: "Wszyscy gracze opuścili PORTPOLSKA"
+          description: "Graczy online: 0"
+        labels:
+          severity: info
+          game: valheim
+
+      - uid: valheim-server-down
+        title: Valheim - Serwer offline
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 120
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: valheim_online == 0
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 1m
+        annotations:
+          summary: "Serwer Valheim PORTPOLSKA offline"
+          description: "valheim_online = 0 od minuty"
+        labels:
+          severity: critical
+          game: valheim

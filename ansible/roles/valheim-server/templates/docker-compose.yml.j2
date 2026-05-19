@@ -2,7 +2,6 @@ services:
   valheim:
     image: {{ valheim_image }}
     container_name: valheim
-    user: "1000:1000"
     stop_signal: SIGINT
     ports:
       - "2456:2456/udp"
@@ -21,7 +20,7 @@ services:
       - TZ={{ valheim_timezone }}
       - PUBLIC={{ 1 if valheim_server_public else 0 }}
       - ENABLE_CROSSPLAY={{ 1 if valheim_crossplay else 0 }}
-      - USE_PUBLIC_BETA=1
+      - USE_PUBLIC_BETA={{ 1 if valheim_public_test else 0 }}
       - HTTP_PORT=3000
       - AUTO_UPDATE=1
       - AUTO_UPDATE_SCHEDULE={{ valheim_update_cron }}
@@ -30,4 +29,8 @@ services:
       - AUTO_BACKUP_DAYS_TO_LIVE={{ valheim_backups_max_age }}
       - AUTO_BACKUP_REMOVE_OLD=1
       - AUTO_BACKUP_ON_SHUTDOWN=1
+{% if valheim_webhook_url | default('') | length > 0 %}
+      - WEBHOOK_URL={{ valheim_webhook_url }}
+      - PLAYER_EVENT_NOTIFICATIONS=1
+{% endif %}
     restart: unless-stopped

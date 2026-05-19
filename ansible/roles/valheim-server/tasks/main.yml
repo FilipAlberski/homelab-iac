@@ -3,9 +3,9 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    owner: homelab
-    group: homelab
-    mode: '0755'
+    owner: 111
+    group: 1000
+    mode: '0775'
   loop:
     - /opt/valheim
     - /opt/valheim/saves
@@ -31,22 +31,22 @@
       {{ id }}
       {% endfor %}
     dest: /opt/valheim/saves/adminlist.txt
-    owner: homelab
-    group: homelab
+    owner: 111
+    group: 1000
     mode: '0644'
 
 - name: Deploy Valheim Docker Compose
   ansible.builtin.template:
     src: docker-compose.yml.j2
     dest: /opt/valheim/docker-compose.yml
-    owner: homelab
-    group: homelab
+    owner: 111
+    group: 1000
     mode: '0644'
   notify: Restart valheim
 
 - name: Ensure Valheim compose is running
-  ansible.builtin.command: docker compose up -d
+  ansible.builtin.command: docker compose up -d --remove-orphans
   args:
     chdir: /opt/valheim
   become_user: homelab
-  changed_when: true
+  changed_when: "'Running' not in result.stdout and 'Running' not in result.stderr"

@@ -6,6 +6,7 @@ valheim_server_password: "CPK0000"
 valheim_server_port: 2456
 valheim_server_public: true
 valheim_crossplay: false
+valheim_public_test: true
 valheim_timezone: "Europe/Warsaw"
 valheim_update_cron: "0 1 * * *"
 valheim_backups_cron: "5 * * * *"
@@ -13,3 +14,6 @@ valheim_backups_max_age: 3
 valheim_adminlist_ids:
   - "76561198209272507"
   - "76561199698265485"
+
+# Discord webhook for player join/leave notifications (optional)
+# valheim_webhook_url: "https://discord.com/api/webhooks/..."

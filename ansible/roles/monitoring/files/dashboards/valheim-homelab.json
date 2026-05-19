@@ -1,649 +1,195 @@
 {
   "annotations": {
-    "list": [
-      {
-        "builtIn": 1,
-        "datasource": {
-          "type": "grafana",
-          "uid": "-- Grafana --"
-        },
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
-        "type": "dashboard"
-      }
-    ]
+    "list": [{"builtIn": 1, "datasource": {"type": "grafana", "uid": "-- Grafana --"}, "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard"}]
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": null,
   "links": [],
   "panels": [
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 1,
-                  "text": "OFFLINE"
-                }
-              },
-              "type": "value"
-            },
-            {
-              "options": {
-                "from": 1,
-                "result": {
-                  "color": "green",
-                  "index": 0,
-                  "text": "ONLINE"
-                },
-                "to": 1000000
-              },
-              "type": "range"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 0,
-        "y": 0
-      },
       "id": 1,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.0.0",
-      "targets": [
-        {
-          "expr": "time() - container_last_seen{instance=\"192.168.40.221:9280\",image=~\".*valheim-server.*\"}",
-          "refId": "A"
-        }
-      ],
-      "title": "Valheim Status",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
+      "type": "stat",
+      "title": "Server Status",
+      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 80
-              },
-              {
-                "color": "red",
-                "value": 95
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
+          "color": {"mode": "thresholds"},
+          "mappings": [
+            {"options": {"0": {"color": "red", "index": 1, "text": "OFFLINE"}, "1": {"color": "green", "index": 0, "text": "ONLINE"}}, "type": "value"}
+          ],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}
+        }
       },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 6,
-        "y": 0
-      },
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"expr": "max(valheim_online{version!=\"Unknown\"})", "refId": "A"}]
+    },
+    {
       "id": 2,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.0.0",
-      "targets": [
-        {
-          "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\",instance=\"192.168.40.221:9100\"}[5m])) * 100)",
-          "refId": "A"
-        }
-      ],
-      "title": "games-01 CPU",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
+      "type": "stat",
+      "title": "Players Online",
+      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 80
-              },
-              {
-                "color": "red",
-                "value": 95
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
+          "color": {"mode": "thresholds"},
+          "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}, {"color": "green", "value": 1}]}
+        }
       },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 12,
-        "y": 0
-      },
+      "options": {"colorMode": "background", "graphMode": "none", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"expr": "max(valheim_current_player_count{version!=\"Unknown\"})", "refId": "A"}]
+    },
+    {
       "id": 3,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.0.0",
-      "targets": [
-        {
-          "expr": "100 * (1 - ((node_memory_MemAvailable_bytes{instance=\"192.168.40.221:9100\"} or node_memory_MemFree_bytes{instance=\"192.168.40.221:9100\"}) / node_memory_MemTotal_bytes{instance=\"192.168.40.221:9100\"}))",
-          "refId": "A"
-        }
-      ],
-      "title": "games-01 RAM",
-      "type": "stat"
+      "type": "stat",
+      "title": "Max Players",
+      "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "fieldConfig": {"defaults": {"color": {"mode": "fixed"}, "thresholds": {"mode": "absolute", "steps": [{"color": "purple", "value": null}]}}},
+      "options": {"colorMode": "background", "graphMode": "none", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "value"},
+      "targets": [{"expr": "max(valheim_max_player_count{version!=\"Unknown\"})", "refId": "A"}]
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 80
-              },
-              {
-                "color": "red",
-                "value": 95
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 18,
-        "y": 0
-      },
       "id": 4,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.0.0",
-      "targets": [
-        {
-          "expr": "100 - ((node_filesystem_avail_bytes{instance=\"192.168.40.221:9100\",mountpoint=\"/\"} * 100) / node_filesystem_size_bytes{instance=\"192.168.40.221:9100\",mountpoint=\"/\"})",
-          "refId": "A"
-        }
-      ],
-      "title": "games-01 Disk /",
-      "type": "stat"
+      "type": "stat",
+      "title": "World",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "fieldConfig": {"defaults": {"color": {"mode": "fixed"}, "thresholds": {"mode": "absolute", "steps": [{"color": "semi-dark-blue", "value": null}]}}},
+      "options": {"colorMode": "background", "graphMode": "none", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "name"},
+      "targets": [{"expr": "max(valheim_online{name=\"PORTPOLSKA\",version!=\"Unknown\"})", "legendFormat": "{{map}}", "refId": "A"}]
     },
     {
-      "datasource": {
-        "type": "loki",
-        "uid": "${loki_datasource}"
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 5
-      },
       "id": 5,
-      "options": {
-        "sortOrder": "Descending",
-        "wrapLogMessage": false,
-        "prettifyLogMessage": false,
-        "enableLogDetails": true,
-        "showTime": true,
-        "showLabels": false,
-        "showCommonLabels": false
-      },
-      "pluginVersion": "12.0.0",
-      "targets": [
-        {
-          "expr": "{job=\"valheim\"} |= \"valheim-server\"",
-          "refId": "A"
-        }
-      ],
-      "title": "Valheim Logs (Loki)",
-      "type": "logs"
+      "type": "stat",
+      "title": "Version",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "fieldConfig": {"defaults": {"color": {"mode": "fixed"}, "thresholds": {"mode": "absolute", "steps": [{"color": "dark-gray", "value": null}]}}},
+      "options": {"colorMode": "none", "graphMode": "none", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "name"},
+      "targets": [{"expr": "max(valheim_online{version!=\"Unknown\"})", "legendFormat": "{{version}}", "refId": "A"}]
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
+      "id": 10,
+      "type": "timeseries",
+      "title": "Players Online Over Time",
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 4},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
+          "color": {"mode": "palette-classic"},
+          "custom": {"drawStyle": "line", "fillOpacity": 20, "lineWidth": 2, "showPoints": "never", "spanNulls": true, "stacking": {"mode": "none"}},
           "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 15
-      },
-      "id": 6,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
         }
       },
-      "pluginVersion": "12.0.0",
-      "targets": [
-        {
-          "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\",instance=\"192.168.40.221:9100\"}[5m])) * 100)",
-          "legendFormat": "CPU %",
-          "refId": "A"
-        }
-      ],
-      "title": "games-01 CPU Usage",
-      "type": "timeseries"
+      "options": {"legend": {"showLegend": false}, "tooltip": {"mode": "single"}},
+      "targets": [{"expr": "valheim_current_player_count", "legendFormat": "Players", "refId": "A"}]
     },
     {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
+      "id": 11,
+      "type": "timeseries",
+      "title": "Server CPU Usage",
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 4},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "bytes"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 15
-      },
-      "id": 7,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "12.0.0",
-      "targets": [
-        {
-          "expr": "node_memory_MemTotal_bytes{instance=\"192.168.40.221:9100\"} - (node_memory_MemAvailable_bytes{instance=\"192.168.40.221:9100\"} or node_memory_MemFree_bytes{instance=\"192.168.40.221:9100\"})",
-          "legendFormat": "RAM Used",
-          "refId": "A"
-        }
-      ],
-      "title": "games-01 RAM Usage",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
+          "color": {"mode": "palette-classic"},
+          "custom": {"drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "showPoints": "never", "spanNulls": true, "stacking": {"mode": "none"}},
           "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 23
-      },
-      "id": 8,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
         }
       },
-      "pluginVersion": "12.0.0",
+      "options": {"legend": {"showLegend": true, "placement": "bottom"}, "tooltip": {"mode": "single"}},
       "targets": [
-        {
-          "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-          "legendFormat": "{{ instance }}",
-          "refId": "A"
+        {"expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\",instance=\"192.168.40.221:9100\"}[5m])) * 100)", "legendFormat": "Total CPU", "refId": "A"},
+        {"expr": "valheim_sys_load_average{window=\"1m\"}", "legendFormat": "Load 1m", "refId": "B"}
+      ]
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Memory Usage",
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 4},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "showPoints": "never", "spanNulls": true, "stacking": {"mode": "none"}},
+          "unit": "bytes"
         }
-      ],
-      "title": "All Nodes CPU Usage",
-      "type": "timeseries"
+      },
+      "options": {"legend": {"showLegend": true, "placement": "bottom"}, "tooltip": {"mode": "single"}},
+      "targets": [
+        {"expr": "valheim_sys_memory_used_bytes", "legendFormat": "VM Used", "refId": "A"},
+        {"expr": "valheim_sys_memory_total_bytes", "legendFormat": "VM Total", "refId": "B"},
+        {"expr": "node_memory_MemTotal_bytes{instance=\"192.168.40.221:9100\"} - node_memory_MemAvailable_bytes{instance=\"192.168.40.221:9100\"}", "legendFormat": "Host Used", "refId": "C"}
+      ]
+    },
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "Network Traffic",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"drawStyle": "line", "fillOpacity": 10, "lineWidth": 2, "showPoints": "never", "stacking": {"mode": "none"}},
+          "unit": "bps"
+        }
+      },
+      "options": {"legend": {"showLegend": true, "placement": "bottom"}, "tooltip": {"mode": "single"}},
+      "targets": [
+        {"expr": "rate(node_network_receive_bytes_total{instance=\"192.168.40.221:9100\",device!=\"lo\"}[5m]) * 8", "legendFormat": "{{device}} RX", "refId": "A"},
+        {"expr": "-rate(node_network_transmit_bytes_total{instance=\"192.168.40.221:9100\",device!=\"lo\"}[5m]) * 8", "legendFormat": "{{device}} TX", "refId": "B"}
+      ]
+    },
+    {
+      "id": 21,
+      "type": "timeseries",
+      "title": "Disk Usage",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "datasource": {"type": "prometheus", "uid": "${datasource}"},
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "showPoints": "never", "stacking": {"mode": "none"}},
+          "unit": "percent"
+        }
+      },
+      "options": {"legend": {"showLegend": true, "placement": "bottom"}, "tooltip": {"mode": "single"}},
+      "targets": [
+        {"expr": "100 - ((valheim_sys_disk_available_bytes * 100) / valheim_sys_disk_total_bytes)", "legendFormat": "Disk Used %", "refId": "A"},
+        {"expr": "100 - ((node_filesystem_avail_bytes{instance=\"192.168.40.221:9100\",mountpoint=\"/\"} * 100) / node_filesystem_size_bytes{instance=\"192.168.40.221:9100\",mountpoint=\"/\"})", "legendFormat": "Host / Used %", "refId": "B"}
+      ]
+    },
+    {
+      "id": 30,
+      "type": "logs",
+      "title": "Server Logs (Loki)",
+      "gridPos": {"h": 16, "w": 24, "x": 0, "y": 20},
+      "datasource": {"type": "loki", "uid": "${loki_datasource}"},
+      "options": {"showTime": true, "showLabels": false, "showCommonLabels": false, "wrapLogMessage": false, "prettifyLogMessage": false, "enableLogDetails": true, "sortOrder": "Descending"},
+      "targets": [
+        {"expr": "{service_name=\"valheim\"}", "refId": "A"}
+      ]
     }
   ],
   "refresh": "10s",
   "schemaVersion": 41,
-  "tags": ["homelab", "valheim"],
+  "tags": ["homelab", "valheim", "gaming"],
   "templating": {
     "list": [
-      {
-        "current": {
-          "selected": false,
-          "text": "Prometheus",
-          "value": "prometheus"
-        },
-        "hide": 0,
-        "includeAll": false,
-        "label": "Datasource",
-        "multi": false,
-        "name": "datasource",
-        "options": [],
-        "query": "prometheus",
-        "queryValue": "",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "type": "datasource"
-      },
-      {
-        "current": {
-          "selected": false,
-          "text": "Loki",
-          "value": "loki"
-        },
-        "hide": 0,
-        "includeAll": false,
-        "label": "Loki Datasource",
-        "multi": false,
-        "name": "loki_datasource",
-        "options": [],
-        "query": "loki",
-        "queryValue": "",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "type": "datasource"
-      }
+      {"current": {"selected": false, "text": "Prometheus", "value": "prometheus"}, "hide": 0, "label": "Datasource", "name": "datasource", "query": "prometheus", "type": "datasource"},
+      {"current": {"selected": false, "text": "Loki", "value": "loki"}, "hide": 0, "label": "Loki Datasource", "name": "loki_datasource", "query": "loki", "type": "datasource"}
     ]
   },
-  "time": {
-    "from": "now-1h",
-    "to": "now"
-  },
+  "time": {"from": "now-1h", "to": "now"},
   "timepicker": {},
   "timezone": "browser",
   "title": "Valheim Homelab",
   "uid": "valheim-homelab",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

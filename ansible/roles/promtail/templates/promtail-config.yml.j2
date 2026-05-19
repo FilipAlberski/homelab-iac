@@ -19,3 +19,12 @@ scrape_configs:
           __path__: /var/lib/docker/containers/*/*-json.log
     pipeline_stages:
       - docker: {}
+      - replace:
+          expression: '\\x1b\[[0-9;]*m'
+          replace: ''
+      - replace:
+          expression: '\[[0-9;]*m'
+          replace: ''
+      - replace:
+          expression: '\[[0-9;]*\['
+          replace: ''
