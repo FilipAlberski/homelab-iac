@@ -49,4 +49,5 @@
   args:
     chdir: /opt/valheim
   become_user: homelab
+  register: result
   changed_when: "'Running' not in result.stdout and 'Running' not in result.stderr"

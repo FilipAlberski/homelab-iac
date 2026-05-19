@@ -11,6 +11,9 @@ valheim_timezone: "Europe/Warsaw"
 valheim_update_cron: "0 1 * * *"
 valheim_backups_cron: "5 * * * *"
 valheim_backups_max_age: 3
+valheim_type: "Vanilla"
+valheim_mods: ""
+
 valheim_adminlist_ids:
   - "76561198209272507"
   - "76561199698265485"

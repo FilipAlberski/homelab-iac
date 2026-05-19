@@ -21,6 +21,9 @@ services:
       - PUBLIC={{ 1 if valheim_server_public else 0 }}
       - ENABLE_CROSSPLAY={{ 1 if valheim_crossplay else 0 }}
       - USE_PUBLIC_BETA={{ 1 if valheim_public_test else 0 }}
+      - TYPE={{ valheim_type }}
+      - |
+        MODS={{ valheim_mods | replace('\n', '\n        ') }}
       - HTTP_PORT=3000
       - AUTO_UPDATE=1
       - AUTO_UPDATE_SCHEDULE={{ valheim_update_cron }}
