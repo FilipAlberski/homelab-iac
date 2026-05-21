@@ -1,0 +1,8 @@
+---
+ansible_user: homelab
+ansible_python_interpreter: /usr/bin/python3
+
+# Reboot policy after package upgrades.
+# allowed values: always | if-needed | never
+reboot_policy: if-needed
+reboot_timeout: 600

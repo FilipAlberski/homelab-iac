@@ -37,6 +37,12 @@ http:
       entryPoints:
         - web
 
+    podinfo:
+      rule: Host(`podinfo.lab`)
+      service: podinfo
+      entryPoints:
+        - web
+
   services:
     kuma:
       loadBalancer:
@@ -67,3 +73,8 @@ http:
       loadBalancer:
         servers:
           - url: "http://{{ hostvars['monitor-01']['ansible_host'] | default('192.168.40.145') }}:9093"
+
+    podinfo:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.40.203:32360"

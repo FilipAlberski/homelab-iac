@@ -1,74 +1,100 @@
 # homelab-iac
 
-Infrastructure-as-Code for the homelab Proxmox cluster.
-Terraform provisions VMs from a cloud-init template; Ansible handles post-provisioning.
+Repo zarzadzajace homelabem na Proxmoxie. Terraform tworzy VMki z cloud-init templateu, Ansible je konfiguruje. Wszystko przez `make`.
 
-## Layout
+## Co tu jest
+
+- **Terraform** - definicje VMek na Proxmoxie
+- **Ansible** - konfiguracja systemow i deploy aplikacji
+- **Makefile** - jeden entrypoint do wszystkiego
+
+## Struktura
 
 ```
 terraform/
-  modules/vm/               reusable VM module (bpg/proxmox, cloud-init, multi-disk)
-  environments/prod/        declarative VM list — single source of truth
+  modules/vm/                 modul VM (bpg/proxmox, cloud-init)
+  environments/prod/          produkcyjne VMki (DNS, proxy, apps, monitoring)
+  environments/lab/           labowe VMki (CKA, kubernetes, testy)
 ansible/
-  inventories/prod/         hosts.generated (auto-built from terraform output)
-  playbooks/                update.yml, ping.yml
-  group_vars/               defaults
-Makefile                    thin wrapper around terraform + ansible
+  inventories/prod/           inventory generowane z Terraforma
+  inventories/lab/
+  playbooks/                  playbooki do deployu uslug
+  roles/                      role ansible (docker, pihole, traefik, itp.)
+Makefile                      wrapper na terraform + ansible
 ```
 
-## Numbering scheme
+## Schemat numeracji VMID
 
-| VMID range | Purpose                  |
-| ---------- | ------------------------ |
-| 100–119    | AI / assistants          |
-| 120–139    | Media                    |
-| 140–159    | Network / infra services |
-| 160–179    | Storage / backup         |
-| 180–199    | Dev / sandbox            |
-| 200–219    | Kubernetes nodes         |
-| 220–239    | Gaming servers           |
-| 9000+      | Templates                |
+| Zakres    | Przeznaczenie              |
+|-----------|---------------------------|
+| 100-119   | AI / asystenci             |
+| 120-139   | Media                      |
+| 140-159   | Siec / infrastruktura      |
+| 160-179   | Storage / backup           |
+| 180-199   | Dev / sandbox              |
+| 200-219   | Kubernetes                 |
+| 220-239   | Gaming                     |
+| 9000+     | Templatey                  |
 
-**IP rule:** the last octet of the VM IP equals the VMID itself (range is kept ≤ 219 to fit `/24`).
-So VMID `101` → `192.168.40.101`, VMID `142` → `192.168.40.142`. No lookup needed.
+IP = `192.168.40.{VMID}`. VMID 101 -> IP 192.168.40.101.
 
 ## Storage
 
-| Datastore   | Used for                                   |
+| Datastore   | Po co                                      |
 | ----------- | ------------------------------------------ |
-| `local`     | ISOs + cloud-init snippets                 |
-| `local-lvm` | OS / boot disks                            |
-| `datav1`    | Large data volumes (models, media, etc.)   |
-| `storage-01`| Shared or cold storage                     |
-| `vm-backups`| PBS / vzdump target (not used live)        |
+| `local`     | ISO + cloud-init snippets                  |
+| `local-lvm` | Dyski systemowe / boot                     |
+| `datav1`    | Duze wolumeny (media, modele, itp.)        |
+| `storage-01`| Storage wspoldzielony / cold                |
+| `vm-backups`| Backup PBS / vzdump                        |
 
-## Quickstart
+## Szybki start
 
 ```bash
-# 1. Fill in secrets (file is gitignored)
+# 1. Wypelnij secrets (plik jest gitignored)
 cp terraform/environments/prod/terraform.tfvars.example \
    terraform/environments/prod/terraform.tfvars
-$EDITOR  terraform/environments/prod/terraform.tfvars
+$EDITOR terraform/environments/prod/terraform.tfvars
 
-# 2. Provision
+# 2. Stworz VMki
 make init
 make plan
 make apply
 
-# 3. Generate Ansible inventory from Terraform state and verify
+# 3. Wygeneruj inventory i sprawdz czy dziala
 make inventory
 make ping
 
-# 4. Run updates
-make update            # apply
-make update-check      # dry-run
+# 4. Aktualizacje
+make update              # normalna aktualizacja
+make update-check        # dry-run
 ```
 
-`make up` runs apply → inventory → ping in one shot.
+`make up` robi apply -> inventory -> ping w jednym.
 
-## Adding a new VM
+## Dwa srodowiska
 
-Edit `terraform/environments/prod/locals.tf`, add an entry to `local.vms`:
+Domyslnie wszystko dziala na `prod`. Zeby przelaczyc na lab:
+
+```bash
+make ENV=lab plan
+make ENV=lab apply
+make ENV=lab inventory
+make ENV=lab ping
+```
+
+- **prod** - infrastruktura: DNS, proxy, aplikacje, monitoring, gry. Nie ruszac.
+- **lab** - jednorazowe VMki, kubernetes, CKA, testy. Mozna niszczyc i odtwarzac.
+
+Oba srodowiska siedza na tym samym Proxmoxie, ale maja **odzielny stan Terraforma**.
+
+## Dodawanie nowej VMki
+
+Edytuj odpowiedni `locals.tf`:
+- Prod: `terraform/environments/prod/locals.tf`
+- Lab: `terraform/environments/lab/locals.tf`
+
+Dodaj entry do `local.vms`:
 
 ```hcl
 jellyfin-01 = {
@@ -83,15 +109,64 @@ jellyfin-01 = {
 }
 ```
 
-Then `make plan && make apply && make inventory`.
+Potem: `make plan && make apply && make inventory`.
 
-## Current inventory
+## Aktualne VMki
 
-| Name         | VMID | IP             | Purpose          | Tags                  |
-| ------------ | ---- | -------------- | ---------------- | --------------------- |
-| assistant-01 | 101  | 192.168.40.101 | AI / Assistants  | `ai`, `assistant`     |
-| dns-01       | 141  | 192.168.40.141 | DNS sinkhole     | `network`, `dns`      |
-| proxy-01     | 142  | 192.168.40.142 | Traefik / Proxy  | `network`, `proxy`    |
-| app-01       | 143  | 192.168.40.143 | Homelab apps     | `apps`                |
-| games-01     | 221  | 192.168.40.221 | Gaming / Valheim | `gaming`, `valheim`   |
+### Prod
 
+| Nazwa        | VMID | IP             | CPU | RAM   | Dysk      | Tagi                          |
+| ------------ | ---- | -------------- | --- | ----- | --------- | ----------------------------- |
+| assistant-01 | 101  | 192.168.40.101 | 4   | 16 GB | 50 GB     | ai, assistant                 |
+| dns-01       | 141  | 192.168.40.141 | 2   | 2 GB  | 30 GB     | network, dns                  |
+| proxy-01     | 142  | 192.168.40.142 | 2   | 2 GB  | 30 GB     | network, proxy, docker        |
+| app-01       | 143  | 192.168.40.143 | 2   | 12 GB | 30+200 GB | apps, docker                  |
+| monitor-01   | 145  | 192.168.40.145 | 4   | 8 GB  | 50+100 GB | infra, monitoring, docker     |
+| games-01     | 221  | 192.168.40.221 | 4   | 24 GB | 100 GB    | gaming, valheim, docker       |
+
+### Lab
+
+| Nazwa             | VMID | IP             | CPU | RAM  | Dysk   | Tagi                          |
+| ----------------- | ---- | -------------- | --- | ---- | ------ | ----------------------------- |
+| cka-lab-master-01 | 201  | 192.168.40.201 | 2   | 4 GB | 40 GB  | kubernetes, cka, k8s-master   |
+| cka-lab-master-02 | 202  | 192.168.40.202 | 2   | 4 GB | 40 GB  | kubernetes, cka, k8s-master   |
+| cka-lab-worker-01 | 203  | 192.168.40.203 | 2   | 6 GB | 100 GB | kubernetes, cka, k8s-worker   |
+
+## Makefile targets
+
+```
+make help              pokaz wszystkie targety
+make init              terraform init
+make plan              terraform plan
+make apply             terraform apply
+make destroy           terraform destroy (UWAGA - niszczy VMki)
+make inventory         generuj inventory z terraform output
+make ping              ansible ping wszystkich hostow
+make update            aktualizacja OS + reboot jesli potrzeba
+make update-check      dry-run aktualizacji
+make dns               deploy Pi-hole
+make proxy             deploy Traefik
+make apps              deploy aplikacji homelab
+make games             deploy Valheim
+make monitor           deploy monitoringu
+make paperless         deploy Paperless-ngx
+make lint              terraform fmt + validate + ansible-lint
+make up                apply -> inventory -> ping (jednym razem)
+make datastore         stworz datav1 storage na Proxmoxie
+```
+
+## Dodawanie domeny do Pi-hole i Traefika
+
+Jesli nowa usluga potrzebuje domeny `*.lab`:
+
+1. `ansible/roles/pihole/templates/custom.list.j2` - dodaj IP i domena
+2. `ansible/roles/traefik/templates/dynamic.yml.j2` - dodaj router i service
+3. `make dns && make proxy`
+
+## Secret management
+
+- `terraform.tfvars` - secrets Proxmoxa (gitignored)
+- `ansible/.vault_pass` - haslo do Ansible Vault (gitignored)
+- `vault.yml` - zaszyfrowane secrets aplikacyjne (Grafana, Alertmanager, itp.)
+
+Nie commitowac secretow. `.gitignore` to pilnuje, ale warto sprawdzac przed pushem.
