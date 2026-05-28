@@ -32,7 +32,6 @@ services:
       - ./grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
       - ./grafana-alerting.yml:/etc/grafana/provisioning/alerting/alerting.yml:ro
       - ./grafana-alert-rules.yml:/etc/grafana/provisioning/alerting/rules.yml:ro
-      - ./valheim-homelab.json:/var/lib/grafana/dashboards/valheim-homelab.json:ro
       - ./homelab-overview.json:/var/lib/grafana/dashboards/homelab-overview.json:ro
       - ./traefik-overview.json:/var/lib/grafana/dashboards/traefik-overview.json:ro
     ports:
@@ -60,7 +59,7 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - ./loki-config.yml:/etc/loki/local-config.yaml:ro
-      - ./loki-rules.yml:/loki/rules/fake/valheim.yml:ro
+      - ./loki-rules.yml:/loki/rules/fake/loki-rules.yml:ro
       - ./loki-data:/loki
     ports:
       - "3100:3100"

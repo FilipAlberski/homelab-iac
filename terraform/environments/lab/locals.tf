@@ -28,50 +28,5 @@ locals {
   network_prefix = "192.168.40"
   network_cidr   = "/24"
 
-  # Lab environment — Kubernetes CKA training cluster.
-  # These VMs are isolated from prod infrastructure and may be destroyed/rebuilt freely.
-  vms = {
-    cka-lab-master-01 = {
-      vm_id              = 201
-      cpu_cores          = 2
-      memory_mb          = 4096
-      memory_floating_mb = 2048
-      disks = [
-        {
-          datastore_id = "local-lvm"
-          size         = 40
-          interface    = "scsi0"
-        },
-      ]
-      tags = ["terraform", "kubernetes", "cka", "k8s-master"]
-    }
-    cka-lab-master-02 = {
-      vm_id              = 202
-      cpu_cores          = 2
-      memory_mb          = 4096
-      memory_floating_mb = 2048
-      disks = [
-        {
-          datastore_id = "local-lvm"
-          size         = 40
-          interface    = "scsi0"
-        },
-      ]
-      tags = ["terraform", "kubernetes", "cka", "k8s-master"]
-    }
-    cka-lab-worker-01 = {
-      vm_id              = 203
-      cpu_cores          = 2
-      memory_mb          = 6144
-      memory_floating_mb = 2048
-      disks = [
-        {
-          datastore_id = "local-lvm"
-          size         = 100
-          interface    = "scsi0"
-        },
-      ]
-      tags = ["terraform", "kubernetes", "cka", "k8s-worker"]
-    }
-  }
+  vms = {}
 }

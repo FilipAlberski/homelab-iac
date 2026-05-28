@@ -117,25 +117,6 @@
       "datasource": { "type": "prometheus", "uid": "${datasource}" },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [
-            { "options": { "0": { "color": "red", "index": 1, "text": "DOWN" } }, "type": "value" },
-            { "options": { "from": 1, "result": { "color": "green", "index": 0, "text": "UP" }, "to": 1000000 }, "type": "range" }
-          ],
-          "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "green", "value": 1 } ] }
-        }
-      },
-      "gridPos": { "h": 3, "w": 4, "x": 20, "y": 0 },
-      "id": 6,
-      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [ { "expr": "up{job=\"node\",instance=\"192.168.40.221:9100\"}", "refId": "A" } ],
-      "title": "games-01",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
           "color": { "mode": "palette-classic" },
           "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "barWidthFactor": 0.6, "drawStyle": "line", "fillOpacity": 10, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "insertNulls": false, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } },
           "unit": "percent"
@@ -264,25 +245,6 @@
       "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
       "targets": [ { "expr": "up{job=\"cadvisor\",instance=\"192.168.40.143:9280\"}", "refId": "A" } ],
       "title": "app-01 Docker",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "${datasource}" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [
-            { "options": { "0": { "color": "red", "index": 1, "text": "DOWN" } }, "type": "value" },
-            { "options": { "from": 1, "result": { "color": "green", "index": 0, "text": "UP" }, "to": 1000000 }, "type": "range" }
-          ],
-          "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "green", "value": 1 } ] }
-        }
-      },
-      "gridPos": { "h": 3, "w": 4, "x": 8, "y": 27 },
-      "id": 15,
-      "options": { "colorMode": "background", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [ { "expr": "up{job=\"cadvisor\",instance=\"192.168.40.221:9280\"}", "refId": "A" } ],
-      "title": "games-01 Docker",
       "type": "stat"
     }
   ],

@@ -1,67 +1,66 @@
 # homelab-iac
 
-Repo zarzadzajace homelabem na Proxmoxie. Terraform tworzy VMki z cloud-init templateu, Ansible je konfiguruje. Wszystko przez `make`.
+Repozytorium do zarządzania homelabem na Proxmoxie. Terraform tworzy VMki z cloud-init template'u, Ansible je konfiguruje. Wszystko przez `make`.
 
 ## Co tu jest
 
-- **Terraform** - definicje VMek na Proxmoxie
-- **Ansible** - konfiguracja systemow i deploy aplikacji
-- **Makefile** - jeden entrypoint do wszystkiego
+- **Terraform** — definicje VMek na Proxmoxie (`bpg/proxmox`, cloud-init)
+- **Ansible** — konfiguracja systemów i deploy aplikacji (17 ról)
+- **Makefile** — jeden entrypoint do wszystkiego
 
 ## Struktura
 
 ```
 terraform/
-  modules/vm/                 modul VM (bpg/proxmox, cloud-init)
-  environments/prod/          produkcyjne VMki (DNS, proxy, apps, monitoring)
+  modules/vm/                 moduł VM (bpg/proxmox, cloud-init)
+  environments/prod/          produkcyjne VMki (DNS, proxy, apps, monitoring, storage, CI/CD)
   environments/lab/           labowe VMki (CKA, kubernetes, testy)
 ansible/
   inventories/prod/           inventory generowane z Terraforma
   inventories/lab/
-  playbooks/                  playbooki do deployu uslug
-  roles/                      role ansible (docker, pihole, traefik, itp.)
+  playbooks/                  playbooki do deployu usług
+  roles/                      17 ról (docker, pihole, traefik, monitoring, itp.)
 Makefile                      wrapper na terraform + ansible
 ```
 
 ## Schemat numeracji VMID
 
 | Zakres    | Przeznaczenie              |
-|-----------|---------------------------|
+|-----------|----------------------------|
 | 100-119   | AI / asystenci             |
 | 120-139   | Media                      |
-| 140-159   | Siec / infrastruktura      |
+| 140-159   | Sieć / infrastruktura      |
 | 160-179   | Storage / backup           |
 | 180-199   | Dev / sandbox              |
 | 200-219   | Kubernetes                 |
-| 220-239   | Gaming                     |
 | 9000+     | Templatey                  |
 
-IP = `192.168.40.{VMID}`. VMID 101 -> IP 192.168.40.101.
+IP = `192.168.40.{VMID}` (VMID ≤ 219).
 
 ## Storage
 
 | Datastore   | Po co                                      |
-| ----------- | ------------------------------------------ |
+|-------------|--------------------------------------------|
 | `local`     | ISO + cloud-init snippets                  |
 | `local-lvm` | Dyski systemowe / boot                     |
-| `datav1`    | Duze wolumeny (media, modele, itp.)        |
-| `storage-01`| Storage wspoldzielony / cold                |
+| `datav1`    | Duże wolumeny (media, modele, dane usług)  |
+| `storage-01`| (nieskonfigurowany — nieużywany)           |
 | `vm-backups`| Backup PBS / vzdump                        |
 
 ## Szybki start
 
 ```bash
-# 1. Wypelnij secrets (plik jest gitignored)
+# 1. Wypełnij secrets (plik jest gitignored)
 cp terraform/environments/prod/terraform.tfvars.example \
    terraform/environments/prod/terraform.tfvars
 $EDITOR terraform/environments/prod/terraform.tfvars
 
-# 2. Stworz VMki
+# 2. Stwórz VMki
 make init
 make plan
 make apply
 
-# 3. Wygeneruj inventory i sprawdz czy dziala
+# 3. Wygeneruj inventory i sprawdź czy działa
 make inventory
 make ping
 
@@ -70,11 +69,11 @@ make update              # normalna aktualizacja
 make update-check        # dry-run
 ```
 
-`make up` robi apply -> inventory -> ping w jednym.
+`make up` robi apply → inventory → ping w jednym.
 
-## Dwa srodowiska
+## Dwa środowiska
 
-Domyslnie wszystko dziala na `prod`. Zeby przelaczyc na lab:
+Domyślnie wszystko działa na `prod`. Żeby przełączyć na lab:
 
 ```bash
 make ENV=lab plan
@@ -83,10 +82,10 @@ make ENV=lab inventory
 make ENV=lab ping
 ```
 
-- **prod** - infrastruktura: DNS, proxy, aplikacje, monitoring, gry. Nie ruszac.
-- **lab** - jednorazowe VMki, kubernetes, CKA, testy. Mozna niszczyc i odtwarzac.
+- **prod** — infrastruktura: DNS, proxy, aplikacje, monitoring, storage, CI/CD. Nie ruszać.
+- **lab** — jednorazowe VMki, kubernetes, CKA, testy. Można niszczyć i odtwarzać.
 
-Oba srodowiska siedza na tym samym Proxmoxie, ale maja **odzielny stan Terraforma**.
+Oba środowiska siedzą na tym samym Proxmoxie, ale mają **oddzielny stan Terraforma**.
 
 ## Dodawanie nowej VMki
 
@@ -98,9 +97,10 @@ Dodaj entry do `local.vms`:
 
 ```hcl
 jellyfin-01 = {
-  vm_id     = 121
-  cpu_cores = 4
-  memory_mb = 8192
+  vm_id              = 121
+  cpu_cores          = 4
+  memory_mb          = 8192
+  memory_floating_mb = 2048
   disks = [
     { datastore_id = "local-lvm", size = 30, interface = "scsi0" },
     { datastore_id = "datav1",    size = 500, interface = "scsi1" },
@@ -115,144 +115,91 @@ Potem: `make plan && make apply && make inventory`.
 
 ### Prod
 
-| Nazwa        | VMID | IP             | CPU | RAM   | Dysk      | Tagi                          |
-| ------------ | ---- | -------------- | --- | ----- | --------- | ----------------------------- |
-| assistant-01 | 101  | 192.168.40.101 | 4   | 16 GB | 50 GB     | ai, assistant                 |
-| dns-01       | 141  | 192.168.40.141 | 2   | 2 GB  | 30 GB     | network, dns                  |
-| proxy-01     | 142  | 192.168.40.142 | 2   | 2 GB  | 30 GB     | network, proxy, docker        |
-| app-01       | 143  | 192.168.40.143 | 2   | 12 GB | 30+200 GB | apps, docker, seafile         |
-| monitor-01   | 145  | 192.168.40.145 | 4   | 8 GB  | 50+100 GB | infra, monitoring, docker     |
-| gitlab-01    | 181  | 192.168.40.181 | 4   | 12 GB | 50+100 GB | dev, gitlab, docker           |
-| storage-01   | 160  | 192.168.40.160 | 2   | 4 GB  | 30+200 GB | storage, docker               |
-| db-01        | 184  | 192.168.40.184 | 2   | 4 GB  | 30+50 GB  | database, docker              |
-| games-01     | 221  | 192.168.40.221 | 4   | 24 GB | 100 GB    | gaming, valheim, docker       |
+| Nazwa        | VMID | IP             | CPU | RAM   | Dysk OS   | Dysk danych | Tagi                                |
+|--------------|------|----------------|-----|-------|-----------|-------------|-------------------------------------|
+| assistant-01 | 101  | .40.101        | 4   | 16 GB | 50 GB     | —           | ai, assistant                       |
+| dns-01       | 141  | .40.141        | 2   | 2 GB  | 30 GB     | —           | network, dns                        |
+| proxy-01     | 142  | .40.142        | 2   | 2 GB  | 30 GB     | —           | network, proxy, docker              |
+| app-01       | 143  | .40.143        | 2   | 12 GB | 30 GB     | datav1 200G | apps, docker, seafile               |
+| monitor-01   | 145  | .40.145        | 4   | 8 GB  | 50 GB     | datav1 100G | infra, monitoring, docker           |
+| storage-01   | 160  | .40.160        | 2   | 4 GB  | 30 GB     | datav1 200G | storage, docker                     |
+| gitlab-01    | 181  | .40.181        | 4   | 12 GB | 50 GB     | datav1 100G | dev, gitlab, docker                 |
+| db-01        | 184  | .40.184        | 2   | 4 GB  | 30 GB     | datav1 50G  | database, docker                    |
 
 ### Lab
 
-| Nazwa             | VMID | IP             | CPU | RAM  | Dysk   | Tagi                          |
-| ----------------- | ---- | -------------- | --- | ---- | ------ | ----------------------------- |
-| cka-lab-master-01 | 201  | 192.168.40.201 | 2   | 4 GB | 40 GB  | kubernetes, cka, k8s-master   |
-| cka-lab-master-02 | 202  | 192.168.40.202 | 2   | 4 GB | 40 GB  | kubernetes, cka, k8s-master   |
-| cka-lab-worker-01 | 203  | 192.168.40.203 | 2   | 6 GB | 100 GB | kubernetes, cka, k8s-worker   |
+_(brak zdefiniowanych VMek)_
 
 ## Makefile targets
 
 ```
-make help              pokaz wszystkie targety
+make help              pokaż wszystkie targety
 make init              terraform init
 make plan              terraform plan
 make apply             terraform apply
-make destroy           terraform destroy (UWAGA - niszczy VMki)
+make destroy           terraform destroy (UWAGA — niszczy VMki)
+make fmt               terraform fmt -recursive
+make validate          terraform validate
+make output            terraform output
 make inventory         generuj inventory z terraform output
-make ping              ansible ping wszystkich hostow
-make update            aktualizacja OS + reboot jesli potrzeba
+make ping              ansible ping wszystkich hostów
+make update            aktualizacja OS + reboot jeśli potrzeba
 make update-check      dry-run aktualizacji
-make dns               deploy Pi-hole
-make proxy             deploy Traefik
-make apps              deploy aplikacji homelab
-make games             deploy Valheim
-make monitor           deploy monitoringu
+make resize            LVM growpart na wszystkich VMkach
+make dns               deploy Pi-hole na dns group
+make proxy             deploy Traefik na proxy group
+make apps              deploy aplikacji homelab (Uptime Kuma, Portainer, Homepage)
+make monitor           deploy monitoringu (Prometheus, Grafana, Alertmanager, Loki)
+make monitor-agents    deploy node_exporter, cadvisor
 make paperless         deploy Paperless-ngx
 make gitlab            deploy GitLab CE + Runner
 make minio             deploy MinIO S3
 make seafile           deploy Seafile
-make lint              terraform fmt + validate + ansible-lint
-make up                apply -> inventory -> ping (jednym razem)
-make datastore         stworz datav1 storage na Proxmoxie
+make update-apps       pull + recreate Uptime Kuma i Portainer
+make lint              terraform fmt -check + validate + ansible-lint
+make up                apply → inventory → ping (jednym razem)
+make datastore         stwórz datav1 storage na Proxmoxie
 ```
 
 ## Dodawanie domeny do Pi-hole i Traefika
 
-Jesli nowa usluga potrzebuje domeny `*.lab`:
+Jeśli nowa usługa potrzebuje domeny `*.lab`:
 
-1. `ansible/roles/pihole/templates/custom.list.j2` - dodaj IP i domena
-2. `ansible/roles/traefik/templates/dynamic.yml.j2` - dodaj router i service
-3. `make dns && make proxy`
+1. `ansible/roles/pihole/templates/docker-compose.yml.j2` — dodaj do `FTLCONF_dns_hosts`
+2. `ansible/roles/pihole/templates/custom.list.j2` — dodaj dla kompletności
+3. `ansible/roles/traefik/templates/dynamic.yml.j2` — dodaj router i service
+4. `make dns && make proxy`
 
-## Self-hosted CI/CD (GitLab + Front/Back/DB)
+## Self-hosted CI/CD (GitLab + DB)
 
-Nowa grupa VMek pod wlasne projekty webowe z CI/CD opartym na GitLab CE.
-
-| Serwer  | IP             | Rola                            |
-|---------|----------------|---------------------------------|
-| gitlab-01 | 192.168.40.181 | GitLab CE + Runner + Registry   |
-| db-01     | 192.168.40.184 | PostgreSQL 16 + Redis 7         |
+| Serwer    | IP             | Rola                          |
+|-----------|----------------|-------------------------------|
+| gitlab-01 | 192.168.40.181 | GitLab CE + Runner + Registry |
+| db-01     | 192.168.40.184 | PostgreSQL 16 + Redis 7       |
 
 ### Flow deployu
 
-1. Pushujesz kod na **GitHub** (prywatne repo)
-2. GitLab (self-hosted) ma **Pull Mirror** — synchronizuje zmiany z GitHuba
-3. GitLab Runner buduje obrazy Docker i pushuje je do **lokalnego registry** (`gitlab.lab:5050`)
-4. Pipeline przez SSH deployuje na `front-01` / `back-01`
-
-### Adresy
-
-| Usluga     | URL                         |
-|------------|----------------------------|
-| GitLab     | `http://gitlab.lab`        |
-| Registry   | `http://gitlab.lab:5050`  |
+1. Push na GitHub (prywatne repo)
+2. GitLab Pull Mirror synchronizuje zmiany z GitHuba
+3. GitLab Runner buduje obrazy Docker, pushuje do lokalnego registry (`gitlab.lab:5050`)
+4. Pipeline przez SSH deployuje na docelową VMkę
 
 ### Pierwsze kroki po deployu GitLaba
 
 ```bash
 make gitlab   # deploy GitLab CE
-# Poczekaj ~2-3 min az sie postawi
-# Zaloguj sie jako root / changeme123! (zmien w defaults albo w vault)
-# W GitLab: Admin -> Runners -> utworz token
+# Poczekaj ~2-3 min aż się postawi
+# Zaloguj się (admin/changeme123! — zmień w vault lub defaults)
+# GitLab: Admin → Runners → utwórz token
 # Ustaw token w ansible/roles/gitlab-server/defaults/main.yml (gitlab_runner_token)
 # Ponownie: make gitlab
 ```
 
-### Przyklad .gitlab-ci.yml (dla Twojego repo na GitHubie)
-
-```yaml
-stages:
-  - build
-  - deploy
-
-variables:
-  REGISTRY: "gitlab.lab:5050"
-  APPS_HOST: "192.168.40.182"
-
-build-front:
-  stage: build
-  script:
-    - docker build -t $REGISTRY/front:latest ./front
-    - docker push $REGISTRY/front:latest
-  tags:
-    - docker
-
-build-back:
-  stage: build
-  script:
-    - docker build -t $REGISTRY/back:latest ./back
-    - docker push $REGISTRY/back:latest
-  tags:
-    - docker
-
-deploy:
-  stage: deploy
-  script:
-    - ssh homelab@$APPS_HOST "cd /opt/apps && docker compose pull && docker compose up -d"
-  tags:
-    - docker
-```
-
-### Konfiguracja mirroru z GitHuba
-
-W projekcie GitLaba:
-1. **Settings -> Repository -> Mirroring repositories**
-2. Dodaj URL: `https://github.com/TWOJ_USER/TWOJE_REPO.git`
-3. Authentication: **Personal Access Token** (GitHub -> Settings -> Developer settings -> PAT)
-4. Mirror direction: **Pull**
-5. Zaznacz `Trigger pipelines for mirror updates`
-
 ## Secret management
 
-- `terraform.tfvars` - secrets Proxmoxa (gitignored)
-- `ansible/.vault_pass` - haslo do Ansible Vault (gitignored)
-- `vault.yml` - zaszyfrowane secrets aplikacyjne (Grafana, Alertmanager, itp.)
-- `ansible/roles/gitlab-server/defaults/main.yml` - haslo root GitLaba (domyslnie `changeme123!`)
-- `ansible/roles/database/defaults/main.yml` - haslo PostgreSQL (domyslnie `changeme`)
+- `terraform.tfvars` — secrets Proxmoxa (gitignored)
+- `ansible/.vault_pass` — hasło do Ansible Vault (gitignored)
+- `vault.yml` — zaszyfrowane secrets aplikacyjne (Ansible Vault AES256)
+- `roles/*/defaults/main.yml` — domyślne hasła (fallback, nadpisywane przez vault)
 
-Nie commitowac secretow. `.gitignore` to pilnuje, ale warto sprawdzac przed pushem.
+Nie commitować secretów. `.gitignore` to pilnuje, ale warto sprawdzać przed pushem.

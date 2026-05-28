@@ -111,20 +111,6 @@ locals {
       ]
       tags = ["terraform", "storage", "docker"]
     }
-    games-01 = {
-      vm_id              = 221
-      cpu_cores          = 4
-      memory_mb          = 24576
-      memory_floating_mb = 8192
-      disks = [
-        {
-          datastore_id = "local-lvm"
-          size         = 100
-          interface    = "scsi0"
-        },
-      ]
-      tags = ["terraform", "gaming", "valheim", "docker"]
-    }
     monitor-01 = {
       vm_id              = 145
       cpu_cores          = 4

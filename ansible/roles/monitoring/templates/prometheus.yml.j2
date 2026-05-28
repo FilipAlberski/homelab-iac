@@ -23,7 +23,6 @@ scrape_configs:
         - 192.168.40.142:9100
         - 192.168.40.143:9100
         - 192.168.40.145:9100
-        - 192.168.40.221:9100
         labels:
           env: homelab
 
@@ -32,7 +31,6 @@ scrape_configs:
       - targets:
         - 192.168.40.142:9280
         - 192.168.40.143:9280
-        - 192.168.40.221:9280
         labels:
           env: homelab
 
@@ -43,14 +41,4 @@ scrape_configs:
         labels:
           env: homelab
 
-  - job_name: 'promtail'
-    static_configs:
-      - targets:
-        - 192.168.40.221:9080
 
-  - job_name: 'valheim'
-    static_configs:
-      - targets:
-        - 192.168.40.221:3000
-        labels:
-          env: homelab

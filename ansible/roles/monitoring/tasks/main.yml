@@ -76,7 +76,7 @@
     mode: '0644'
   notify: Restart monitoring
 
-- name: Deploy Grafana alert rules (empty — Valheim alerts removed)
+- name: Deploy Grafana alert rules
   ansible.builtin.template:
     src: grafana-alert-rules.yml.j2
     dest: "{{ monitoring_data_dir }}/grafana-alert-rules.yml"
@@ -111,7 +111,6 @@
     group: homelab
     mode: '0644'
   loop:
-    - dashboards/valheim-homelab.json
     - dashboards/homelab-overview.json
     - dashboards/traefik-overview.json
   notify: Restart monitoring

@@ -8,23 +8,4 @@ positions:
 clients:
   - url: http://192.168.40.145:3100/loki/api/v1/push
 
-scrape_configs:
-  - job_name: valheim-logs
-    static_configs:
-      - targets:
-          - localhost
-        labels:
-          job: valheim
-          host: games-01
-          __path__: /var/lib/docker/containers/*/*-json.log
-    pipeline_stages:
-      - docker: {}
-      - replace:
-          expression: '\\x1b\[[0-9;]*m'
-          replace: ''
-      - replace:
-          expression: '\[[0-9;]*m'
-          replace: ''
-      - replace:
-          expression: '\[[0-9;]*\['
-          replace: ''
+scrape_configs: []

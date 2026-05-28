@@ -77,9 +77,6 @@ proxy:     ## Deploy Traefik on proxy hosts
 apps:      ## Deploy apps on app-01
 	$(ANSIBLE) playbooks/apps.yml
 
-games:     ## Deploy Valheim server on games-01
-	$(ANSIBLE) playbooks/games.yml
-
 monitor:   ## Deploy monitoring stack on monitor-01
 	$(ANSIBLE) playbooks/monitor.yml
 

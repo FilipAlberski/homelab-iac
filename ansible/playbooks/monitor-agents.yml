@@ -14,11 +14,3 @@
 
   roles:
     - cadvisor
-
-- name: Deploy promtail on Valheim host
-  hosts: gaming
-  become: true
-  gather_facts: true
-
-  roles:
-    - promtail

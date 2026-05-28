@@ -1,17 +1,5 @@
 {% raw %}
 groups:
-  - name: valheim
-    interval: 30s
-    rules:
-      - alert: ValheimContainerDown
-        expr: time() - container_last_seen{instance="192.168.40.221:9280",image=~".*valheim-server.*"} > 120
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Valheim server container is down"
-          description: "Valheim container on games-01 has not been seen for more than 2 minutes."
-
   - name: infrastructure
     interval: 30s
     rules:

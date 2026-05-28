@@ -13,5 +13,5 @@ monitoring_prometheus_retention: 30d
 
 # Telegram placeholder (fill in later)
 monitoring_alertmanager_telegram_enabled: true
-monitoring_alertmanager_telegram_bot_token: ""
-monitoring_alertmanager_telegram_chat_id: ""
+monitoring_alertmanager_telegram_bot_token: "{{ vault_monitoring_alertmanager_telegram_bot_token | default('') }}"
+monitoring_alertmanager_telegram_chat_id: "{{ vault_monitoring_alertmanager_telegram_chat_id | default('') }}"

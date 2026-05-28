@@ -1,8 +1,6 @@
 ---
-- name: Restart uptime-kuma
+- name: Restart homepage
   ansible.builtin.command: docker compose restart
   args:
-    chdir: /opt/uptime-kuma
+    chdir: "{{ homepage_dir }}"
   changed_when: true
-
-

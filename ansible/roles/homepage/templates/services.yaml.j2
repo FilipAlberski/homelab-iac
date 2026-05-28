@@ -1,0 +1,75 @@
+---
+- Network:
+    - Pi-hole:
+        href: http://pihole.lab/admin
+        icon: pi-hole
+        description: DNS Sinkhole & Ad Blocking
+        widget:
+          type: pihole
+          url: http://192.168.40.141
+          password: "{{ pihole_webpassword | default('changeme') }}"
+
+    - Traefik:
+        href: http://traefik.lab
+        icon: traefik
+        description: Reverse Proxy
+        widget:
+          type: traefik
+          url: http://192.168.40.142:8080
+
+- Monitoring:
+    - Uptime Kuma:
+        href: http://kuma.lab
+        icon: uptime-kuma
+        description: Uptime Monitoring
+        widget:
+          type: uptimekuma
+          url: http://192.168.40.143:3001
+
+    - Grafana:
+        href: http://grafana.lab
+        icon: grafana
+        description: Dashboards & Metrics
+
+    - Prometheus:
+        href: http://prometheus.lab
+        icon: prometheus
+        description: Metrics Collection
+
+    - Alertmanager:
+        href: http://alertmanager.lab
+        icon: alertmanager
+        description: Alert Management
+
+- Applications:
+    - Portainer:
+        href: http://portainer.lab
+        icon: portainer
+        description: Container Management
+
+    - Paperless-ngx:
+        href: http://paperless.lab
+        icon: paperless-ngx
+        description: Document Management
+
+    - Seafile:
+        href: http://seafile.lab
+        icon: seafile
+        description: File Sync & Share
+
+    - MinIO:
+        href: http://minio.lab
+        icon: minio
+        description: S3-Compatible Storage
+
+- Development:
+    - GitLab:
+        href: http://gitlab.lab
+        icon: gitlab
+        description: CI/CD & Repositories
+
+- Infrastructure:
+    - Proxmox:
+        href: https://192.168.40.10:8006
+        icon: proxmox
+        description: Hypervisor

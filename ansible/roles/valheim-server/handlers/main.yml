@@ -1,5 +1,0 @@
----
-- name: Restart valheim-server
-  ansible.builtin.systemd:
-    name: valheim
-    state: restarted
