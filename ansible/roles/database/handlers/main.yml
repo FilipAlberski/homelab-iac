@@ -1,0 +1,6 @@
+---
+- name: Restart database
+  ansible.builtin.shell: |
+    cd {{ database_dir }} && docker compose down && docker compose up -d
+  args:
+    chdir: "{{ database_dir }}"

@@ -1,0 +1,7 @@
+---
+seafile_dir: /srv/data/seafile
+seafile_hostname: seafile.lab
+seafile_admin_email: admin@lab
+seafile_admin_password: "changeme"
+seafile_db_password: "changeme"
+seafile_jwt_key: "a7f3c9e1b2d4f6a8c0e2d4f6a8b0c2e4"

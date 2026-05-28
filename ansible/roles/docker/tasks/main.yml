@@ -11,6 +11,13 @@
   args:
     creates: /etc/yum.repos.d/docker-ce.repo
 
+- name: Import Docker GPG key
+  ansible.builtin.command: rpm --import https://download.docker.com/linux/centos/gpg
+  register: docker_gpg_import
+  until: docker_gpg_import.rc == 0
+  retries: 5
+  delay: 10
+
 - name: Install Docker CE and compose plugin
   ansible.builtin.dnf:
     name:

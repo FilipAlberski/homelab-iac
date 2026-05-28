@@ -20,10 +20,16 @@ services:
         192.168.40.142 grafana.lab
         192.168.40.142 prometheus.lab
         192.168.40.142 alertmanager.lab
+        192.168.40.181 gitlab.lab
+        192.168.40.184 db-01.lab
+        192.168.40.160 storage-01.lab
+        192.168.40.142 seafile.lab
+        192.168.40.142 minio.lab
+        192.168.40.142 portainer.lab
         192.168.40.201 cka-lab-master-01.lab
         192.168.40.202 cka-lab-master-02.lab
         192.168.40.203 cka-lab-worker-01.lab
-        192.168.40.142 podinfo.lab
+        192.168.40.142 cka-lab-worker-01.lab
       FTLCONF_dns_listeningMode: ALL
     volumes:
       - './etc-pihole:/etc/pihole'

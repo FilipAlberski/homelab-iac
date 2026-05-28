@@ -1,53 +1,53 @@
 ---
-- name: Create Valheim directories
+- name: Ensure Valheim server directory exists
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ valheim_server_dir }}"
     state: directory
-    owner: 111
-    group: 1000
-    mode: '0775'
-  loop:
-    - /opt/valheim
-    - /opt/valheim/saves
-    - /opt/valheim/saves/worlds_local
-    - /opt/valheim/server
-    - /opt/valheim/backups
+    owner: homelab
+    group: homelab
+    mode: '0755'
 
-- name: Ensure Valheim firewall ports are open
+- name: Ensure Valheim save directory exists
+  ansible.builtin.file:
+    path: "{{ valheim_save_dir }}/worlds_local"
+    state: directory
+    owner: homelab
+    group: homelab
+    mode: '0755'
+    recurse: true
+
+- name: Deploy Valheim start script
+  ansible.builtin.template:
+    src: start_valheim.sh.j2
+    dest: "{{ valheim_server_dir }}/start_valheim.sh"
+    owner: homelab
+    group: homelab
+    mode: '0755'
+  notify: Restart valheim-server
+
+- name: Deploy Valheim systemd service
+  ansible.builtin.template:
+    src: valheim.service.j2
+    dest: /etc/systemd/system/valheim.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart valheim-server
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Ensure Valheim service is enabled and running
+  ansible.builtin.systemd:
+    name: valheim
+    enabled: true
+    state: started
+
+- name: Open Valheim UDP ports in firewalld
   ansible.posix.firewalld:
-    port: "{{ item }}"
+    port: "2456-2457/udp"
     permanent: true
     state: enabled
     immediate: true
     zone: public
-  loop:
-    - 2456-2458/udp
-
-- name: Deploy adminlist.txt
-  ansible.builtin.copy:
-    content: |
-      // List admin players ID  ONE per line
-      {% for id in valheim_adminlist_ids %}
-      {{ id }}
-      {% endfor %}
-    dest: /opt/valheim/saves/adminlist.txt
-    owner: 111
-    group: 1000
-    mode: '0644'
-
-- name: Deploy Valheim Docker Compose
-  ansible.builtin.template:
-    src: docker-compose.yml.j2
-    dest: /opt/valheim/docker-compose.yml
-    owner: 111
-    group: 1000
-    mode: '0644'
-  notify: Restart valheim
-
-- name: Ensure Valheim compose is running
-  ansible.builtin.command: docker compose up -d --remove-orphans
-  args:
-    chdir: /opt/valheim
-  become_user: homelab
-  register: result
-  changed_when: "'Running' not in result.stdout and 'Running' not in result.stderr"

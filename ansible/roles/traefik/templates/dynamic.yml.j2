@@ -37,9 +37,27 @@ http:
       entryPoints:
         - web
 
+    portainer:
+      rule: Host(`portainer.lab`)
+      service: portainer
+      entryPoints:
+        - web
+
     podinfo:
       rule: Host(`podinfo.lab`)
       service: podinfo
+      entryPoints:
+        - web
+
+    minio:
+      rule: Host(`minio.lab`)
+      service: minio
+      entryPoints:
+        - web
+
+    seafile:
+      rule: Host(`seafile.lab`)
+      service: seafile
       entryPoints:
         - web
 
@@ -78,3 +96,18 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.40.203:32360"
+
+    minio:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['storage-01']['ansible_host'] | default('192.168.40.160') }}:9001"
+
+    portainer:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:8000"
+
+    seafile:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:8002"

@@ -7,5 +7,4 @@
   roles:
     - lvm-resize
     - server-hardening
-    - docker
     - valheim-server

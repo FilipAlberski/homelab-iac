@@ -1,0 +1,61 @@
+---
+services:
+  db:
+    image: mariadb:10.11
+    container_name: seafile-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "{{ seafile_db_password }}"
+      MYSQL_LOG_CONSOLE: "true"
+      MARIADB_AUTO_UPGRADE: "1"
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis
+    container_name: seafile-redis
+    restart: unless-stopped
+
+  memcached:
+    image: memcached
+    container_name: seafile-memcached
+    restart: unless-stopped
+
+  seafile:
+    image: seafileltd/seafile-mc:latest
+    container_name: seafile
+    restart: unless-stopped
+    ports:
+      - "8002:80"
+    volumes:
+      - ./seafile-data:/shared
+    environment:
+      DB_HOST: db
+      DB_ROOT_PASSWD: "{{ seafile_db_password }}"
+      SEAFILE_MYSQL_DB_HOST: db
+      SEAFILE_MYSQL_DB_PORT: 3306
+      SEAFILE_MYSQL_DB_USER: seafile
+      SEAFILE_MYSQL_DB_PASSWORD: "{{ seafile_db_password }}"
+      INIT_SEAFILE_MYSQL_ROOT_PASSWORD: "{{ seafile_db_password }}"
+      SEAFILE_MYSQL_DB_CCNET_DB_NAME: ccnet_db
+      SEAFILE_MYSQL_DB_SEAFILE_DB_NAME: seafile_db
+      SEAFILE_MYSQL_DB_SEAHUB_DB_NAME: seahub_db
+      TIME_ZONE: Europe/Warsaw
+      INIT_SEAFILE_ADMIN_EMAIL: "{{ seafile_admin_email }}"
+      INIT_SEAFILE_ADMIN_PASSWORD: "{{ seafile_admin_password }}"
+      SEAFILE_SERVER_HOSTNAME: "{{ seafile_hostname }}"
+      SEAFILE_SERVER_PROTOCOL: http
+      JWT_PRIVATE_KEY: "{{ seafile_jwt_key }}"
+      SEAFILE_LOG_TO_STDOUT: "true"
+      ENABLE_SEADOC: "false"
+      ENABLE_GO_FILESERVER: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started

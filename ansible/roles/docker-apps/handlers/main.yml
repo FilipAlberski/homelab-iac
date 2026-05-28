@@ -1,0 +1,6 @@
+---
+- name: Restart docker-apps
+  ansible.builtin.shell: |
+    cd {{ docker_apps_dir }} && docker compose down && docker compose up -d
+  args:
+    chdir: "{{ docker_apps_dir }}"

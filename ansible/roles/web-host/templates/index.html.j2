@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ web_host_container_name | upper }}</title>
+    <style>
+        body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #0f0f23; color: #e0e0e0; }
+        .box { text-align: center; padding: 2rem; border: 1px solid #333; border-radius: 12px; background: #1a1a2e; }
+        h1 { color: #00d4aa; margin-bottom: 0.5rem; }
+        p { color: #888; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>{{ web_host_container_name | upper }}</h1>
+        <p>Serwer działa — wymień tę stronę na swoją aplikację przez CI/CD.</p>
+    </div>
+</body>
+</html>

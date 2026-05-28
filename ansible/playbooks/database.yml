@@ -1,0 +1,10 @@
+---
+- name: Deploy Database on db-01
+  hosts: database
+  become: true
+  gather_facts: true
+
+  roles:
+    - lvm-resize
+    - docker
+    - database

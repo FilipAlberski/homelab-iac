@@ -1,0 +1,10 @@
+---
+- name: Deploy MinIO S3 on storage-01
+  hosts: storage
+  become: true
+  gather_facts: true
+
+  roles:
+    - lvm-resize
+    - docker
+    - minio

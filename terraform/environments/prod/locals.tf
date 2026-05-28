@@ -32,9 +32,10 @@ locals {
   # Add a new entry here to declare a new VM.
   vms = {
     assistant-01 = {
-      vm_id     = 101
-      cpu_cores = 4
-      memory_mb = 16384
+      vm_id              = 101
+      cpu_cores          = 4
+      memory_mb          = 16384
+      memory_floating_mb = 4096
       disks = [
         {
           datastore_id = "local-lvm"
@@ -45,9 +46,10 @@ locals {
       tags = ["terraform", "ai", "assistant"]
     }
     dns-01 = {
-      vm_id     = 141
-      cpu_cores = 2
-      memory_mb = 2048
+      vm_id              = 141
+      cpu_cores          = 2
+      memory_mb          = 2048
+      memory_floating_mb = 1024
       disks = [
         {
           datastore_id = "local-lvm"
@@ -58,9 +60,10 @@ locals {
       tags = ["terraform", "network", "dns"]
     }
     proxy-01 = {
-      vm_id     = 142
-      cpu_cores = 2
-      memory_mb = 2048
+      vm_id              = 142
+      cpu_cores          = 2
+      memory_mb          = 2048
+      memory_floating_mb = 1024
       disks = [
         {
           datastore_id = "local-lvm"
@@ -71,9 +74,10 @@ locals {
       tags = ["terraform", "network", "proxy", "docker"]
     }
     app-01 = {
-      vm_id     = 143
-      cpu_cores = 2
-      memory_mb = 12288
+      vm_id              = 143
+      cpu_cores          = 2
+      memory_mb          = 12288
+      memory_floating_mb = 2048
       disks = [
         {
           datastore_id = "local-lvm"
@@ -86,12 +90,32 @@ locals {
           interface    = "scsi1"
         },
       ]
-      tags = ["terraform", "apps", "docker"]
+      tags = ["terraform", "apps", "docker", "seafile"]
+    }
+    storage-01 = {
+      vm_id              = 160
+      cpu_cores          = 2
+      memory_mb          = 4096
+      memory_floating_mb = 2048
+      disks = [
+        {
+          datastore_id = "local-lvm"
+          size         = 30
+          interface    = "scsi0"
+        },
+        {
+          datastore_id = "datav1"
+          size         = 200
+          interface    = "scsi1"
+        },
+      ]
+      tags = ["terraform", "storage", "docker"]
     }
     games-01 = {
-      vm_id     = 221
-      cpu_cores = 4
-      memory_mb = 24576
+      vm_id              = 221
+      cpu_cores          = 4
+      memory_mb          = 24576
+      memory_floating_mb = 8192
       disks = [
         {
           datastore_id = "local-lvm"
@@ -102,9 +126,10 @@ locals {
       tags = ["terraform", "gaming", "valheim", "docker"]
     }
     monitor-01 = {
-      vm_id     = 145
-      cpu_cores = 4
-      memory_mb = 8192
+      vm_id              = 145
+      cpu_cores          = 4
+      memory_mb          = 8192
+      memory_floating_mb = 4096
       disks = [
         {
           datastore_id = "local-lvm"
@@ -118,6 +143,44 @@ locals {
         },
       ]
       tags = ["terraform", "infra", "monitoring", "docker"]
+    }
+    gitlab-01 = {
+      vm_id              = 181
+      cpu_cores          = 4
+      memory_mb          = 12288
+      memory_floating_mb = 4096
+      disks = [
+        {
+          datastore_id = "local-lvm"
+          size         = 50
+          interface    = "scsi0"
+        },
+        {
+          datastore_id = "datav1"
+          size         = 100
+          interface    = "scsi1"
+        },
+      ]
+      tags = ["terraform", "dev", "gitlab", "docker"]
+    }
+    db-01 = {
+      vm_id              = 184
+      cpu_cores          = 2
+      memory_mb          = 4096
+      memory_floating_mb = 1024
+      disks = [
+        {
+          datastore_id = "local-lvm"
+          size         = 30
+          interface    = "scsi0"
+        },
+        {
+          datastore_id = "datav1"
+          size         = 50
+          interface    = "scsi1"
+        },
+      ]
+      tags = ["terraform", "database", "docker"]
     }
   }
 }

@@ -1,0 +1,10 @@
+---
+- name: Deploy GitLab CE on gitlab-01
+  hosts: gitlab
+  become: true
+  gather_facts: true
+
+  roles:
+    - lvm-resize
+    - docker
+    - gitlab-server

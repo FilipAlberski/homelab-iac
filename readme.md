@@ -120,8 +120,11 @@ Potem: `make plan && make apply && make inventory`.
 | assistant-01 | 101  | 192.168.40.101 | 4   | 16 GB | 50 GB     | ai, assistant                 |
 | dns-01       | 141  | 192.168.40.141 | 2   | 2 GB  | 30 GB     | network, dns                  |
 | proxy-01     | 142  | 192.168.40.142 | 2   | 2 GB  | 30 GB     | network, proxy, docker        |
-| app-01       | 143  | 192.168.40.143 | 2   | 12 GB | 30+200 GB | apps, docker                  |
+| app-01       | 143  | 192.168.40.143 | 2   | 12 GB | 30+200 GB | apps, docker, seafile         |
 | monitor-01   | 145  | 192.168.40.145 | 4   | 8 GB  | 50+100 GB | infra, monitoring, docker     |
+| gitlab-01    | 181  | 192.168.40.181 | 4   | 12 GB | 50+100 GB | dev, gitlab, docker           |
+| storage-01   | 160  | 192.168.40.160 | 2   | 4 GB  | 30+200 GB | storage, docker               |
+| db-01        | 184  | 192.168.40.184 | 2   | 4 GB  | 30+50 GB  | database, docker              |
 | games-01     | 221  | 192.168.40.221 | 4   | 24 GB | 100 GB    | gaming, valheim, docker       |
 
 ### Lab
@@ -150,6 +153,9 @@ make apps              deploy aplikacji homelab
 make games             deploy Valheim
 make monitor           deploy monitoringu
 make paperless         deploy Paperless-ngx
+make gitlab            deploy GitLab CE + Runner
+make minio             deploy MinIO S3
+make seafile           deploy Seafile
 make lint              terraform fmt + validate + ansible-lint
 make up                apply -> inventory -> ping (jednym razem)
 make datastore         stworz datav1 storage na Proxmoxie
@@ -163,10 +169,90 @@ Jesli nowa usluga potrzebuje domeny `*.lab`:
 2. `ansible/roles/traefik/templates/dynamic.yml.j2` - dodaj router i service
 3. `make dns && make proxy`
 
+## Self-hosted CI/CD (GitLab + Front/Back/DB)
+
+Nowa grupa VMek pod wlasne projekty webowe z CI/CD opartym na GitLab CE.
+
+| Serwer  | IP             | Rola                            |
+|---------|----------------|---------------------------------|
+| gitlab-01 | 192.168.40.181 | GitLab CE + Runner + Registry   |
+| db-01     | 192.168.40.184 | PostgreSQL 16 + Redis 7         |
+
+### Flow deployu
+
+1. Pushujesz kod na **GitHub** (prywatne repo)
+2. GitLab (self-hosted) ma **Pull Mirror** — synchronizuje zmiany z GitHuba
+3. GitLab Runner buduje obrazy Docker i pushuje je do **lokalnego registry** (`gitlab.lab:5050`)
+4. Pipeline przez SSH deployuje na `front-01` / `back-01`
+
+### Adresy
+
+| Usluga     | URL                         |
+|------------|----------------------------|
+| GitLab     | `http://gitlab.lab`        |
+| Registry   | `http://gitlab.lab:5050`  |
+
+### Pierwsze kroki po deployu GitLaba
+
+```bash
+make gitlab   # deploy GitLab CE
+# Poczekaj ~2-3 min az sie postawi
+# Zaloguj sie jako root / changeme123! (zmien w defaults albo w vault)
+# W GitLab: Admin -> Runners -> utworz token
+# Ustaw token w ansible/roles/gitlab-server/defaults/main.yml (gitlab_runner_token)
+# Ponownie: make gitlab
+```
+
+### Przyklad .gitlab-ci.yml (dla Twojego repo na GitHubie)
+
+```yaml
+stages:
+  - build
+  - deploy
+
+variables:
+  REGISTRY: "gitlab.lab:5050"
+  APPS_HOST: "192.168.40.182"
+
+build-front:
+  stage: build
+  script:
+    - docker build -t $REGISTRY/front:latest ./front
+    - docker push $REGISTRY/front:latest
+  tags:
+    - docker
+
+build-back:
+  stage: build
+  script:
+    - docker build -t $REGISTRY/back:latest ./back
+    - docker push $REGISTRY/back:latest
+  tags:
+    - docker
+
+deploy:
+  stage: deploy
+  script:
+    - ssh homelab@$APPS_HOST "cd /opt/apps && docker compose pull && docker compose up -d"
+  tags:
+    - docker
+```
+
+### Konfiguracja mirroru z GitHuba
+
+W projekcie GitLaba:
+1. **Settings -> Repository -> Mirroring repositories**
+2. Dodaj URL: `https://github.com/TWOJ_USER/TWOJE_REPO.git`
+3. Authentication: **Personal Access Token** (GitHub -> Settings -> Developer settings -> PAT)
+4. Mirror direction: **Pull**
+5. Zaznacz `Trigger pipelines for mirror updates`
+
 ## Secret management
 
 - `terraform.tfvars` - secrets Proxmoxa (gitignored)
 - `ansible/.vault_pass` - haslo do Ansible Vault (gitignored)
 - `vault.yml` - zaszyfrowane secrets aplikacyjne (Grafana, Alertmanager, itp.)
+- `ansible/roles/gitlab-server/defaults/main.yml` - haslo root GitLaba (domyslnie `changeme123!`)
+- `ansible/roles/database/defaults/main.yml` - haslo PostgreSQL (domyslnie `changeme`)
 
 Nie commitowac secretow. `.gitignore` to pilnuje, ale warto sprawdzac przed pushem.

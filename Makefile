@@ -52,7 +52,7 @@ output:    ## terraform output
 	$(TF) output
 
 ##@ Ansible
-.PHONY: inventory ping update update-check lint dns proxy apps paperless update-apps
+.PHONY: inventory ping update update-check lint dns proxy apps paperless gitlab minio seafile update-apps monitor monitor-agents resize
 inventory: ## Regenerate Ansible inventory from Terraform output
 	@mkdir -p $(dir $(INVENTORY))
 	$(TF) output -raw ansible_inventory > $(INVENTORY)
@@ -91,6 +91,15 @@ resize:    ## Resize root filesystem on all VMs (LVM growpart)
 
 paperless: ## Deploy Paperless-ngx on app-01
 	$(ANSIBLE) playbooks/paperless.yml
+
+gitlab:    ## Deploy GitLab CE + Runner on gitlab-01
+	$(ANSIBLE) playbooks/gitlab.yml
+
+minio:     ## Deploy MinIO S3 on storage-01
+	$(ANSIBLE) playbooks/minio.yml
+
+seafile:   ## Deploy Seafile on app-01
+	$(ANSIBLE) playbooks/seafile.yml
 
 update-apps: ## Pull latest images & recreate app containers
 	$(ANSIBLE) playbooks/update-apps.yml

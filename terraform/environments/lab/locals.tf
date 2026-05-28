@@ -32,9 +32,10 @@ locals {
   # These VMs are isolated from prod infrastructure and may be destroyed/rebuilt freely.
   vms = {
     cka-lab-master-01 = {
-      vm_id     = 201
-      cpu_cores = 2
-      memory_mb = 4096
+      vm_id              = 201
+      cpu_cores          = 2
+      memory_mb          = 4096
+      memory_floating_mb = 2048
       disks = [
         {
           datastore_id = "local-lvm"
@@ -45,9 +46,10 @@ locals {
       tags = ["terraform", "kubernetes", "cka", "k8s-master"]
     }
     cka-lab-master-02 = {
-      vm_id     = 202
-      cpu_cores = 2
-      memory_mb = 4096
+      vm_id              = 202
+      cpu_cores          = 2
+      memory_mb          = 4096
+      memory_floating_mb = 2048
       disks = [
         {
           datastore_id = "local-lvm"
@@ -58,9 +60,10 @@ locals {
       tags = ["terraform", "kubernetes", "cka", "k8s-master"]
     }
     cka-lab-worker-01 = {
-      vm_id     = 203
-      cpu_cores = 2
-      memory_mb = 6144
+      vm_id              = 203
+      cpu_cores          = 2
+      memory_mb          = 6144
+      memory_floating_mb = 2048
       disks = [
         {
           datastore_id = "local-lvm"

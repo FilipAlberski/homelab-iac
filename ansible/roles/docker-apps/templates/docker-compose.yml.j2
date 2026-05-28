@@ -1,0 +1,19 @@
+---
+services:
+  front:
+    container_name: front
+    image: nginx:alpine
+    ports:
+      - "3000:80"
+    volumes:
+      - ./front:/usr/share/nginx/html:ro
+    restart: unless-stopped
+
+  api:
+    container_name: api
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./api:/usr/share/nginx/html:ro
+    restart: unless-stopped

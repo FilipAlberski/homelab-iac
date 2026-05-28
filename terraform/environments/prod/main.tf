@@ -10,8 +10,9 @@ module "vms" {
   node_name   = var.proxmox_node
   template_id = var.template_id
 
-  cpu_cores = each.value.cpu_cores
-  memory_mb = each.value.memory_mb
+  cpu_cores          = each.value.cpu_cores
+  memory_mb          = each.value.memory_mb
+  memory_floating_mb = lookup(each.value, "memory_floating_mb", 0)
 
   disks = each.value.disks
 

@@ -1,0 +1,6 @@
+---
+- name: Restart gitlab
+  ansible.builtin.shell: |
+    cd {{ gitlab_dir }} && docker compose down && docker compose up -d
+  args:
+    chdir: "{{ gitlab_dir }}"

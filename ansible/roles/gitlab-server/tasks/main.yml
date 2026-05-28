@@ -1,0 +1,64 @@
+---
+- name: Create GitLab directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: homelab
+    group: homelab
+    mode: '0755'
+  loop:
+    - "{{ gitlab_dir }}"
+    - "{{ gitlab_dir }}/config"
+    - "{{ gitlab_dir }}/logs"
+    - "{{ gitlab_dir }}/data"
+    - "{{ gitlab_dir }}/runner-config"
+
+- name: Open firewall ports for GitLab
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop:
+    - 80/tcp
+    - 443/tcp
+    - 2222/tcp
+    - 5050/tcp
+  become: true
+
+- name: Deploy GitLab Docker Compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ gitlab_dir }}/docker-compose.yml"
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart gitlab
+
+- name: Ensure GitLab compose is running
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: "{{ gitlab_dir }}"
+  changed_when: true
+
+- name: Wait for GitLab API to be ready
+  ansible.builtin.uri:
+    url: "http://localhost/api/v4/version"
+    status_code: 200
+  register: gitlab_health
+  until: gitlab_health.status == 200
+  retries: 30
+  delay: 10
+  ignore_errors: true
+
+- name: Register GitLab Runner (if token provided)
+  ansible.builtin.command: >
+    docker exec gitlab-runner gitlab-runner register
+    --non-interactive
+    --url "{{ gitlab_external_url }}"
+    --token "{{ gitlab_runner_token }}"
+    --executor docker
+    --docker-image docker:stable
+    --docker-volumes /var/run/docker.sock:/var/run/docker.sock
+  when: gitlab_runner_token | length > 0
+  ignore_errors: true

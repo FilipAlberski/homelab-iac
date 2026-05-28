@@ -1,0 +1,10 @@
+---
+- name: Deploy Seafile on app-01
+  hosts: seafile
+  become: true
+  gather_facts: true
+
+  roles:
+    - lvm-resize
+    - docker
+    - seafile
