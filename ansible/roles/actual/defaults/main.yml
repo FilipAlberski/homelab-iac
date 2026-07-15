@@ -1,0 +1,6 @@
+---
+actual_port: 5006
+actual_dir: /opt/actual
+actual_data_dir: /opt/actual/data
+actual_image: actualbudget/actual-server:latest
+actual_password: "{{ vault_actual_password | default('changeme') }}"

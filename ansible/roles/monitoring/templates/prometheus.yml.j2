@@ -1,3 +1,4 @@
+---
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
@@ -5,40 +6,122 @@ global:
 alerting:
   alertmanagers:
     - static_configs:
-        - targets: ['alertmanager:9093']
+        - targets:
+            - alertmanager:9093
 
 rule_files:
-  - /etc/prometheus/alerts.yml
+  - /etc/prometheus/rules/*.yml
 
 scrape_configs:
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['localhost:9090']
-
-  - job_name: 'node'
+  - job_name: prometheus
     static_configs:
       - targets:
-        - 192.168.40.101:9100
-        - 192.168.40.141:9100
-        - 192.168.40.142:9100
-        - 192.168.40.143:9100
-        - 192.168.40.145:9100
-        labels:
-          env: homelab
+          - localhost:9090
 
-  - job_name: 'cadvisor'
+  - job_name: grafana
     static_configs:
       - targets:
-        - 192.168.40.142:9280
-        - 192.168.40.143:9280
-        labels:
-          env: homelab
+          - grafana:3000
 
-  - job_name: 'traefik'
+  - job_name: loki
     static_configs:
       - targets:
-        - 192.168.40.142:8080
-        labels:
-          env: homelab
+          - loki:3100
 
+  - job_name: alertmanager
+    static_configs:
+      - targets:
+          - alertmanager:9093
 
+  - job_name: blackbox
+    static_configs:
+      - targets:
+          - blackbox-exporter:9115
+
+  - job_name: blackbox_http
+    metrics_path: /probe
+    params:
+      module:
+        - http_2xx
+    static_configs:
+      - targets:
+          - http://{{ hostvars['dns-01']['ansible_host'] | default('192.168.40.141') }}/admin/
+          - http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:3001
+          - http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:3000/login
+          - http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:9090/-/ready
+          - http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:9093/-/ready
+          - http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:3100/ready
+    relabel_configs:
+      - source_labels:
+          - __address__
+        target_label: __param_target
+      - source_labels:
+          - __param_target
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_tcp
+    metrics_path: /probe
+    params:
+      module:
+        - tcp_connect
+    static_configs:
+      - targets:
+          - {{ hostvars['proxy-01']['ansible_host'] | default('192.168.40.142') }}:80
+          - {{ hostvars['proxy-01']['ansible_host'] | default('192.168.40.142') }}:443
+          - {{ hostvars['dns-01']['ansible_host'] | default('192.168.40.141') }}:53
+          - {{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:9090
+          - {{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:9093
+          - {{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:3100
+          - {{ hostvars['games-01']['ansible_host'] | default('192.168.40.130') }}:26900
+    relabel_configs:
+      - source_labels:
+          - __address__
+        target_label: __param_target
+      - source_labels:
+          - __param_target
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_icmp
+    metrics_path: /probe
+    params:
+      module:
+        - icmp
+    static_configs:
+      - targets:
+          - 192.168.40.10
+          - {{ hostvars['games-01']['ansible_host'] | default('192.168.40.130') }}
+          - {{ hostvars['dns-01']['ansible_host'] | default('192.168.40.141') }}
+          - {{ hostvars['proxy-01']['ansible_host'] | default('192.168.40.142') }}
+          - {{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}
+          - {{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}
+    relabel_configs:
+      - source_labels:
+          - __address__
+        target_label: __param_target
+      - source_labels:
+          - __param_target
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: blackbox_dns
+    metrics_path: /probe
+    params:
+      module:
+        - dns_udp
+    static_configs:
+      - targets:
+          - {{ hostvars['dns-01']['ansible_host'] | default('192.168.40.141') }}
+    relabel_configs:
+      - source_labels:
+          - __address__
+        target_label: __param_target
+      - source_labels:
+          - __param_target
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

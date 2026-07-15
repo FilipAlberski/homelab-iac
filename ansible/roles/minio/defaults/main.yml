@@ -1,6 +1,0 @@
----
-minio_dir: /srv/data/minio
-minio_root_user: "{{ vault_minio_root_user | default('minioadmin') }}"
-minio_root_password: "{{ vault_minio_root_password | default('minioadmin') }}"
-minio_api_port: 9000
-minio_console_port: 9001

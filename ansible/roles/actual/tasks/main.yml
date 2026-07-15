@@ -1,0 +1,33 @@
+---
+- name: Create Actual Budget directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: homelab
+    group: homelab
+    mode: '0755'
+  loop:
+    - "{{ actual_dir }}"
+    - "{{ actual_data_dir }}"
+
+- name: Deploy Actual Budget Docker Compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ actual_dir }}/docker-compose.yml"
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart actual
+
+- name: Open firewall port for Actual Budget
+  ansible.posix.firewalld:
+    port: "{{ actual_port }}/tcp"
+    permanent: true
+    state: enabled
+    immediate: true
+
+- name: Ensure Actual Budget compose is running
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: "{{ actual_dir }}"
+  changed_when: true

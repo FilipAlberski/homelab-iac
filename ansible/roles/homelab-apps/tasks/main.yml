@@ -36,10 +36,17 @@
     chdir: /opt/uptime-kuma
   changed_when: true
 
+- name: Deploy Portainer Docker Compose
+  ansible.builtin.template:
+    src: portainer.yml.j2
+    dest: /opt/portainer/docker-compose.yml
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  notify: Restart portainer
+
 - name: Ensure Portainer compose is running
   ansible.builtin.command: docker compose up -d
   args:
     chdir: /opt/portainer
   changed_when: true
-
-

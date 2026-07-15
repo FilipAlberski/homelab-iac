@@ -1,6 +1,0 @@
----
-- name: Restart web
-  ansible.builtin.shell: |
-    cd {{ web_host_dir }} && docker compose down && docker compose up -d
-  args:
-    chdir: "{{ web_host_dir }}"

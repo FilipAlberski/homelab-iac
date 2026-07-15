@@ -1,0 +1,17 @@
+---
+- name: Bootstrap all hosts
+  hosts: all
+  become: true
+  gather_facts: true
+
+  roles:
+    - common
+    - lvm-resize
+
+- name: Bootstrap Docker hosts
+  hosts: docker
+  become: true
+  gather_facts: true
+
+  roles:
+    - docker

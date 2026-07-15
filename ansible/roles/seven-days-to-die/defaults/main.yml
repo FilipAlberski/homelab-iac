@@ -1,0 +1,43 @@
+---
+seven_days_to_die_data_disk: /dev/sda
+seven_days_to_die_dir: /srv/data/games/7dtd
+seven_days_to_die_image: vinanrra/7dtd-server:latest
+seven_days_to_die_lgsm_version: v25.2.0
+seven_days_to_die_version: public
+seven_days_to_die_timezone: Europe/Warsaw
+seven_days_to_die_server_password: "{{ vault_seven_days_to_die_server_password | default('changeme') }}"
+seven_days_to_die_puid: 1000
+seven_days_to_die_pgid: 1000
+seven_days_to_die_start_mode: 1
+seven_days_to_die_backup: "YES"
+seven_days_to_die_backup_hour: 5
+seven_days_to_die_backup_max: 7
+seven_days_to_die_monitor: "YES"
+seven_days_to_die_update_mods: "NO"
+seven_days_to_die_mods_urls: ""
+seven_days_to_die_alloc_fixes: "NO"
+seven_days_to_die_cpm: "NO"
+seven_days_to_die_bepinex: "NO"
+seven_days_to_die_darkness_falls: "NO"
+seven_days_to_die_undead_legacy: "NO"
+seven_days_to_die_game_port: 26900
+seven_days_to_die_query_port_1: 26901
+seven_days_to_die_query_port_2: 26902
+seven_days_to_die_disabled_network_protocols: ""
+seven_days_to_die_max_world_transfer_speed_kibs: 1300
+seven_days_to_die_sandbox_code: AASGBBDCVCBZECFBDAJDKIDXKDYJ
+seven_days_to_die_bootstrap_timeout: 1800
+
+seven_days_to_die_reset_game: false
+
+seven_days_to_die_mem_limit: 28g
+seven_days_to_die_log_max_size: 10m
+seven_days_to_die_log_max_file: 3
+seven_days_to_die_party_shared_kill_range: 10000
+seven_days_to_die_player_killing_mode: 0
+
+seven_days_to_die_admins:
+  - platform: Steam
+    userid: "76561198209272507"
+    name: Rutinoscorbin
+    permission_level: 0

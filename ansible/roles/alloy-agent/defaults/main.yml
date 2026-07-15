@@ -1,0 +1,6 @@
+---
+alloy_agent_dir: /opt/alloy
+alloy_agent_image: grafana/alloy:v1.5.1
+alloy_agent_monitoring_host: "{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}"
+alloy_agent_prometheus_url: "http://{{ alloy_agent_monitoring_host }}:9090/api/v1/write"
+alloy_agent_loki_url: "http://{{ alloy_agent_monitoring_host }}:3100/loki/api/v1/push"

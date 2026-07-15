@@ -52,7 +52,10 @@ output:    ## terraform output
 	$(TF) output
 
 ##@ Ansible
-.PHONY: inventory ping update update-check lint dns proxy apps paperless gitlab minio seafile update-apps monitor monitor-agents resize
+.PHONY: deps inventory ping update update-check lint site bootstrap dns proxy monitoring apps paperless seafile actual games update-apps resize
+deps:      ## Install Ansible collection dependencies
+	cd $(ANSIBLE_DIR) && ansible-galaxy collection install -r requirements.yml -p collections
+
 inventory: ## Regenerate Ansible inventory from Terraform output
 	@mkdir -p $(dir $(INVENTORY))
 	$(TF) output -raw ansible_inventory > $(INVENTORY)
@@ -61,6 +64,12 @@ inventory: ## Regenerate Ansible inventory from Terraform output
 
 ping:      ## Ansible ping all hosts
 	$(ANSIBLE) playbooks/ping.yml
+
+site:      ## Bootstrap and deploy the full homelab
+	$(ANSIBLE) playbooks/site.yml
+
+bootstrap: ## Bootstrap base OS and Docker hosts
+	$(ANSIBLE) playbooks/bootstrap.yml
 
 update:    ## Run system updates (reboot if needed)
 	$(ANSIBLE) playbooks/update.yml
@@ -74,14 +83,11 @@ dns:       ## Deploy Pi-hole on dns hosts
 proxy:     ## Deploy Traefik on proxy hosts
 	$(ANSIBLE) playbooks/proxy.yml
 
+monitoring: ## Deploy Grafana/Prometheus/Loki and Alloy agents
+	$(ANSIBLE) playbooks/monitoring.yml
+
 apps:      ## Deploy apps on app-01
 	$(ANSIBLE) playbooks/apps.yml
-
-monitor:   ## Deploy monitoring stack on monitor-01
-	$(ANSIBLE) playbooks/monitor.yml
-
-monitor-agents: ## Deploy monitoring agents on all hosts
-	$(ANSIBLE) playbooks/monitor-agents.yml
 
 resize:    ## Resize root filesystem on all VMs (LVM growpart)
 	$(ANSIBLE) playbooks/resize.yml
@@ -89,16 +95,16 @@ resize:    ## Resize root filesystem on all VMs (LVM growpart)
 paperless: ## Deploy Paperless-ngx on app-01
 	$(ANSIBLE) playbooks/paperless.yml
 
-gitlab:    ## Deploy GitLab CE + Runner on gitlab-01
-	$(ANSIBLE) playbooks/gitlab.yml
-
-minio:     ## Deploy MinIO S3 on storage-01
-	$(ANSIBLE) playbooks/minio.yml
-
 seafile:   ## Deploy Seafile on app-01
 	$(ANSIBLE) playbooks/seafile.yml
 
-update-apps: ## Pull latest images & recreate app containers
+actual:    ## Deploy Actual Budget on app-01
+	$(ANSIBLE) playbooks/actual.yml
+
+games:     ## Deploy game servers on games-01
+	$(ANSIBLE) playbooks/games.yml
+
+update-apps: ## Pull latest images & recreate all app service containers
 	$(ANSIBLE) playbooks/update-apps.yml
 
 lint:      ## Lint Terraform + Ansible playbooks

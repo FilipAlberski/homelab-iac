@@ -1,6 +1,0 @@
----
-web_host_dir: /opt/web
-web_host_port: 80
-web_host_container_name: web
-web_host_image: nginx:alpine
-web_host_container_port: 80

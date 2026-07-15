@@ -1,0 +1,10 @@
+---
+- name: Deploy Actual Budget on app-01
+  hosts: apps
+  become: true
+  gather_facts: true
+
+  roles:
+    - lvm-resize
+    - docker
+    - actual

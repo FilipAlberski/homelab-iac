@@ -6,7 +6,7 @@ output "vms" {
       name  = m.name
       ip    = m.ipv4_address
       fqdn  = m.fqdn
-      tags  = m.tags
+      tags  = sort(m.tags)
     }
   }
 }
@@ -31,7 +31,7 @@ output "ansible_inventory" {
       "${v.name} ansible_host=${v.ipv4_address}"
     ],
     flatten([
-      for tag in distinct(flatten([for v in module.vms : v.tags])) : tag == "terraform" ? [] : concat(
+      for tag in sort(distinct(flatten([for v in module.vms : v.tags]))) : tag == "terraform" ? [] : concat(
         [""],
         ["[${replace(tag, "-", "_")}]"],
         [

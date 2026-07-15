@@ -7,7 +7,7 @@
         widget:
           type: pihole
           url: http://192.168.40.141
-          password: "{{ pihole_webpassword | default('changeme') }}"
+          password: "{{ vault_pihole_webpassword | default('changeme') }}"
 
     - Traefik:
         href: http://traefik.lab
@@ -18,6 +18,11 @@
           url: http://192.168.40.142:8080
 
 - Monitoring:
+    - Grafana:
+        href: http://grafana.lab
+        icon: grafana
+        description: Metrics dashboards
+
     - Uptime Kuma:
         href: http://kuma.lab
         icon: uptime-kuma
@@ -26,22 +31,12 @@
           type: uptimekuma
           url: http://192.168.40.143:3001
 
-    - Grafana:
-        href: http://grafana.lab
-        icon: grafana
-        description: Dashboards & Metrics
-
-    - Prometheus:
-        href: http://prometheus.lab
-        icon: prometheus
-        description: Metrics Collection
-
-    - Alertmanager:
-        href: http://alertmanager.lab
-        icon: alertmanager
-        description: Alert Management
-
 - Applications:
+    - Actual Budget:
+        href: https://actual.lab
+        icon: actual-budget
+        description: Personal finance
+
     - Portainer:
         href: http://portainer.lab
         icon: portainer
@@ -57,16 +52,11 @@
         icon: seafile
         description: File Sync & Share
 
-    - MinIO:
-        href: http://minio.lab
-        icon: minio
-        description: S3-Compatible Storage
-
-- Development:
-    - GitLab:
-        href: http://gitlab.lab
-        icon: gitlab
-        description: CI/CD & Repositories
+- Games:
+    - 7 Days to Die:
+        href: steam://connect/7dtd.lab:26900
+        icon: si-steam
+        description: Dedicated game server on games-01
 
 - Infrastructure:
     - Proxmox:

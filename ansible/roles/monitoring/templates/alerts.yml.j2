@@ -1,88 +1,173 @@
-{% raw %}
+---
 groups:
-  - name: infrastructure
-    interval: 30s
+  - name: homelab-hosts
     rules:
-      - alert: InstanceDown
-        expr: up{job="node"} == 0
+      - alert: HostTelemetryStale
+        expr: time() - max by (instance) (timestamp(node_uname_info{instance=~".*-01"})) > 300
         for: 2m
         labels:
           severity: critical
         annotations:
-          summary: "Instance {{ $labels.instance }} down"
-          description: "Node exporter on {{ $labels.instance }} has been down for more than 2 minutes."
+          summary: "Host telemetry is stale for {% raw %}{{ $labels.instance }}{% endraw %}"
+          description: "No fresh Alloy/node metrics have been received for more than 5 minutes."
 
-      - alert: HighCPU
-        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
-        for: 5m
+      - alert: HostExporterDown
+        expr: up{job="node",instance=~".*-01"} == 0
+        for: 2m
         labels:
           severity: warning
         annotations:
-          summary: "High CPU on {{ $labels.instance }}"
-          description: "CPU usage on {{ $labels.instance }} is above 90% for more than 5 minutes."
+          summary: "Host exporter is down on {% raw %}{{ $labels.instance }}{% endraw %}"
+          description: "Alloy is reporting a failed node exporter scrape."
 
-      - alert: HighRAM
-        expr: 100 * (1 - ((node_memory_MemAvailable_bytes or node_memory_MemFree_bytes) / node_memory_MemTotal_bytes)) > 90
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High RAM on {{ $labels.instance }}"
-          description: "RAM usage on {{ $labels.instance }} is above 90% for more than 5 minutes."
-
-      - alert: DiskFull
-        expr: 100 - ((node_filesystem_avail_bytes{mountpoint="/"} * 100) / node_filesystem_size_bytes{mountpoint="/"}) > 85
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Disk almost full on {{ $labels.instance }}"
-          description: "Root filesystem on {{ $labels.instance }} is above 85% full."
-
-      - alert: DiskWillFillIn4Hours
-        expr: predict_linear(node_filesystem_avail_bytes{mountpoint="/"}[1h], 4 * 3600) < 0
+      - alert: HostDiskLowSpace
+        expr: |
+          (
+            node_filesystem_avail_bytes{instance=~".*-01",fstype!~"tmpfs|overlay|squashfs|ramfs|devtmpfs",mountpoint!~"/run.*|/var/lib/docker/.+"}
+            /
+            node_filesystem_size_bytes{instance=~".*-01",fstype!~"tmpfs|overlay|squashfs|ramfs|devtmpfs",mountpoint!~"/run.*|/var/lib/docker/.+"}
+          ) < 0.15
         for: 10m
         labels:
-          severity: critical
-        annotations:
-          summary: "Disk will fill in 4 hours on {{ $labels.instance }}"
-          description: "Root filesystem on {{ $labels.instance }} is filling rapidly — predicted to run out in ~4h based on 1h trend."
-
-      - alert: DataDiskFull
-        expr: 100 - ((node_filesystem_avail_bytes{mountpoint="/srv/data"} * 100) / node_filesystem_size_bytes{mountpoint="/srv/data"}) > 85
-        for: 5m
-        labels:
           severity: warning
         annotations:
-          summary: "Data disk almost full on {{ $labels.instance }}"
-          description: "/srv/data on {{ $labels.instance }} is above 85% full."
+          summary: "Low disk space on {% raw %}{{ $labels.instance }}{% endraw %}: {% raw %}{{ $labels.mountpoint }}{% endraw %}"
+          description: "Filesystem {% raw %}{{ $labels.mountpoint }}{% endraw %} has less than 15% free space."
 
-      - alert: SystemdFailed
-        expr: node_systemd_unit_state{state="failed"} == 1
+      - alert: HostDiskCritical
+        expr: |
+          (
+            node_filesystem_avail_bytes{instance=~".*-01",fstype!~"tmpfs|overlay|squashfs|ramfs|devtmpfs",mountpoint!~"/run.*|/var/lib/docker/.+"}
+            /
+            node_filesystem_size_bytes{instance=~".*-01",fstype!~"tmpfs|overlay|squashfs|ramfs|devtmpfs",mountpoint!~"/run.*|/var/lib/docker/.+"}
+          ) < 0.05
         for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Failed systemd unit on {{ $labels.instance }}"
-          description: "Unit {{ $labels.name }} is in failed state on {{ $labels.instance }}."
-
-      - alert: HostOOMKill
-        expr: increase(node_vmstat_oom_kill[10m]) > 0
         labels:
           severity: critical
         annotations:
-          summary: "OOM kill on {{ $labels.instance }}"
-          description: "Out-of-memory killer was triggered on {{ $labels.instance }} in the last 10 minutes."
+          summary: "Disk almost full on {% raw %}{{ $labels.instance }}{% endraw %}: {% raw %}{{ $labels.mountpoint }}{% endraw %}"
+          description: "Filesystem {% raw %}{{ $labels.mountpoint }}{% endraw %} has less than 5% free space."
 
-  - name: containers
-    interval: 30s
+      - alert: HostHighLoad
+        expr: node_load1{instance=~".*-01"} / count without (cpu, mode) (node_cpu_seconds_total{instance=~".*-01",mode="idle"}) > 1.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High load on {% raw %}{{ $labels.instance }}{% endraw %}"
+          description: "1-minute load average is more than 1.5x the CPU core count."
+
+      - alert: HostRebooted
+        expr: time() - node_boot_time_seconds{instance=~".*-01"} < 600
+        for: 2m
+        labels:
+          severity: info
+        annotations:
+          summary: "Host recently rebooted: {% raw %}{{ $labels.instance }}{% endraw %}"
+          description: "Host uptime is below 10 minutes."
+
+      - alert: HostMemoryHigh
+        expr: 1 - (node_memory_MemAvailable_bytes{instance=~".*-01"} / node_memory_MemTotal_bytes{instance=~".*-01"}) > 0.90
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {% raw %}{{ $labels.instance }}{% endraw %}"
+          description: "Memory usage is above 90% for 15 minutes."
+
+      - alert: HostDiskInodesLow
+        expr: |
+          (
+            node_filesystem_files_free{instance=~".*-01",fstype!~"tmpfs|overlay|squashfs|ramfs|devtmpfs",mountpoint!~"/run.*|/var/lib/docker/.+"}
+            /
+            node_filesystem_files{instance=~".*-01",fstype!~"tmpfs|overlay|squashfs|ramfs|devtmpfs",mountpoint!~"/run.*|/var/lib/docker/.+"}
+          ) < 0.10
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low inode space on {% raw %}{{ $labels.instance }}{% endraw %}: {% raw %}{{ $labels.mountpoint }}{% endraw %}"
+          description: "Filesystem {% raw %}{{ $labels.mountpoint }}{% endraw %} has less than 10% free inodes."
+
+      - alert: HostDiskWillFillSoon
+        expr: |
+          predict_linear(
+            node_filesystem_avail_bytes{instance=~".*-01",fstype!~"tmpfs|overlay|squashfs|ramfs|devtmpfs",mountpoint!~"/run.*|/var/lib/docker/.+"}[6h],
+            7 * 24 * 3600
+          ) < 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk may fill within 7 days on {% raw %}{{ $labels.instance }}{% endraw %}: {% raw %}{{ $labels.mountpoint }}{% endraw %}"
+          description: "Filesystem {% raw %}{{ $labels.mountpoint }}{% endraw %} free-space trend predicts exhaustion within 7 days."
+
+      - alert: HostUnreachable
+        expr: probe_success{job="blackbox_icmp",instance=~"192\\.168\\.40\\.1[3-4][0-9]"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Host unreachable: {% raw %}{{ $labels.instance }}{% endraw %}"
+          description: "ICMP ping probe failed for 2 minutes. Host may be down or network interface dead."
+
+      - alert: ProxmoxUnreachable
+        expr: probe_success{job="blackbox_icmp",instance="192.168.40.10"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Proxmox host unreachable: 192.168.40.10"
+          description: "ICMP ping probe failed for 2 minutes. Proxmox host may be down or network dead."
+
+  - name: homelab-services
     rules:
-      - alert: ContainerRestarting
-        expr: resets(container_cpu_usage_seconds_total[30m]) > 3
-        for: 5m
+      - alert: TraefikDown
+        expr: probe_success{job="blackbox_tcp",instance=~"{{ hostvars['proxy-01']['ansible_host'] | default('192.168.40.142') }}:(80|443)"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          host: proxy-01
+        annotations:
+          summary: "Traefik/proxy endpoint is down"
+          description: "Blackbox probe failed for {% raw %}{{ $labels.instance }}{% endraw %}."
+
+      - alert: PiholeDown
+        expr: probe_success{job=~"blackbox_http|blackbox_tcp|blackbox_dns",instance=~"http://{{ hostvars['dns-01']['ansible_host'] | default('192.168.40.141') }}/admin/|{{ hostvars['dns-01']['ansible_host'] | default('192.168.40.141') }}(:53)?"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          host: dns-01
+        annotations:
+          summary: "Pi-hole/DNS endpoint is down"
+          description: "Blackbox probe failed for {% raw %}{{ $labels.instance }}{% endraw %}."
+
+      - alert: MonitoringStackDown
+        expr: probe_success{job=~"blackbox_http|blackbox_tcp",instance=~"http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:(3000/login|9090/-/ready|9093/-/ready|3100/ready)|{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:(9090|9093|3100)"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          host: monitoring-01
+        annotations:
+          summary: "Monitoring endpoint is down"
+          description: "Blackbox probe failed for {% raw %}{{ $labels.instance }}{% endraw %}."
+
+      - alert: SevenDaysToDieDown
+        expr: probe_success{job="blackbox_tcp",instance=~"{{ hostvars['games-01']['ansible_host'] | default('192.168.40.130') }}:26900"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          host: games-01
+        annotations:
+          summary: "7 Days to Die server is down on games-01"
+          description: "Blackbox TCP probe failed for port 26900 on games-01. Server may be stopped or crashed."
+
+      - alert: SevenDaysToDieRestarting
+        expr: sum by (instance) (changes(container_last_seen{host="games-01",container="7dtdserver"}[5m])) > 1
+        for: 1m
         labels:
           severity: warning
+          host: games-01
         annotations:
-          summary: "Container {{ $labels.name }} restarting frequently"
-          description: "Container {{ $labels.name }} on {{ $labels.instance }} has restarted more than 3 times in the last 30 minutes."
-{% endraw %}
+          summary: "7 Days to Die container is restarting loop on games-01"
+          description: "Container 7dtdserver restarted more than once in 5 minutes."

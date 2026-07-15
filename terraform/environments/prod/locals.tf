@@ -2,8 +2,8 @@
 # Homelab numbering scheme
 #
 # VMID layout:
-#   100-119 : AI / Assistants            (assistant-01 = 101)
-#   120-139 : Media (jellyfin, *arr...)
+#   100-119 : AI / Assistants
+#   120-139 : Games / media
 #   140-159 : Network / infra services   (pihole, traefik, ...)
 #   160-179 : Storage / backup
 #   180-199 : Dev / sandbox
@@ -20,153 +20,10 @@
 #   local        : ISO + cloud-init snippets
 #   local-lvm    : OS / boot disks (fast, on the host)
 #   datav1       : large data volumes (e.g. media, models, datasets)
-#   storage-01   : shared/cold storage
 #   vm-backups   : PBS / vzdump target (NOT used as a live disk)
 ###############################################################################
 
 locals {
   network_prefix = "192.168.40"
   network_cidr   = "/24"
-
-  # Single source of truth for every VM in this environment.
-  # Add a new entry here to declare a new VM.
-  vms = {
-    assistant-01 = {
-      vm_id              = 101
-      cpu_cores          = 4
-      memory_mb          = 16384
-      memory_floating_mb = 4096
-      disks = [
-        {
-          datastore_id = "local-lvm"
-          size         = 50
-          interface    = "scsi0"
-        },
-      ]
-      tags = ["terraform", "ai", "assistant"]
-    }
-    dns-01 = {
-      vm_id              = 141
-      cpu_cores          = 2
-      memory_mb          = 2048
-      memory_floating_mb = 1024
-      disks = [
-        {
-          datastore_id = "local-lvm"
-          size         = 30
-          interface    = "scsi0"
-        },
-      ]
-      tags = ["terraform", "network", "dns"]
-    }
-    proxy-01 = {
-      vm_id              = 142
-      cpu_cores          = 2
-      memory_mb          = 2048
-      memory_floating_mb = 1024
-      disks = [
-        {
-          datastore_id = "local-lvm"
-          size         = 30
-          interface    = "scsi0"
-        },
-      ]
-      tags = ["terraform", "network", "proxy", "docker"]
-    }
-    app-01 = {
-      vm_id              = 143
-      cpu_cores          = 2
-      memory_mb          = 12288
-      memory_floating_mb = 2048
-      disks = [
-        {
-          datastore_id = "local-lvm"
-          size         = 30
-          interface    = "scsi0"
-        },
-        {
-          datastore_id = "datav1"
-          size         = 200
-          interface    = "scsi1"
-        },
-      ]
-      tags = ["terraform", "apps", "docker", "seafile"]
-    }
-    storage-01 = {
-      vm_id              = 160
-      cpu_cores          = 2
-      memory_mb          = 4096
-      memory_floating_mb = 2048
-      disks = [
-        {
-          datastore_id = "local-lvm"
-          size         = 30
-          interface    = "scsi0"
-        },
-        {
-          datastore_id = "datav1"
-          size         = 200
-          interface    = "scsi1"
-        },
-      ]
-      tags = ["terraform", "storage", "docker"]
-    }
-    monitor-01 = {
-      vm_id              = 145
-      cpu_cores          = 4
-      memory_mb          = 8192
-      memory_floating_mb = 4096
-      disks = [
-        {
-          datastore_id = "local-lvm"
-          size         = 50
-          interface    = "scsi0"
-        },
-        {
-          datastore_id = "datav1"
-          size         = 100
-          interface    = "scsi1"
-        },
-      ]
-      tags = ["terraform", "infra", "monitoring", "docker"]
-    }
-    gitlab-01 = {
-      vm_id              = 181
-      cpu_cores          = 4
-      memory_mb          = 12288
-      memory_floating_mb = 4096
-      disks = [
-        {
-          datastore_id = "local-lvm"
-          size         = 50
-          interface    = "scsi0"
-        },
-        {
-          datastore_id = "datav1"
-          size         = 100
-          interface    = "scsi1"
-        },
-      ]
-      tags = ["terraform", "dev", "gitlab", "docker"]
-    }
-    db-01 = {
-      vm_id              = 184
-      cpu_cores          = 2
-      memory_mb          = 4096
-      memory_floating_mb = 1024
-      disks = [
-        {
-          datastore_id = "local-lvm"
-          size         = 30
-          interface    = "scsi0"
-        },
-        {
-          datastore_id = "datav1"
-          size         = 50
-          interface    = "scsi1"
-        },
-      ]
-      tags = ["terraform", "database", "docker"]
-    }
-  }
 }

@@ -1,4 +1,0 @@
----
-- name: Restart cadvisor
-  ansible.builtin.command: docker restart cadvisor
-  changed_when: true

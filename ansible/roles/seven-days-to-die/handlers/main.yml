@@ -1,0 +1,6 @@
+---
+- name: Restart 7dtd server
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: "{{ seven_days_to_die_dir }}"
+  changed_when: true

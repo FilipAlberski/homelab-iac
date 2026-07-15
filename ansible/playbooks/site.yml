@@ -1,0 +1,27 @@
+---
+- name: Bootstrap base host configuration
+  ansible.builtin.import_playbook: bootstrap.yml
+
+- name: Deploy DNS
+  ansible.builtin.import_playbook: dns.yml
+
+- name: Deploy reverse proxy
+  ansible.builtin.import_playbook: proxy.yml
+
+- name: Deploy monitoring
+  ansible.builtin.import_playbook: monitoring.yml
+
+- name: Deploy application stack
+  ansible.builtin.import_playbook: apps.yml
+
+- name: Deploy Paperless
+  ansible.builtin.import_playbook: paperless.yml
+
+- name: Deploy Actual Budget
+  ansible.builtin.import_playbook: actual.yml
+
+- name: Deploy Seafile
+  ansible.builtin.import_playbook: seafile.yml
+
+- name: Deploy game servers
+  ansible.builtin.import_playbook: games.yml

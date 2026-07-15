@@ -1,9 +1,15 @@
 ---
+- name: Wait for cloud-init to finish
+  ansible.builtin.command: cloud-init status --wait
+  changed_when: false
+  failed_when: false
+
 - name: Install Docker repo dependencies
   ansible.builtin.dnf:
     name:
       - dnf-plugins-core
     state: present
+    lock_timeout: 300
 
 - name: Add Docker CE repository
   ansible.builtin.command: >
@@ -12,9 +18,11 @@
     creates: /etc/yum.repos.d/docker-ce.repo
 
 - name: Import Docker GPG key
-  ansible.builtin.command: rpm --import https://download.docker.com/linux/centos/gpg
-  register: docker_gpg_import
-  until: docker_gpg_import.rc == 0
+  ansible.builtin.rpm_key:
+    key: https://download.docker.com/linux/centos/gpg
+    state: present
+  register: docker_gpg_key
+  until: docker_gpg_key is succeeded
   retries: 5
   delay: 10
 
@@ -27,6 +35,7 @@
       - docker-buildx-plugin
       - docker-compose-plugin
     state: present
+    lock_timeout: 300
 
 - name: Ensure Docker service is enabled and running
   ansible.builtin.systemd:

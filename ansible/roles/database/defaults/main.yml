@@ -1,6 +1,0 @@
----
-database_dir: /opt/database
-database_postgres_user: app
-database_postgres_password: "{{ vault_database_postgres_password | default('changeme') }}"
-database_postgres_db: app
-database_back_host: "192.168.40.183"

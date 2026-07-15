@@ -1,0 +1,19 @@
+---
+services:
+  alloy:
+    container_name: alloy
+    image: "{{ alloy_agent_image }}"
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+    user: root
+    volumes:
+      - ./config.alloy:/etc/alloy/config.alloy:ro
+      - ./data:/var/lib/alloy/data
+      - /:/host/root:ro,rslave
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /var/log:/host/var/log:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped

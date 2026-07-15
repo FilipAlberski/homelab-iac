@@ -7,138 +7,71 @@
     group: homelab
     mode: '0755'
   loop:
-    - "{{ monitoring_data_dir }}"
-    - "{{ monitoring_data_dir }}/prometheus-data"
-    - "{{ monitoring_data_dir }}/grafana-data"
-    - "{{ monitoring_data_dir }}/loki-data"
-    - "{{ monitoring_data_dir }}/alertmanager-data"
+    - "{{ monitoring_dir }}"
+    - "{{ monitoring_dir }}/prometheus"
+    - "{{ monitoring_dir }}/prometheus/data"
+    - "{{ monitoring_dir }}/prometheus/rules"
+    - "{{ monitoring_dir }}/loki"
+    - "{{ monitoring_dir }}/loki/data"
+    - "{{ monitoring_dir }}/loki/rules"
+    - "{{ monitoring_dir }}/loki/rules/fake"
+    - "{{ monitoring_dir }}/alertmanager"
+    - "{{ monitoring_dir }}/blackbox"
+    - "{{ monitoring_dir }}/grafana"
+    - "{{ monitoring_dir }}/grafana/data"
+    - "{{ monitoring_dir }}/grafana/provisioning"
+    - "{{ monitoring_dir }}/grafana/provisioning/dashboards"
+    - "{{ monitoring_dir }}/grafana/provisioning/datasources"
+    - "{{ monitoring_dir }}/grafana/dashboards"
 
-- name: Deploy monitoring Docker Compose
-  ansible.builtin.template:
-    src: docker-compose.yml.j2
-    dest: "{{ monitoring_data_dir }}/docker-compose.yml"
-    owner: homelab
-    group: homelab
-    mode: '0644'
-  notify: Restart monitoring
-
-- name: Deploy Prometheus config
-  ansible.builtin.template:
-    src: prometheus.yml.j2
-    dest: "{{ monitoring_data_dir }}/prometheus.yml"
-    owner: homelab
-    group: homelab
-    mode: '0644'
-  notify: Restart monitoring
-
-- name: Deploy Prometheus alerts
-  ansible.builtin.template:
-    src: alerts.yml.j2
-    dest: "{{ monitoring_data_dir }}/alerts.yml"
-    owner: homelab
-    group: homelab
-    mode: '0644'
-  notify: Restart monitoring
-
-- name: Deploy Alertmanager config
-  ansible.builtin.template:
-    src: alertmanager.yml.j2
-    dest: "{{ monitoring_data_dir }}/alertmanager.yml"
-    owner: homelab
-    group: homelab
-    mode: '0644'
-  notify: Restart monitoring
-
-- name: Deploy Loki config
-  ansible.builtin.template:
-    src: loki-config.yml.j2
-    dest: "{{ monitoring_data_dir }}/loki-config.yml"
-    owner: homelab
-    group: homelab
-    mode: '0644'
-  notify: Restart monitoring
-
-- name: Deploy Loki rules
-  ansible.builtin.template:
-    src: loki-rules.yml.j2
-    dest: "{{ monitoring_data_dir }}/loki-rules.yml"
-    owner: homelab
-    group: homelab
-    mode: '0644'
-  notify: Restart monitoring
-
-- name: Deploy Grafana alerting contact points and policies
-  ansible.builtin.template:
-    src: grafana-alerting.yml.j2
-    dest: "{{ monitoring_data_dir }}/grafana-alerting.yml"
-    owner: homelab
-    group: homelab
-    mode: '0644'
-  notify: Restart monitoring
-
-- name: Deploy Grafana alert rules
-  ansible.builtin.template:
-    src: grafana-alert-rules.yml.j2
-    dest: "{{ monitoring_data_dir }}/grafana-alert-rules.yml"
-    owner: homelab
-    group: homelab
-    mode: '0644'
-  notify: Restart monitoring
-
-- name: Deploy Grafana datasources provisioning
-  ansible.builtin.template:
-    src: grafana-datasources.yml.j2
-    dest: "{{ monitoring_data_dir }}/grafana-datasources.yml"
-    owner: homelab
-    group: homelab
-    mode: '0644'
-  notify: Restart monitoring
-
-- name: Deploy Grafana dashboards provisioning
-  ansible.builtin.template:
-    src: grafana-dashboards.yml.j2
-    dest: "{{ monitoring_data_dir }}/grafana-dashboards.yml"
-    owner: homelab
-    group: homelab
-    mode: '0644'
-  notify: Restart monitoring
-
-- name: Copy dashboard JSONs
-  ansible.builtin.copy:
-    src: "{{ item }}"
-    dest: "{{ monitoring_data_dir }}/{{ item | basename }}"
-    owner: homelab
-    group: homelab
-    mode: '0644'
-  loop:
-    - dashboards/homelab-overview.json
-    - dashboards/traefik-overview.json
-  notify: Restart monitoring
-
-- name: Open monitoring firewall ports
+- name: Open firewall ports for monitoring
   ansible.posix.firewalld:
     port: "{{ item }}"
     permanent: true
     state: enabled
     immediate: true
-    zone: public
   loop:
-    - 9090/tcp
     - 3000/tcp
+    - 9090/tcp
     - 9093/tcp
     - 3100/tcp
+    - 9115/tcp
+  become: true
 
-- name: Fix monitoring directory permissions
-  ansible.builtin.file:
-    path: "{{ monitoring_data_dir }}"
-    state: directory
-    owner: root
-    group: root
-    mode: '0755'
-    recurse: true
+- name: Deploy monitoring configuration
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  loop:
+    - src: docker-compose.yml.j2
+      dest: "{{ monitoring_dir }}/docker-compose.yml"
+    - src: prometheus.yml.j2
+      dest: "{{ monitoring_dir }}/prometheus/prometheus.yml"
+    - src: alerts.yml.j2
+      dest: "{{ monitoring_dir }}/prometheus/rules/alerts.yml"
+    - src: loki-config.yml.j2
+      dest: "{{ monitoring_dir }}/loki/loki-config.yml"
+    - src: loki-rules.yml.j2
+      dest: "{{ monitoring_dir }}/loki/rules/fake/loki-rules.yml"
+    - src: alertmanager.yml.j2
+      dest: "{{ monitoring_dir }}/alertmanager/alertmanager.yml"
+    - src: blackbox.yml.j2
+      dest: "{{ monitoring_dir }}/blackbox/blackbox.yml"
+    - src: grafana-datasources.yml.j2
+      dest: "{{ monitoring_dir }}/grafana/provisioning/datasources/datasources.yml"
+    - src: grafana-dashboards.yml.j2
+      dest: "{{ monitoring_dir }}/grafana/provisioning/dashboards/dashboards.yml"
+    - src: homelab-overview.json.j2
+      dest: "{{ monitoring_dir }}/grafana/dashboards/homelab-overview.json"
+    - src: vm-fleet.json.j2
+      dest: "{{ monitoring_dir }}/grafana/dashboards/vm-fleet.json"
+  notify: Restart monitoring
 
 - name: Ensure monitoring compose is running
   ansible.builtin.command: docker compose up -d
   args:
-    chdir: "{{ monitoring_data_dir }}"
+    chdir: "{{ monitoring_dir }}"
   changed_when: true

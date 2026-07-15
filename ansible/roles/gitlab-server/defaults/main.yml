@@ -1,7 +1,0 @@
----
-gitlab_dir: /opt/gitlab
-gitlab_external_url: "http://gitlab.lab"
-gitlab_initial_root_password: "{{ vault_gitlab_initial_root_password | default('changeme123!') }}"
-gitlab_registry_enabled: true
-gitlab_registry_external_url: "http://gitlab.lab:5050"
-gitlab_runner_token: ""

@@ -2,6 +2,8 @@
 **/.terraform/*
 *.tfstate
 *.tfstate.*
+*.tfplan
+*.plan
 *.tfvars
 *.tfvars.json
 !*.tfvars.example
@@ -17,7 +19,9 @@ terraform.rc
 
 # Ansible
 *.retry
+.ansible/
 ansible/inventories/*/hosts.generated
+ansible/.ansible_facts_cache/
 ansible/.vault_pass
 ansible/collections/
 
@@ -33,7 +37,3 @@ ansible/collections/
 .idea/
 *.swp
 .DS_Store
-
-
-
-

@@ -1,17 +1,16 @@
 ---
-monitoring_data_dir: /opt/monitoring
-monitoring_version_prometheus: v3.3.1
-monitoring_version_grafana: 12.0.0
-monitoring_version_alertmanager: v0.28.1
-monitoring_version_loki: 3.5.0
-
+monitoring_dir: /opt/monitoring
+monitoring_grafana_image: grafana/grafana:11.4.0
+monitoring_prometheus_image: prom/prometheus:v3.1.0
+monitoring_loki_image: grafana/loki:3.3.2
+monitoring_alertmanager_image: prom/alertmanager:v0.28.0
+monitoring_blackbox_exporter_image: prom/blackbox-exporter:v0.25.0
 monitoring_grafana_admin_user: admin
-monitoring_grafana_admin_password: "{{ vault_monitoring_grafana_password | default('changeme') }}"
+monitoring_grafana_admin_password: "{{ vault_monitoring_grafana_admin_password | default('changeme') }}"
 
-# Retention
-monitoring_prometheus_retention: 30d
-
-# Telegram placeholder (fill in later)
-monitoring_alertmanager_telegram_enabled: true
-monitoring_alertmanager_telegram_bot_token: "{{ vault_monitoring_alertmanager_telegram_bot_token | default('') }}"
-monitoring_alertmanager_telegram_chat_id: "{{ vault_monitoring_alertmanager_telegram_chat_id | default('') }}"
+monitoring_telegram_bot_token: "{{ vault_monitoring_telegram_bot_token | default('') }}"
+monitoring_telegram_chat_id: "{{ vault_monitoring_telegram_chat_id | default('') }}"
+monitoring_telegram_api_url: https://api.telegram.org
+monitoring_telegram_parse_mode: HTML
+monitoring_telegram_send_resolved: true
+monitoring_telegram_enabled: "{{ monitoring_telegram_bot_token | length > 0 and monitoring_telegram_chat_id | string | length > 0 }}"

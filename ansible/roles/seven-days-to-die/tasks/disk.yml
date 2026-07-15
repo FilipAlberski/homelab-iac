@@ -1,0 +1,41 @@
+---
+- name: Check if data disk exists
+  ansible.builtin.stat:
+    path: "{{ seven_days_to_die_data_disk }}"
+  register: _7dtd_data_disk
+
+- name: Check filesystem on data disk
+  when:
+    - _7dtd_data_disk.stat.exists
+    - _7dtd_data_disk.stat.isblk
+  ansible.builtin.command: blkid -s TYPE -o value {{ seven_days_to_die_data_disk }}
+  register: _7dtd_blkid
+  changed_when: false
+  ignore_errors: true
+
+- name: Format data disk with ext4
+  when:
+    - _7dtd_data_disk.stat.exists
+    - _7dtd_data_disk.stat.isblk
+    - _7dtd_blkid.rc != 0
+  ansible.builtin.command: mkfs.ext4 -F {{ seven_days_to_die_data_disk }}
+  changed_when: true
+
+- name: Create data mount point
+  ansible.builtin.file:
+    path: /srv/data
+    state: directory
+    owner: homelab
+    group: homelab
+    mode: '0755'
+
+- name: Mount data disk
+  when:
+    - _7dtd_data_disk.stat.exists
+    - _7dtd_data_disk.stat.isblk
+  ansible.posix.mount:
+    path: /srv/data
+    src: "{{ seven_days_to_die_data_disk }}"
+    fstype: ext4
+    opts: defaults
+    state: mounted

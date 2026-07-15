@@ -12,7 +12,7 @@
         is_rhel_like: "{{ ansible_facts['os_family'] in ['RedHat', 'Rocky'] }}"
         is_debian_like: "{{ ansible_facts['os_family'] == 'Debian' }}"
 
-    - name: Upgrade all packages (RHEL / Rocky / Alma)
+    - name: Upgrade all packages (RHEL / Rocky / Alma)  # noqa: package-latest
       when: is_rhel_like
       ansible.builtin.dnf:
         name: "*"

@@ -2,8 +2,8 @@
 # Homelab numbering scheme
 #
 # VMID layout:
-#   100-119 : AI / Assistants            (assistant-01 = 101)
-#   120-139 : Media (jellyfin, *arr...)
+#   100-119 : AI / Assistants
+#   120-139 : Games / media
 #   140-159 : Network / infra services   (pihole, traefik, ...)
 #   160-179 : Storage / backup
 #   180-199 : Dev / sandbox
@@ -20,7 +20,6 @@
 #   local        : ISO + cloud-init snippets
 #   local-lvm    : OS / boot disks (fast, on the host)
 #   datav1       : large data volumes (e.g. media, models, datasets)
-#   storage-01   : shared/cold storage
 #   vm-backups   : PBS / vzdump target (NOT used as a live disk)
 ###############################################################################
 

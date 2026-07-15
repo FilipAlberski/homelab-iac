@@ -1,0 +1,54 @@
+---
+services:
+  7dtdserver:
+    container_name: 7dtdserver
+    image: {{ seven_days_to_die_image }}
+    environment:
+      LINUXGSM_VERSION: "{{ seven_days_to_die_lgsm_version }}"
+      START_MODE: "{{ seven_days_to_die_start_mode }}"
+      VERSION: "{{ seven_days_to_die_version }}"
+      PUID: "{{ seven_days_to_die_puid }}"
+      PGID: "{{ seven_days_to_die_pgid }}"
+      TimeZone: "{{ seven_days_to_die_timezone }}"
+      ServerPassword: "{{ seven_days_to_die_server_password }}"
+      TEST_ALERT: "NO"
+      UPDATE_MODS: "{{ seven_days_to_die_update_mods }}"
+      MODS_URLS: "{{ seven_days_to_die_mods_urls }}"
+      ALLOC_FIXES: "{{ seven_days_to_die_alloc_fixes }}"
+      ALLOC_FIXES_UPDATE: "NO"
+      UNDEAD_LEGACY: "{{ seven_days_to_die_undead_legacy }}"
+      UNDEAD_LEGACY_VERSION: stable
+      UNDEAD_LEGACY_UPDATE: "NO"
+      DARKNESS_FALLS: "{{ seven_days_to_die_darkness_falls }}"
+      DARKNESS_FALLS_UPDATE: "NO"
+      DARKNESS_FALLS_URL: "False"
+      CPM: "{{ seven_days_to_die_cpm }}"
+      CPM_UPDATE: "NO"
+      BEPINEX: "{{ seven_days_to_die_bepinex }}"
+      BEPINEX_UPDATE: "NO"
+      BACKUP: "{{ seven_days_to_die_backup }}"
+      BACKUP_HOUR: "{{ seven_days_to_die_backup_hour }}"
+      BACKUP_MAX: "{{ seven_days_to_die_backup_max }}"
+      MONITOR: "{{ seven_days_to_die_monitor }}"
+    volumes:
+      - {{ seven_days_to_die_dir }}/7DaysToDie:/home/sdtdserver/.local/share/7DaysToDie/
+      - {{ seven_days_to_die_dir }}/LGSM-Config:/home/sdtdserver/lgsm/config-lgsm/sdtdserver
+      - {{ seven_days_to_die_dir }}/ServerFiles:/home/sdtdserver/serverfiles/
+      - {{ seven_days_to_die_dir }}/log:/home/sdtdserver/log/
+      - {{ seven_days_to_die_dir }}/backups:/home/sdtdserver/lgsm/backup/
+    ports:
+      - "{{ seven_days_to_die_game_port }}:26900/tcp"
+      - "{{ seven_days_to_die_game_port }}:26900/udp"
+      - "{{ seven_days_to_die_query_port_1 }}:26901/udp"
+      - "{{ seven_days_to_die_query_port_2 }}:26902/udp"
+    mem_limit: {{ seven_days_to_die_mem_limit }}
+    ulimits:
+      nofile:
+        soft: "10240"
+        hard: "10240"
+    logging:
+      driver: json-file
+      options:
+        max-size: {{ seven_days_to_die_log_max_size }}
+        max-file: "{{ seven_days_to_die_log_max_file }}"
+    restart: unless-stopped

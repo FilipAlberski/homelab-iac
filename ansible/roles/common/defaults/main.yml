@@ -1,0 +1,12 @@
+---
+common_timezone: Europe/Warsaw
+common_packages:
+  - bash-completion
+  - bind-utils
+  - curl
+  - ethtool
+  - firewalld
+  - git
+  - tar
+  - unzip
+  - vim

@@ -2,24 +2,23 @@
 - name: Check if data disk exists
   ansible.builtin.stat:
     path: /dev/sdb
-  register: data_disk
+  register: paperless_data_disk
 
 - name: Ensure data disk is formatted
   when:
-    - data_disk.stat.exists
-    - data_disk.stat.isblk
+    - paperless_data_disk.stat.exists
+    - paperless_data_disk.stat.isblk
   block:
     - name: Check filesystem on data disk
       ansible.builtin.command: blkid -s TYPE -o value /dev/sdb
-      register: blkid_sdb
+      register: paperless_blkid_sdb
       changed_when: false
       ignore_errors: true
 
     - name: Format data disk with ext4
-      ansible.builtin.filesystem:
-        dev: /dev/sdb
-        fstype: ext4
-      when: blkid_sdb.rc != 0
+      ansible.builtin.command: mkfs.ext4 -F /dev/sdb
+      when: paperless_blkid_sdb.rc != 0
+      changed_when: true
 
 - name: Create data mount point
   ansible.builtin.file:
@@ -62,32 +61,40 @@
   when: not paperless_creds_file.stat.exists
   block:
     - name: Generate secret key
-      ansible.builtin.shell: python3 -c "import secrets; print(secrets.token_urlsafe(64))"
-      register: gen_key
+      ansible.builtin.command: python3 -c "import secrets; print(secrets.token_urlsafe(64))"
+      register: paperless_generated_key
       changed_when: false
 
     - name: Generate DB password
-      ansible.builtin.shell: python3 -c "import secrets; print(secrets.token_urlsafe(32))"
-      register: gen_dbpass
+      ansible.builtin.command: python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+      register: paperless_generated_db_password
       changed_when: false
 
     - name: Save credentials
       ansible.builtin.copy:
         content: |
-          PAPERLESS_SECRET_KEY={{ gen_key.stdout }}
-          PAPERLESS_DBPASS={{ gen_dbpass.stdout }}
+          PAPERLESS_SECRET_KEY={{ paperless_generated_key.stdout }}
+          PAPERLESS_DBPASS={{ paperless_generated_db_password.stdout }}
         dest: /opt/paperless/.credentials
         owner: homelab
         group: homelab
         mode: '0600'
 
 - name: Read Paperless credentials
-  ansible.builtin.shell: grep '^PAPERLESS_SECRET_KEY=' /opt/paperless/.credentials | cut -d= -f2-
+  ansible.builtin.shell: |
+    set -o pipefail
+    grep '^PAPERLESS_SECRET_KEY=' /opt/paperless/.credentials | cut -d= -f2-
+  args:
+    executable: /bin/bash
   register: paperless_key_read
   changed_when: false
 
 - name: Read Paperless DB password
-  ansible.builtin.shell: grep '^PAPERLESS_DBPASS=' /opt/paperless/.credentials | cut -d= -f2-
+  ansible.builtin.shell: |
+    set -o pipefail
+    grep '^PAPERLESS_DBPASS=' /opt/paperless/.credentials | cut -d= -f2-
+  args:
+    executable: /bin/bash
   register: paperless_dbpass_read
   changed_when: false
 

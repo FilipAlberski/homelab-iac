@@ -1,6 +1,12 @@
 ---
 http:
   routers:
+    traefik:
+      rule: Host(`traefik.lab`)
+      service: api@internal
+      entryPoints:
+        - web
+
     kuma:
       rule: Host(`kuma.lab`)
       service: kuma
@@ -18,6 +24,28 @@ http:
       service: paperless
       entryPoints:
         - web
+
+    portainer:
+      rule: Host(`portainer.lab`)
+      service: portainer
+      entryPoints:
+        - web
+
+    seafile:
+      rule: Host(`seafile.lab`)
+      service: seafile
+      entryPoints:
+        - web
+
+    actual:
+      rule: Host(`actual.lab`)
+      service: actual
+      entryPoints:
+        - web
+        - websecure
+      tls: {}
+      middlewares:
+        - actual-headers
 
     grafana:
       rule: Host(`grafana.lab`)
@@ -37,23 +65,18 @@ http:
       entryPoints:
         - web
 
-    portainer:
-      rule: Host(`portainer.lab`)
-      service: portainer
+    loki:
+      rule: Host(`loki.lab`)
+      service: loki
       entryPoints:
         - web
 
-    minio:
-      rule: Host(`minio.lab`)
-      service: minio
-      entryPoints:
-        - web
-
-    seafile:
-      rule: Host(`seafile.lab`)
-      service: seafile
-      entryPoints:
-        - web
+  middlewares:
+    actual-headers:
+      headers:
+        customResponseHeaders:
+          Cross-Origin-Opener-Policy: same-origin
+          Cross-Origin-Embedder-Policy: require-corp
 
   services:
     kuma:
@@ -71,26 +94,6 @@ http:
         servers:
           - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:8001"
 
-    grafana:
-      loadBalancer:
-        servers:
-          - url: "http://{{ hostvars['monitor-01']['ansible_host'] | default('192.168.40.145') }}:3000"
-
-    prometheus:
-      loadBalancer:
-        servers:
-          - url: "http://{{ hostvars['monitor-01']['ansible_host'] | default('192.168.40.145') }}:9090"
-
-    alertmanager:
-      loadBalancer:
-        servers:
-          - url: "http://{{ hostvars['monitor-01']['ansible_host'] | default('192.168.40.145') }}:9093"
-
-    minio:
-      loadBalancer:
-        servers:
-          - url: "http://{{ hostvars['storage-01']['ansible_host'] | default('192.168.40.160') }}:9001"
-
     portainer:
       loadBalancer:
         servers:
@@ -100,3 +103,33 @@ http:
       loadBalancer:
         servers:
           - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:8002"
+
+    actual:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:5006"
+
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:3000"
+
+    prometheus:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:9090"
+
+    alertmanager:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:9093"
+
+    loki:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:3100"
+
+tls:
+  certificates:
+    - certFile: /certs/cert.pem
+      keyFile: /certs/key.pem
