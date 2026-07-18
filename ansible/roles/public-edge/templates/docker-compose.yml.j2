@@ -1,0 +1,26 @@
+---
+services:
+  traefik:
+    image: {{ public_edge_traefik_image }}
+    restart: unless-stopped
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+    networks:
+      - public-proxy
+
+  cloudflared:
+    image: {{ public_edge_cloudflared_image }}
+    command: --metrics 0.0.0.0:2000 tunnel --no-autoupdate run --token-file /run/secrets/cloudflared-tunnel-token
+    restart: unless-stopped
+    depends_on:
+      - traefik
+    volumes:
+      - ./secrets/cloudflared-tunnel-token:/run/secrets/cloudflared-tunnel-token:ro
+    networks:
+      - public-proxy
+
+networks:
+  public-proxy:
+    name: public-proxy
+    driver: bridge

@@ -171,3 +171,15 @@ groups:
         annotations:
           summary: "7 Days to Die container is restarting loop on games-01"
           description: "Container 7dtdserver restarted more than once in 5 minutes."
+
+      - alert: CloudflareTunnelDown
+        expr: |
+          cloudflared_tunnel_ha_connections{instance="public-01"} < 1
+          or absent(cloudflared_tunnel_ha_connections{instance="public-01"})
+        for: 2m
+        labels:
+          severity: critical
+          host: public-01
+        annotations:
+          summary: "Cloudflare Tunnel is disconnected on public-01"
+          description: "cloudflared has no active connection to the Cloudflare edge."

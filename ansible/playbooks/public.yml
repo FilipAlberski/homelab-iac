@@ -1,0 +1,10 @@
+---
+- name: Deploy public web edge
+  hosts: public
+  become: true
+  gather_facts: true
+
+  roles:
+    - lvm-resize
+    - docker
+    - public-edge

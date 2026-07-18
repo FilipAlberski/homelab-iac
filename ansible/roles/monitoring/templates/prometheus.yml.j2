@@ -98,6 +98,7 @@ scrape_configs:
           - {{ hostvars['proxy-01']['ansible_host'] | default('192.168.40.142') }}
           - {{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}
           - {{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}
+          - {{ hostvars['public-01']['ansible_host'] | default('192.168.40.145') }}
     relabel_configs:
       - source_labels:
           - __address__

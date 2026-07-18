@@ -87,5 +87,20 @@ locals {
       tags = ["terraform", "monitoring", "docker"]
     }
 
+    public-01 = {
+      vm_id              = 145
+      cpu_cores          = 2
+      memory_mb          = 4096
+      memory_floating_mb = 1024
+      disks = [
+        {
+          datastore_id = "local-lvm"
+          size         = 30
+          interface    = "scsi0"
+        },
+      ]
+      tags = ["terraform", "public", "docker", "cloudflare-tunnel"]
+    }
+
   }
 }

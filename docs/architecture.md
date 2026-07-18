@@ -20,6 +20,7 @@ Production VMs are declared in `terraform/environments/prod/vms.tf`. The last oc
 | 142 | `proxy-01` | `192.168.40.142` | `network`, `proxy`, `docker` |
 | 143 | `app-01` | `192.168.40.143` | `apps`, `docker`, `seafile` |
 | 144 | `monitoring-01` | `192.168.40.144` | `monitoring`, `docker` |
+| 145 | `public-01` | `192.168.40.145` | `public`, `docker`, `cloudflare-tunnel` |
 
 Terraform tags generate Ansible inventory groups. Hyphens are converted to underscores, so `seven-days-to-die` becomes `seven_days_to_die`.
 
@@ -43,3 +44,15 @@ Pi-hole owns internal `*.lab` records. Traefik handles HTTP services on `proxy-0
 | Prometheus | `prometheus.lab` | `monitoring-01:9090` |
 | Alertmanager | `alertmanager.lab` | `monitoring-01:9093` |
 | Loki | `loki.lab` | `monitoring-01:3100` |
+
+## Public Web Edge
+
+`public-01` is isolated from the internal `*.lab` proxy. It runs Cloudflare Tunnel
+and a separate Traefik instance on the private `public-proxy` Docker network.
+No HTTP/S ports are published from the VM: Cloudflare Tunnel connects outward to
+Cloudflare and forwards public `alberski.pl` traffic to Traefik.
+
+The tunnel token is stored only as `vault_cloudflared_tunnel_token` in the
+encrypted production vault. Before deploying, create a remotely managed tunnel
+in Cloudflare and map `alberski.pl` and `*.alberski.pl` to `http://traefik:80`.
+Website roles will add Traefik routes and join the `public-proxy` network.

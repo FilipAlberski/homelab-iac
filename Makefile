@@ -52,7 +52,7 @@ output:    ## terraform output
 	$(TF) output
 
 ##@ Ansible
-.PHONY: deps inventory ping update update-check lint site bootstrap dns proxy monitoring apps paperless seafile actual games update-apps resize
+.PHONY: deps inventory ping update update-check lint site bootstrap dns proxy monitoring public apps paperless seafile actual games update-apps resize
 deps:      ## Install Ansible collection dependencies
 	cd $(ANSIBLE_DIR) && ansible-galaxy collection install -r requirements.yml -p collections
 
@@ -85,6 +85,9 @@ proxy:     ## Deploy Traefik on proxy hosts
 
 monitoring: ## Deploy Grafana/Prometheus/Loki and Alloy agents
 	$(ANSIBLE) playbooks/monitoring.yml
+
+public:    ## Deploy public Cloudflare Tunnel and Traefik edge
+	$(ANSIBLE) playbooks/public.yml
 
 apps:      ## Deploy apps on app-01
 	$(ANSIBLE) playbooks/apps.yml

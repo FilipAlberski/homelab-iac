@@ -11,6 +11,7 @@ Infrastructure-as-Code for a small Proxmox homelab. Terraform owns VM lifecycle,
 | `proxy-01` | `192.168.40.142` | Traefik reverse proxy |
 | `app-01` | `192.168.40.143` | Portainer, Uptime Kuma, Homepage, Paperless, Seafile, Actual |
 | `monitoring-01` | `192.168.40.144` | Grafana, Prometheus, Loki, Alertmanager, Blackbox Exporter |
+| `public-01` | `192.168.40.145` | Public web edge: Cloudflare Tunnel and Traefik |
 
 ## Layout
 
@@ -76,6 +77,7 @@ make bootstrap
 make site
 make update
 make monitoring
+make public
 make apps
 make paperless
 make seafile
@@ -91,6 +93,34 @@ make ENV=lab plan
 make ENV=lab apply
 make ENV=lab inventory
 ```
+
+## Public Websites
+
+`public-01` is the isolated edge for public websites. It runs a Cloudflare Tunnel
+and Traefik, with no HTTP or HTTPS ports exposed directly from the VM. The tunnel
+connects outbound to Cloudflare and forwards traffic to Traefik on the private
+`public-proxy` Docker network.
+
+Cloudflare is configured with two published application routes, both using the
+HTTP origin `traefik:80`:
+
+- `alberski.pl` for the main domain;
+- `*.alberski.pl` for subdomains such as `blog.alberski.pl`.
+
+The wildcard route needs a matching proxied `*` tunnel DNS record in Cloudflare;
+Cloudflare does not create that record automatically. The temporary “W trakcie
+budowy” website lives in [sites/coming-soon](sites/coming-soon), runs as the
+`coming-soon` Nginx Docker container, and is routed by Traefik for both domains.
+
+Deploy the edge infrastructure with:
+
+```bash
+make public
+```
+
+Website containers should join the external `public-proxy` Docker network and
+be added to Traefik's dynamic configuration. This keeps them unreachable from
+the VM network except through Cloudflare.
 
 ## Documentation
 

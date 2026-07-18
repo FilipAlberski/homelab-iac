@@ -30,6 +30,20 @@ prometheus.remote_write "default" {
   }
 }
 
+{% if 'public' in group_names %}
+prometheus.scrape "cloudflared" {
+  targets = [
+    {
+      __address__ = "cloudflared:2000",
+      instance    = "{{ inventory_hostname }}",
+      job         = "cloudflared",
+    },
+  ]
+  scrape_interval = "15s"
+  forward_to      = [prometheus.remote_write.default.receiver]
+}
+{% endif %}
+
 discovery.docker "containers" {
   host             = "unix:///var/run/docker.sock"
   refresh_interval = "15s"

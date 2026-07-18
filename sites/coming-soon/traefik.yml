@@ -1,0 +1,16 @@
+---
+http:
+  routers:
+    coming-soon-apex:
+      rule: Host(`alberski.pl`) || Host(`www.alberski.pl`)
+      service: coming-soon
+
+    coming-soon-blog:
+      rule: Host(`blog.alberski.pl`)
+      service: coming-soon
+
+  services:
+    coming-soon:
+      loadBalancer:
+        servers:
+          - url: http://coming-soon:80

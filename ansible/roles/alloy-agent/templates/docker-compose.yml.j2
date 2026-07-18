@@ -16,4 +16,14 @@ services:
       - /sys:/host/sys:ro
       - /var/log:/host/var/log:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+{% if 'public' in group_names %}
+    networks:
+      - public-proxy
+{% endif %}
     restart: unless-stopped
+
+{% if 'public' in group_names %}
+networks:
+  public-proxy:
+    external: true
+{% endif %}
