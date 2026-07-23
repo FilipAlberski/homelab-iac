@@ -22,6 +22,26 @@ locals {
       tags = ["terraform", "games", "docker", "seven-days-to-die"]
     }
 
+    jelly-01 = {
+      vm_id              = 131
+      cpu_cores          = 4
+      memory_mb          = 24576
+      memory_floating_mb = 24576
+      disks = [
+        {
+          datastore_id = "local-lvm"
+          size         = 50
+          interface    = "scsi0"
+        },
+        {
+          datastore_id = "datav1"
+          size         = 1000
+          interface    = "scsi1"
+        },
+      ]
+      tags = ["terraform", "media", "docker", "jellyfin"]
+    }
+
     dns-01 = {
       vm_id              = 141
       cpu_cores          = 2

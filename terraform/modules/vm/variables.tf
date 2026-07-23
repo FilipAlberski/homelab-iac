@@ -42,6 +42,35 @@ variable "cpu_type" {
   default     = "host"
 }
 
+variable "machine" {
+  description = "QEMU machine type (null uses the Proxmox default; q35 is required for PCIe passthrough)"
+  type        = string
+  default     = null
+}
+
+variable "hostpci_devices" {
+  description = "Optional host PCI devices attached after the Proxmox host has been prepared manually"
+  type = list(object({
+    device   = string
+    id       = optional(string)
+    mapping  = optional(string)
+    mdev     = optional(string)
+    pcie     = optional(bool, true)
+    rom_file = optional(string)
+    rombar   = optional(bool, true)
+    xvga     = optional(bool, false)
+  }))
+  default = []
+
+  validation {
+    condition = alltrue([
+      for device in var.hostpci_devices :
+      (device.id != null) != (device.mapping != null)
+    ])
+    error_message = "Each hostpci device must set exactly one of id or mapping."
+  }
+}
+
 variable "memory_mb" {
   description = "Memory in MB (dedicated)"
   type        = number

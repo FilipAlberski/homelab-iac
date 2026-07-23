@@ -1,0 +1,233 @@
+---
+name: media-stack
+
+x-common-environment: &common-environment
+  PUID: "{{ media_puid }}"
+  PGID: "{{ media_pgid }}"
+  UMASK: "{{ media_umask }}"
+  TZ: "{{ media_timezone }}"
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "{{ media_log_max_size }}"
+    max-file: "{{ media_log_max_file }}"
+
+services:
+  gluetun:
+    image: {{ media_gluetun_image }}
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      VPN_SERVICE_PROVIDER: mullvad
+      VPN_TYPE: wireguard
+      WIREGUARD_PRIVATE_KEY: ${WIREGUARD_PRIVATE_KEY}
+      WIREGUARD_ADDRESSES: ${WIREGUARD_ADDRESSES}
+      SERVER_COUNTRIES: "{{ media_mullvad_server_countries }}"
+{% if media_mullvad_server_cities | length > 0 %}
+      SERVER_CITIES: "{{ media_mullvad_server_cities }}"
+{% endif %}
+      OWNED_ONLY: "{{ media_mullvad_owned_only }}"
+      FIREWALL_INPUT_PORTS: "{{ media_ports.qbittorrent }},{{ media_ports.gluetun_health }}"
+      FIREWALL_OUTBOUND_SUBNETS: "{{ media_lan_cidr }}"
+      HEALTH_SERVER_ADDRESS: ":{{ media_ports.gluetun_health }}"
+      UPDATER_PERIOD: 480h
+      TZ: "{{ media_timezone }}"
+    ports:
+      - "{{ media_host_ip }}:{{ media_ports.qbittorrent }}:{{ media_ports.qbittorrent }}/tcp"
+      - "{{ media_host_ip }}:{{ media_ports.gluetun_health }}:{{ media_ports.gluetun_health }}/tcp"
+    volumes:
+      - "{{ media_stack_config_dir }}/gluetun:/gluetun"
+    networks:
+      - media
+    healthcheck:
+      test: ["CMD", "/gluetun-entrypoint", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+    restart: unless-stopped
+
+  qbittorrent:
+    image: {{ media_qbittorrent_image }}
+    container_name: qbittorrent
+    network_mode: service:gluetun
+    depends_on:
+      gluetun:
+        condition: service_healthy
+        restart: true
+    environment:
+      <<: *common-environment
+      WEBUI_PORT: "{{ media_ports.qbittorrent }}"
+      TORRENTING_PORT: "6881"
+    volumes:
+      - "{{ media_stack_config_dir }}/qbittorrent:/config"
+      - "{{ media_data_mount }}:{{ media_data_mount }}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null http://127.0.0.1:{{ media_ports.qbittorrent }}/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging: *default-logging
+    restart: unless-stopped
+
+  sonarr:
+    image: {{ media_sonarr_image }}
+    container_name: sonarr
+    environment: *common-environment
+    ports:
+      - "{{ media_host_ip }}:{{ media_ports.sonarr }}:{{ media_ports.sonarr }}/tcp"
+    volumes:
+      - "{{ media_stack_config_dir }}/sonarr:/config"
+      - "{{ media_data_mount }}:{{ media_data_mount }}"
+    networks:
+      - media
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:{{ media_ports.sonarr }}/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging: *default-logging
+    restart: unless-stopped
+
+  radarr:
+    image: {{ media_radarr_image }}
+    container_name: radarr
+    environment: *common-environment
+    ports:
+      - "{{ media_host_ip }}:{{ media_ports.radarr }}:{{ media_ports.radarr }}/tcp"
+    volumes:
+      - "{{ media_stack_config_dir }}/radarr:/config"
+      - "{{ media_data_mount }}:{{ media_data_mount }}"
+    networks:
+      - media
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:{{ media_ports.radarr }}/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging: *default-logging
+    restart: unless-stopped
+
+  prowlarr:
+    image: {{ media_prowlarr_image }}
+    container_name: prowlarr
+    environment: *common-environment
+    ports:
+      - "{{ media_host_ip }}:{{ media_ports.prowlarr }}:{{ media_ports.prowlarr }}/tcp"
+    volumes:
+      - "{{ media_stack_config_dir }}/prowlarr:/config"
+    networks:
+      - media
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:{{ media_ports.prowlarr }}/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging: *default-logging
+    restart: unless-stopped
+
+  flaresolverr:
+    image: {{ media_flaresolverr_image }}
+    container_name: flaresolverr
+    environment:
+      LOG_LEVEL: info
+      LOG_HTML: "false"
+      CAPTCHA_SOLVER: none
+      TZ: "{{ media_timezone }}"
+    shm_size: 2gb
+    networks:
+      - media
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:{{ media_flaresolverr_port }}/', timeout=5)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    logging: *default-logging
+    restart: unless-stopped
+
+  bazarr:
+    image: {{ media_bazarr_image }}
+    container_name: bazarr
+    environment: *common-environment
+    ports:
+      - "{{ media_host_ip }}:{{ media_ports.bazarr }}:{{ media_ports.bazarr }}/tcp"
+    volumes:
+      - "{{ media_stack_config_dir }}/bazarr:/config"
+      - "{{ media_data_mount }}:{{ media_data_mount }}"
+    networks:
+      - media
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null http://127.0.0.1:{{ media_ports.bazarr }}/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    logging: *default-logging
+    restart: unless-stopped
+
+  jellyfin:
+    image: {{ media_jellyfin_image }}
+    container_name: jellyfin
+    user: "{{ media_puid }}:{{ media_pgid }}"
+    ports:
+      - "{{ media_host_ip }}:{{ media_ports.jellyfin }}:{{ media_ports.jellyfin }}/tcp"
+    volumes:
+      - "{{ media_stack_config_dir }}/jellyfin:/config"
+      - "{{ media_stack_dir }}/cache/jellyfin:/cache"
+      - "{{ media_data_mount }}/media:{{ media_data_mount }}/media:ro"
+{% if media_jellyfin_qsv_available | default(false) %}
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+{% for media_gpu_gid in media_jellyfin_gpu_gids %}
+      - "{{ media_gpu_gid }}"
+{% endfor %}
+{% endif %}
+    networks:
+      - media
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:{{ media_ports.jellyfin }}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    logging: *default-logging
+    restart: unless-stopped
+
+  seerr:
+    image: {{ media_seerr_image }}
+    container_name: seerr
+    init: true
+    environment:
+      TZ: "{{ media_timezone }}"
+      PORT: "{{ media_ports.seerr }}"
+      LOG_LEVEL: info
+    ports:
+      - "{{ media_host_ip }}:{{ media_ports.seerr }}:{{ media_ports.seerr }}/tcp"
+    volumes:
+      - "{{ media_stack_config_dir }}/seerr:/app/config"
+    networks:
+      - media
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:{{ media_ports.seerr }}/api/v1/settings/public"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging: *default-logging
+    restart: unless-stopped
+
+networks:
+  media:
+    name: media-stack
+    driver: bridge

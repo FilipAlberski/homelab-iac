@@ -16,6 +16,7 @@ Production VMs are declared in `terraform/environments/prod/vms.tf`. The last oc
 | VMID | Host | IP | Tags |
 |------|------|----|------|
 | 130 | `games-01` | `192.168.40.130` | `games`, `docker`, `seven-days-to-die` |
+| 131 | `jelly-01` | `192.168.40.131` | `media`, `docker`, `jellyfin` |
 | 141 | `dns-01` | `192.168.40.141` | `network`, `dns`, `docker` |
 | 142 | `proxy-01` | `192.168.40.142` | `network`, `proxy`, `docker` |
 | 143 | `app-01` | `192.168.40.143` | `apps`, `docker`, `seafile` |
@@ -44,6 +45,12 @@ Pi-hole owns internal `*.lab` records. Traefik handles HTTP services on `proxy-0
 | Prometheus | `prometheus.lab` | `monitoring-01:9090` |
 | Alertmanager | `alertmanager.lab` | `monitoring-01:9093` |
 | Loki | `loki.lab` | `monitoring-01:3100` |
+| Jellyfin | `jellyfin.lab` | `jelly-01:8096` |
+| Seerr | `seerr.lab` | `jelly-01:5055` |
+
+Administrative media services resolve directly to `jelly-01` and are not
+routed through Traefik. qBittorrent alone shares Gluetun's network namespace;
+all other media containers use a normal Docker bridge.
 
 ## Public Web Edge
 

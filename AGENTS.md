@@ -9,6 +9,7 @@ IaC repo for a single-node Proxmox VE homelab at `192.168.40.10`. Terraform mana
 | Host | VMID | IP | Purpose |
 |------|------|----|---------|
 | `games-01` | 130 | `192.168.40.130` | 7 Days to Die server |
+| `jelly-01` | 131 | `192.168.40.131` | Jellyfin media stack |
 | `dns-01` | 141 | `192.168.40.141` | Pi-hole DNS |
 | `proxy-01` | 142 | `192.168.40.142` | Traefik reverse proxy |
 | `app-01` | 143 | `192.168.40.143` | Homelab apps |
@@ -36,6 +37,7 @@ ansible/
   roles/homelab-apps/          Uptime Kuma + Portainer
   roles/homepage/              Homepage dashboard
   roles/seven-days-to-die/     game server
+  roles/media-stack/           Jellyfin + Servarr + VPN download stack
 
 docs/                          architecture and runbooks
 scripts/                       Proxmox/bootstrap host scripts
@@ -78,6 +80,8 @@ make paperless
 make seafile
 make actual
 make games
+make media
+make media-verify
 make lint
 ```
 

@@ -37,6 +37,18 @@ http:
       entryPoints:
         - web
 
+    jellyfin:
+      rule: Host(`jellyfin.lab`)
+      service: jellyfin
+      entryPoints:
+        - web
+
+    seerr:
+      rule: Host(`seerr.lab`)
+      service: seerr
+      entryPoints:
+        - web
+
     actual:
       rule: Host(`actual.lab`)
       service: actual
@@ -103,6 +115,16 @@ http:
       loadBalancer:
         servers:
           - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:8002"
+
+    jellyfin:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.40.131') }}:8096"
+
+    seerr:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.40.131') }}:5055"
 
     actual:
       loadBalancer:

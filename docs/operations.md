@@ -34,12 +34,19 @@ make public
 make paperless
 make seafile
 make actual
+make media
+make media-verify
 make games
 make update-apps
 ```
 
 `make update-apps` pulls and recreates the Uptime Kuma, Portainer, Homepage,
 Paperless-ngx, Actual Budget, and Seafile Compose stacks on `app-01`.
+
+`make media` reconciles the complete stack on `jelly-01`. `make media-update`
+pulls its configured images before reconciliation, and `make media-verify`
+performs the VPN isolation, integration, hardlink, library and restart tests.
+See [Media Stack](media-stack.md) before the first deployment.
 
 ## Deploy Public Web Edge
 

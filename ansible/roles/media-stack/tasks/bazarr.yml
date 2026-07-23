@@ -1,0 +1,206 @@
+---
+- name: Wait for Bazarr configuration
+  ansible.builtin.wait_for:
+    path: "{{ media_stack_config_dir }}/bazarr/config/config.yaml"
+    timeout: 300
+
+- name: Read Bazarr configuration
+  ansible.builtin.slurp:
+    path: "{{ media_stack_config_dir }}/bazarr/config/config.yaml"
+  register: media_bazarr_config_file
+  no_log: true
+
+- name: Extract Bazarr API key
+  ansible.builtin.set_fact:
+    media_bazarr_api_key: >-
+      {{ ((media_bazarr_config_file.content | b64decode | from_yaml).auth.apikey) }}
+  no_log: true
+
+- name: Read Bazarr language profiles
+  ansible.builtin.uri:
+    url: "http://{{ media_host_ip }}:{{ media_ports.bazarr }}/api/system/languages/profiles"
+    headers:
+      X-API-KEY: "{{ media_bazarr_api_key }}"
+    return_content: true
+  register: media_bazarr_language_profiles
+  no_log: true
+
+- name: Select Bazarr language profile ID
+  ansible.builtin.set_fact:
+    media_bazarr_default_profile_id: >-
+      {{ ((media_bazarr_language_profiles.json
+           | selectattr('name', 'equalto', media_bazarr_default_profile_name)
+           | map(attribute='profileId') | list | first)
+          | default(
+              (([0] + (media_bazarr_language_profiles.json
+                       | map(attribute='profileId') | list)) | max) + 1,
+              true
+            )) }}
+  no_log: true
+
+- name: Define default Bazarr language profile
+  ansible.builtin.set_fact:
+    media_bazarr_default_profile:
+      profileId: "{{ media_bazarr_default_profile_id }}"
+      name: "{{ media_bazarr_default_profile_name }}"
+      cutoff: null
+      originalFormat: 0
+      items: "{{ media_bazarr_default_profile_items }}"
+      mustContain: []
+      mustNotContain: []
+      tag: null
+  when: >-
+    media_bazarr_default_profile_name not in
+    (media_bazarr_language_profiles.json | map(attribute='name') | list)
+  no_log: true
+
+- name: Create default Bazarr language profile
+  ansible.builtin.uri:
+    url: "http://{{ media_host_ip }}:{{ media_ports.bazarr }}/api/system/settings"
+    method: POST
+    headers:
+      X-API-KEY: "{{ media_bazarr_api_key }}"
+    body_format: form-urlencoded
+    body:
+      languages-enabled: "{{ media_bazarr_default_profile_languages }}"
+      languages-profiles: >-
+        {{ (media_bazarr_language_profiles.json
+            + [media_bazarr_default_profile]) | to_json }}
+    status_code: 204
+  when: media_bazarr_default_profile is defined
+  no_log: true
+
+- name: Build Bazarr integration configuration
+  ansible.builtin.set_fact:
+    media_bazarr_config: >-
+      {{ (media_bazarr_config_file.content | b64decode | from_yaml)
+         | combine({
+             'general': {
+               'use_sonarr': true,
+               'use_radarr': true,
+               'serie_default_enabled': true,
+               'serie_default_profile': media_bazarr_default_profile_id,
+               'movie_default_enabled': true,
+               'movie_default_profile': media_bazarr_default_profile_id,
+               'enabled_providers': media_bazarr_enabled_providers
+             },
+             'sonarr': {
+               'ip': 'sonarr',
+               'port': media_ports.sonarr,
+               'base_url': '/',
+               'ssl': false,
+               'apikey': media_sonarr_api_key
+             },
+             'radarr': {
+               'ip': 'radarr',
+               'port': media_ports.radarr,
+               'base_url': '/',
+               'ssl': false,
+               'apikey': media_radarr_api_key
+             }
+           }, recursive=true) }}
+  no_log: true
+
+- name: Persist Bazarr integration configuration
+  ansible.builtin.copy:
+    content: "{{ media_bazarr_config | to_nice_yaml(indent=2, sort_keys=false) }}"
+    dest: "{{ media_stack_config_dir }}/bazarr/config/config.yaml"
+    owner: "{{ media_puid }}"
+    group: "{{ media_pgid }}"
+    mode: '0600'
+  notify: Restart media stack
+  no_log: true
+
+- name: Restart Bazarr after integration changes
+  ansible.builtin.command: docker compose restart bazarr
+  args:
+    chdir: "{{ media_stack_dir }}"
+  changed_when: true
+
+- name: Wait for Bazarr API after restart
+  ansible.builtin.uri:
+    url: "http://{{ media_host_ip }}:{{ media_ports.bazarr }}/api/system/languages/profiles"
+    headers:
+      X-API-KEY: "{{ media_bazarr_api_key }}"
+    status_code: 200
+  register: media_bazarr_api_ready
+  retries: 30
+  delay: 2
+  until: media_bazarr_api_ready.status == 200
+  no_log: true
+
+- name: Read Bazarr movies
+  ansible.builtin.uri:
+    url: "http://{{ media_host_ip }}:{{ media_ports.bazarr }}/api/movies"
+    headers:
+      X-API-KEY: "{{ media_bazarr_api_key }}"
+    return_content: true
+  register: media_bazarr_movies
+  no_log: true
+
+- name: Assign the default subtitle profile to existing movies
+  ansible.builtin.uri:
+    url: "http://{{ media_host_ip }}:{{ media_ports.bazarr }}/api/movies"
+    method: POST
+    headers:
+      X-API-KEY: "{{ media_bazarr_api_key }}"
+    body_format: form-urlencoded
+    body:
+      radarrid: "{{ item.radarrId }}"
+      profileid: "{{ media_bazarr_default_profile_id }}"
+    status_code: 204
+  loop: "{{ media_bazarr_movies.json.data }}"
+  when: (item.profileId | default(0, true) | int) != (media_bazarr_default_profile_id | int)
+  register: media_bazarr_movie_profile_updates
+  no_log: true
+
+- name: Search missing subtitles for newly profiled movies
+  ansible.builtin.uri:
+    url: "http://{{ media_host_ip }}:{{ media_ports.bazarr }}/api/movies?radarrid={{ item.item.radarrId }}&action=search-missing"
+    method: PATCH
+    headers:
+      X-API-KEY: "{{ media_bazarr_api_key }}"
+    status_code: 204
+    timeout: 180
+  loop: "{{ media_bazarr_movie_profile_updates.results }}"
+  when: not (item.skipped | default(false))
+  no_log: true
+
+- name: Read Bazarr series
+  ansible.builtin.uri:
+    url: "http://{{ media_host_ip }}:{{ media_ports.bazarr }}/api/series"
+    headers:
+      X-API-KEY: "{{ media_bazarr_api_key }}"
+    return_content: true
+  register: media_bazarr_series
+  no_log: true
+
+- name: Assign the default subtitle profile to existing series
+  ansible.builtin.uri:
+    url: "http://{{ media_host_ip }}:{{ media_ports.bazarr }}/api/series"
+    method: POST
+    headers:
+      X-API-KEY: "{{ media_bazarr_api_key }}"
+    body_format: form-urlencoded
+    body:
+      seriesid: "{{ item.sonarrSeriesId }}"
+      profileid: "{{ media_bazarr_default_profile_id }}"
+    status_code: 204
+  loop: "{{ media_bazarr_series.json.data }}"
+  when: (item.profileId | default(0, true) | int) != (media_bazarr_default_profile_id | int)
+  register: media_bazarr_series_profile_updates
+  no_log: true
+
+- name: Search missing subtitles for newly profiled series
+  ansible.builtin.uri:
+    url: "http://{{ media_host_ip }}:{{ media_ports.bazarr }}/api/series?seriesid={{ item.item.sonarrSeriesId }}&action=search-missing"
+    method: PATCH
+    headers:
+      X-API-KEY: "{{ media_bazarr_api_key }}"
+    status_code: 204
+    timeout: 300
+  loop: "{{ media_bazarr_series_profile_updates.results }}"
+  when:
+    - not (item.skipped | default(false))
+    - (item.item.episodeFileCount | default(0) | int) > 0
+  no_log: true

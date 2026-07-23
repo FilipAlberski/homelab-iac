@@ -1,0 +1,36 @@
+[BitTorrent]
+Session\DefaultSavePath=/data/torrents
+Session\Interface=tun0
+Session\InterfaceName=tun0
+Session\Port=6881
+Session\QueueingSystemEnabled=true
+
+[Core]
+AutoDeleteAddedTorrentFile=Never
+
+[LegalNotice]
+Accepted=true
+
+[Meta]
+MigrationVersion=8
+
+[Network]
+Proxy\OnlyForTorrents=false
+
+[Preferences]
+Advanced\RecheckOnCompletion=false
+Connection\UPnP=false
+Downloads\SavePath=/data/torrents/
+Downloads\TempPath=/data/torrents/
+Downloads\TempPathEnabled=false
+General\Locale=en
+WebUI\Address=*
+WebUI\CSRFProtection=true
+WebUI\ClickjackingProtection=true
+WebUI\HostHeaderValidation=false
+WebUI\LocalHostAuth=true
+WebUI\Port={{ media_ports.qbittorrent }}
+WebUI\ServerDomains=*
+WebUI\UseUPnP=false
+WebUI\Username={{ media_qbittorrent_admin_user }}
+WebUI\Password_PBKDF2="{{ media_qbittorrent_password_hash }}"

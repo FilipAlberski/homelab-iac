@@ -52,7 +52,7 @@ output:    ## terraform output
 	$(TF) output
 
 ##@ Ansible
-.PHONY: deps inventory ping update update-check lint site bootstrap dns proxy monitoring public apps paperless seafile actual games update-apps resize
+.PHONY: deps inventory ping update update-check lint site bootstrap dns proxy monitoring public apps paperless seafile actual media media-verify media-update games update-apps resize
 deps:      ## Install Ansible collection dependencies
 	cd $(ANSIBLE_DIR) && ansible-galaxy collection install -r requirements.yml -p collections
 
@@ -103,6 +103,15 @@ seafile:   ## Deploy Seafile on app-01
 
 actual:    ## Deploy Actual Budget on app-01
 	$(ANSIBLE) playbooks/actual.yml
+
+media:      ## Deploy the media stack on jelly-01
+	$(ANSIBLE) playbooks/media.yml
+
+media-verify: ## Verify VPN isolation, health, integrations and hardlink support
+	$(ANSIBLE) playbooks/media-verify.yml
+
+media-update: ## Pull and recreate media stack containers
+	$(ANSIBLE) playbooks/media.yml -e media_stack_pull_images=true
 
 games:     ## Deploy game servers on games-01
 	$(ANSIBLE) playbooks/games.yml

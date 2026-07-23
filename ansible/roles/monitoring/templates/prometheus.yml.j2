@@ -51,6 +51,14 @@ scrape_configs:
           - http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:9090/-/ready
           - http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:9093/-/ready
           - http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:3100/ready
+          - http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.40.131') }}:8096/health
+          - http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.40.131') }}:5055/api/v1/settings/public
+          - http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.40.131') }}:8989/ping
+          - http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.40.131') }}:7878/ping
+          - http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.40.131') }}:9696/ping
+          - http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.40.131') }}:6767/
+          - http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.40.131') }}:8080/
+          - http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.40.131') }}:9999/
     relabel_configs:
       - source_labels:
           - __address__
@@ -99,6 +107,7 @@ scrape_configs:
           - {{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}
           - {{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}
           - {{ hostvars['public-01']['ansible_host'] | default('192.168.40.145') }}
+          - {{ hostvars['jelly-01']['ansible_host'] | default('192.168.40.131') }}
     relabel_configs:
       - source_labels:
           - __address__

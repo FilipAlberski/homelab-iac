@@ -1,0 +1,10 @@
+---
+- name: Deploy media stack on jelly-01
+  hosts: media
+  become: true
+  gather_facts: true
+
+  roles:
+    - lvm-resize
+    - docker
+    - media-stack

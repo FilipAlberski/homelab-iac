@@ -10,6 +10,7 @@ resource "proxmox_virtual_environment_vm" "this" {
   vm_id       = var.vm_id
   on_boot     = var.on_boot
   started     = var.started
+  machine     = var.machine
 
   agent {
     enabled = true
@@ -42,6 +43,20 @@ resource "proxmox_virtual_environment_vm" "this" {
       ssd          = disk.value.ssd
       iothread     = disk.value.iothread
       file_format  = "raw"
+    }
+  }
+
+  dynamic "hostpci" {
+    for_each = var.hostpci_devices
+    content {
+      device   = hostpci.value.device
+      id       = hostpci.value.id
+      mapping  = hostpci.value.mapping
+      mdev     = hostpci.value.mdev
+      pcie     = hostpci.value.pcie
+      rom_file = hostpci.value.rom_file
+      rombar   = hostpci.value.rombar
+      xvga     = hostpci.value.xvga
     }
   }
 
@@ -80,6 +95,9 @@ resource "proxmox_virtual_environment_vm" "this" {
   lifecycle {
     ignore_changes = [
       clone,
+      # The provider does not expose Proxmox's legacy-igd flag. Ignore
+      # host-side PCI changes so apply cannot strip it from Intel iGPU VMs.
+      hostpci,
     ]
   }
 }

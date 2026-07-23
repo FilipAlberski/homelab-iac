@@ -7,6 +7,7 @@ Infrastructure-as-Code for a small Proxmox homelab. Terraform owns VM lifecycle,
 | Host | IP | Role |
 |------|----|------|
 | `games-01` | `192.168.40.130` | 7 Days to Die server |
+| `jelly-01` | `192.168.40.131` | Jellyfin, Seerr, Servarr, qBittorrent through Mullvad |
 | `dns-01` | `192.168.40.141` | Pi-hole DNS |
 | `proxy-01` | `192.168.40.142` | Traefik reverse proxy |
 | `app-01` | `192.168.40.143` | Portainer, Uptime Kuma, Homepage, Paperless, Seafile, Actual |
@@ -38,6 +39,7 @@ ansible/
     seven-days-to-die/           7 Days to Die server
     monitoring/                  Grafana, Prometheus, Loki and Alertmanager
     alloy-agent/                 host metrics and logs forwarding
+    media-stack/                 Jellyfin and automated media acquisition
   playbooks/
     site.yml                    full desired-state deploy
     bootstrap.yml               base OS + Docker bootstrap
@@ -82,6 +84,8 @@ make apps
 make paperless
 make seafile
 make actual
+make media
+make media-verify
 make games
 make update-apps
 ```
@@ -126,6 +130,7 @@ the VM network except through Cloudflare.
 
 - [Architecture](docs/architecture.md)
 - [Operations](docs/operations.md)
+- [Media stack](docs/media-stack.md)
 
 ## Safety
 

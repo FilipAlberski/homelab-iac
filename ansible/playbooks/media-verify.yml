@@ -1,0 +1,15 @@
+---
+- name: Verify media stack on jelly-01
+  hosts: media
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Run media stack runtime verification
+      ansible.builtin.command: /opt/media-stack/verify-media-stack.sh
+      register: media_verify_result
+      changed_when: false
+
+    - name: Show media stack verification report
+      ansible.builtin.debug:
+        var: media_verify_result.stdout_lines

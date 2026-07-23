@@ -1,0 +1,12 @@
+---
+- name: Restart media stack
+  ansible.builtin.command: docker compose up -d --remove-orphans
+  args:
+    chdir: "{{ media_stack_dir }}"
+  changed_when: true
+
+- name: Restart Jellyfin
+  ansible.builtin.command: docker compose restart jellyfin
+  args:
+    chdir: "{{ media_stack_dir }}"
+  changed_when: true

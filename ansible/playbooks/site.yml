@@ -23,5 +23,8 @@
 - name: Deploy Seafile
   ansible.builtin.import_playbook: seafile.yml
 
+- name: Deploy media stack
+  ansible.builtin.import_playbook: media.yml
+
 - name: Deploy game servers
   ansible.builtin.import_playbook: games.yml

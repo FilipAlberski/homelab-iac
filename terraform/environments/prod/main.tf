@@ -11,6 +11,8 @@ module "vms" {
   template_id = var.template_id
 
   cpu_cores          = each.value.cpu_cores
+  machine            = lookup(each.value, "machine", null)
+  hostpci_devices    = lookup(each.value, "hostpci_devices", [])
   memory_mb          = each.value.memory_mb
   memory_floating_mb = lookup(each.value, "memory_floating_mb", 0)
 
