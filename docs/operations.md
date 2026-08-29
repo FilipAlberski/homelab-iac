@@ -23,6 +23,17 @@ This applies common OS configuration, grows disks, and installs Docker on hosts 
 make site
 ```
 
+Home Assistant OS is provisioned by `make apply`, but is not part of
+`make site`. Complete its first-run onboarding separately as described in
+[Home Assistant](home-assistant.md).
+
+After HAOS finishes its initial Supervisor setup, apply the repository's static
+network settings with:
+
+```bash
+make homeassistant-network
+```
+
 ## Deploy Individual Services
 
 ```bash
@@ -31,6 +42,7 @@ make proxy
 make apps
 make monitoring
 make public
+make demo
 make paperless
 make seafile
 make actual
@@ -63,6 +75,23 @@ The public edge does not expose host ports. The starter website in
 `sites/coming-soon` is deployed directly to `public-01` as an Nginx Docker
 container and is available at `alberski.pl` and `blog.alberski.pl`. Its
 container joins `public-proxy`; Traefik routes both hostnames to it.
+
+## Deploy Demo Websites
+
+Provision and configure `public-02` with `make plan`, `make apply`,
+`make inventory`, and `make demo`. Complete the one-time Cloudflare setup before
+publishing the first site. The complete runbook, lifecycle commands and recovery
+procedure are in [Demo Hosting](demo-hosting.md).
+
+Publish a static build with one command:
+
+```bash
+make demo-deploy SLUG=firma-a SOURCE=../firma-a/dist
+```
+
+Use `TTL_DAYS=60` to override the default 30-day lifetime. `make demo-list`
+shows the registry, while `make demo-status SLUG=firma-a STATUS=inactive`
+removes the public release without deleting its metadata immediately.
 
 ## Game Server
 

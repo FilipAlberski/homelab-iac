@@ -13,8 +13,8 @@
 # IP scheme:
 #   The last octet of the IPv4 address equals the VMID itself.
 #   VMIDs are kept in 100-219 so they fit cleanly in a /24:
-#       VMID 101 -> 192.168.40.101
-#       VMID 142 -> 192.168.40.142
+#       VMID 101 -> 192.168.60.101
+#       VMID 142 -> 192.168.60.142
 #
 # Storage layout (matches the Proxmox node):
 #   local        : ISO + cloud-init snippets
@@ -24,6 +24,6 @@
 ###############################################################################
 
 locals {
-  network_prefix = "192.168.40"
+  network_prefix = "192.168.60"
   network_cidr   = "/24"
 }

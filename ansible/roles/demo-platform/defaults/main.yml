@@ -1,0 +1,12 @@
+---
+demo_platform_dir: /opt/demo-platform
+demo_platform_sites_dir: /srv/demos
+demo_platform_domain: demo.alberski.pl
+demo_platform_traefik_image: traefik:v3.3
+demo_platform_nginx_image: nginx:1.27-alpine
+demo_platform_cloudflared_image: cloudflare/cloudflared:latest
+demo_platform_cloudflared_uid: '65532'
+demo_platform_cloudflared_tunnel_token: "{{ vault_demo_cloudflared_tunnel_token | default('') }}"
+demo_platform_default_ttl_days: 30
+demo_platform_cleanup_hour: 3
+demo_platform_cleanup_retention_days: 7

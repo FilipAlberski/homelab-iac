@@ -1,0 +1,8 @@
+---
+- name: Publish a static demo website
+  hosts: demo
+  become: false
+  gather_facts: true
+
+  roles:
+    - demo-site

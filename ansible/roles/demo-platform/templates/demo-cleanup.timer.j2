@@ -1,0 +1,10 @@
+[Unit]
+Description=Run demo website lifecycle cleanup daily
+
+[Timer]
+OnCalendar=*-*-* {{ '%02d' | format(demo_platform_cleanup_hour | int) }}:00:00
+Persistent=true
+RandomizedDelaySec=15m
+
+[Install]
+WantedBy=timers.target

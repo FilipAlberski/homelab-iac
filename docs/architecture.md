@@ -2,11 +2,11 @@
 
 ## Platform
 
-- Hypervisor: single-node Proxmox VE at `192.168.40.10`
-- Guest OS: Rocky Linux 10 cloud-init template, VMID `9000`
+- Hypervisor: single-node Proxmox VE at `192.168.60.10`
+- Guest OS: Rocky Linux 10 cloud-init template for general-purpose VMs; Home Assistant OS for the automation VM
 - Provisioning: Terraform with `bpg/proxmox`
 - Configuration: Ansible roles and Docker Compose
-- Network: flat `192.168.40.0/24`
+- Network: flat `192.168.60.0/24`
 - DNS suffix: `lab`
 
 ## VM Catalog
@@ -15,15 +15,20 @@ Production VMs are declared in `terraform/environments/prod/vms.tf`. The last oc
 
 | VMID | Host | IP | Tags |
 |------|------|----|------|
-| 130 | `games-01` | `192.168.40.130` | `games`, `docker`, `seven-days-to-die` |
-| 131 | `jelly-01` | `192.168.40.131` | `media`, `docker`, `jellyfin` |
-| 141 | `dns-01` | `192.168.40.141` | `network`, `dns`, `docker` |
-| 142 | `proxy-01` | `192.168.40.142` | `network`, `proxy`, `docker` |
-| 143 | `app-01` | `192.168.40.143` | `apps`, `docker`, `seafile` |
-| 144 | `monitoring-01` | `192.168.40.144` | `monitoring`, `docker` |
-| 145 | `public-01` | `192.168.40.145` | `public`, `docker`, `cloudflare-tunnel` |
+| 130 | `games-01` | `192.168.60.130` | `games`, `docker`, `seven-days-to-die` |
+| 131 | `jelly-01` | `192.168.60.131` | `media`, `docker`, `jellyfin` |
+| 141 | `dns-01` | `192.168.60.141` | `network`, `dns`, `docker` |
+| 142 | `proxy-01` | `192.168.60.142` | `network`, `proxy`, `docker` |
+| 143 | `app-01` | `192.168.60.143` | `apps`, `docker`, `seafile` |
+| 144 | `monitoring-01` | `192.168.60.144` | `monitoring`, `docker` |
+| 145 | `public-01` | `192.168.60.145` | `public`, `docker`, `cloudflare-tunnel` |
+| 146 | `public-02` | `192.168.60.146` | `demo`, `docker`, `cloudflare-tunnel` |
+| 147 | `homeassistant-01` | `192.168.60.147` | `automation`, `homeassistant` |
 
 Terraform tags generate Ansible inventory groups. Hyphens are converted to underscores, so `seven-days-to-die` becomes `seven_days_to_die`.
+`homeassistant-01` is the exception: it is declared separately in
+`homeassistant.tf` and excluded from Ansible because Home Assistant OS is
+managed through Supervisor rather than the Rocky Linux roles.
 
 ## Ansible Flow
 
@@ -47,10 +52,15 @@ Pi-hole owns internal `*.lab` records. Traefik handles HTTP services on `proxy-0
 | Loki | `loki.lab` | `monitoring-01:3100` |
 | Jellyfin | `jellyfin.lab` | `jelly-01:8096` |
 | Seerr | `seerr.lab` | `jelly-01:5055` |
+| Home Assistant | `homeassistant.lab:8123` | `homeassistant-01:8123` (direct) |
 
 Administrative media services resolve directly to `jelly-01` and are not
 routed through Traefik. qBittorrent alone shares Gluetun's network namespace;
 all other media containers use a normal Docker bridge.
+
+Home Assistant also resolves directly to its VM. It is not initially routed
+through Traefik, avoiding a dependency on Home Assistant's trusted-proxy
+configuration during onboarding and preserving local discovery behavior.
 
 ## Public Web Edge
 
@@ -63,3 +73,22 @@ The tunnel token is stored only as `vault_cloudflared_tunnel_token` in the
 encrypted production vault. Before deploying, create a remotely managed tunnel
 in Cloudflare and map `alberski.pl` and `*.alberski.pl` to `http://traefik:80`.
 Website roles will add Traefik routes and join the `public-proxy` network.
+
+## Demo Web Edge
+
+`public-02` repeats the proven outbound-only Tunnel and file-provider Traefik
+pattern, but shares no VM, tunnel token, Docker network, route files or site
+storage with `public-01`. Cloudflare sends only `*.demo.alberski.pl` to the
+dedicated tunnel and the host exposes no HTTP/S ports.
+
+One wildcard Traefik router sends DNS-safe slugs to a shared Nginx backend.
+Nginx maps the request hostname to `/srv/demos/<slug>/current`, which is an
+atomic symlink to an immutable release. This serves hundreds of small static
+sites without the per-project overhead of a container. Custom applications can
+later join the isolated `demo-proxy` network and add a file-provider route
+without changing the static path.
+
+Alloy on `public-02` reuses the central Prometheus/Loki stack. It forwards host
+CPU, memory, disk and logs, plus Cloudflare Tunnel and Traefik metrics. Traefik
+health-checks the shared static backend, and Alertmanager rules cover the host,
+tunnel, proxy and backend.

@@ -13,6 +13,10 @@ IaC repo for a single-node Proxmox VE homelab at `192.168.40.10`. Terraform mana
 | `dns-01` | 141 | `192.168.40.141` | Pi-hole DNS |
 | `proxy-01` | 142 | `192.168.40.142` | Traefik reverse proxy |
 | `app-01` | 143 | `192.168.40.143` | Homelab apps |
+| `monitoring-01` | 144 | `192.168.40.144` | Monitoring stack |
+| `public-01` | 145 | `192.168.40.145` | Public websites |
+| `public-02` | 146 | `192.168.40.146` | Client demo websites |
+| `homeassistant-01` | 147 | `192.168.40.147` | Home Assistant OS |
 
 ## Repository Layout
 
@@ -46,6 +50,7 @@ scripts/                       Proxmox/bootstrap host scripts
 ## Terraform Conventions
 
 - Production VMs live in `terraform/environments/prod/vms.tf`.
+- Home Assistant OS is the exception and lives in `terraform/environments/prod/homeassistant.tf`; it is not an Ansible host.
 - Shared prod locals such as network prefix live in `terraform/environments/prod/locals.tf`.
 - VM IPs follow `192.168.40.<VMID>`.
 - Proxmox tags generate Ansible inventory groups. Hyphens become underscores.
@@ -68,6 +73,7 @@ make help
 make plan
 make apply
 make inventory
+make homeassistant-network
 make deps
 make ping
 make bootstrap
@@ -75,6 +81,10 @@ make site
 make update
 make dns
 make proxy
+make monitoring
+make public
+make demo
+make demo-deploy SLUG=name SOURCE=path
 make apps
 make paperless
 make seafile

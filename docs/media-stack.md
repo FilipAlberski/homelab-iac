@@ -1,6 +1,6 @@
 # Media Stack
 
-`jelly-01` (`192.168.40.131`, VMID `131`) runs the complete internal media
+`jelly-01` (`192.168.60.131`, VMID `131`) runs the complete internal media
 stack. Terraform gives it 4 vCPU, 16 GiB RAM, a 50 GiB OS disk and a 1 TiB
 `datav1` disk. Ansible formats the blank second disk as ext4 and mounts it at
 `/data`.
@@ -162,7 +162,7 @@ policy without downloading third-party content.
 To validate VM boot recovery, reboot only after the normal check succeeds:
 
 ```bash
-ssh homelab@192.168.40.131 sudo reboot
+ssh homelab@192.168.60.131 sudo reboot
 # Wait for SSH to return, then:
 make media-verify
 ```

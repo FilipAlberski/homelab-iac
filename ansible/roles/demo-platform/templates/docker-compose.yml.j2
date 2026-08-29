@@ -1,0 +1,43 @@
+---
+services:
+  traefik:
+    container_name: demo-traefik
+    image: "{{ demo_platform_traefik_image }}"
+    restart: unless-stopped
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+    networks:
+      - demo-proxy
+
+  static-web:
+    container_name: demo-static-web
+    image: "{{ demo_platform_nginx_image }}"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./system-pages:/usr/share/nginx/system-pages:ro
+      - {{ demo_platform_sites_dir }}:/srv/demos:ro
+    networks:
+      - demo-proxy
+
+  cloudflared:
+    container_name: demo-cloudflared
+    image: "{{ demo_platform_cloudflared_image }}"
+    command: --metrics 0.0.0.0:2000 tunnel --no-autoupdate run --token-file /run/secrets/cloudflared-tunnel-token
+    restart: unless-stopped
+    depends_on:
+      - traefik
+    volumes:
+      - ./secrets/cloudflared-tunnel-token:/run/secrets/cloudflared-tunnel-token:ro
+    networks:
+      - demo-proxy
+
+networks:
+  demo-proxy:
+    name: demo-proxy
+    driver: bridge

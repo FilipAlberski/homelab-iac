@@ -30,13 +30,27 @@ prometheus.remote_write "default" {
   }
 }
 
-{% if 'public' in group_names %}
+{% if 'public' in group_names or 'demo' in group_names %}
 prometheus.scrape "cloudflared" {
   targets = [
     {
       __address__ = "cloudflared:2000",
       instance    = "{{ inventory_hostname }}",
       job         = "cloudflared",
+    },
+  ]
+  scrape_interval = "15s"
+  forward_to      = [prometheus.remote_write.default.receiver]
+}
+{% endif %}
+
+{% if 'demo' in group_names %}
+prometheus.scrape "demo_traefik" {
+  targets = [
+    {
+      __address__ = "traefik:8082",
+      instance    = "{{ inventory_hostname }}",
+      job         = "demo-traefik",
     },
   ]
   scrape_interval = "15s"

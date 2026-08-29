@@ -1,13 +1,34 @@
 output "vms" {
   description = "Map of all managed VMs with their core attributes"
+  value = merge(
+    {
+      for k, m in module.vms : k => {
+        vm_id = m.vm_id
+        name  = m.name
+        ip    = m.ipv4_address
+        fqdn  = m.fqdn
+        tags  = sort(m.tags)
+      }
+    },
+    {
+      (local.home_assistant.name) = {
+        vm_id = proxmox_virtual_environment_vm.home_assistant.vm_id
+        name  = proxmox_virtual_environment_vm.home_assistant.name
+        ip    = local.home_assistant.ip_address
+        fqdn  = "${local.home_assistant.name}.${var.search_domain}"
+        tags  = sort(local.home_assistant.tags)
+      }
+    },
+  )
+}
+
+output "home_assistant" {
+  description = "Home Assistant network and onboarding details"
   value = {
-    for k, m in module.vms : k => {
-      vm_id = m.vm_id
-      name  = m.name
-      ip    = m.ipv4_address
-      fqdn  = m.fqdn
-      tags  = sort(m.tags)
-    }
+    vm_id       = proxmox_virtual_environment_vm.home_assistant.vm_id
+    ip          = local.home_assistant.ip_address
+    mac_address = local.home_assistant.mac_address
+    url         = "http://${local.home_assistant.ip_address}:8123"
   }
 }
 

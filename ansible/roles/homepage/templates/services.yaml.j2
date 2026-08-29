@@ -6,7 +6,7 @@
         description: DNS Sinkhole & Ad Blocking
         widget:
           type: pihole
-          url: http://192.168.40.141
+          url: http://192.168.60.141
           password: "{{ vault_pihole_webpassword | default('changeme') }}"
 
     - Traefik:
@@ -15,7 +15,7 @@
         description: Reverse Proxy
         widget:
           type: traefik
-          url: http://192.168.40.142:8080
+          url: http://192.168.60.142:8080
 
 - Monitoring:
     - Grafana:
@@ -29,9 +29,14 @@
         description: Uptime Monitoring
         widget:
           type: uptimekuma
-          url: http://192.168.40.143:3001
+          url: http://192.168.60.143:3001
 
 - Applications:
+    - Home Assistant:
+        href: http://homeassistant.lab:8123
+        icon: home-assistant
+        description: Home automation
+
     - Actual Budget:
         href: https://actual.lab
         icon: actual-budget
@@ -81,6 +86,6 @@
 
 - Infrastructure:
     - Proxmox:
-        href: https://192.168.40.10:8006
+        href: https://192.168.60.10:8006
         icon: proxmox
         description: Hypervisor

@@ -94,62 +94,62 @@ http:
     kuma:
       loadBalancer:
         servers:
-          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:3001"
+          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.60.143') }}:3001"
 
     homepage:
       loadBalancer:
         servers:
-          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:3000"
+          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.60.143') }}:3000"
 
     paperless:
       loadBalancer:
         servers:
-          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:8001"
+          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.60.143') }}:8001"
 
     portainer:
       loadBalancer:
         servers:
-          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:8000"
+          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.60.143') }}:8000"
 
     seafile:
       loadBalancer:
         servers:
-          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:8002"
+          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.60.143') }}:8002"
 
     jellyfin:
       loadBalancer:
         servers:
-          - url: "http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.40.131') }}:8096"
+          - url: "http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.60.131') }}:8096"
 
     seerr:
       loadBalancer:
         servers:
-          - url: "http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.40.131') }}:5055"
+          - url: "http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.60.131') }}:5055"
 
     actual:
       loadBalancer:
         servers:
-          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.40.143') }}:5006"
+          - url: "http://{{ hostvars['app-01']['ansible_host'] | default('192.168.60.143') }}:5006"
 
     grafana:
       loadBalancer:
         servers:
-          - url: "http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:3000"
+          - url: "http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.60.144') }}:3000"
 
     prometheus:
       loadBalancer:
         servers:
-          - url: "http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:9090"
+          - url: "http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.60.144') }}:9090"
 
     alertmanager:
       loadBalancer:
         servers:
-          - url: "http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:9093"
+          - url: "http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.60.144') }}:9093"
 
     loki:
       loadBalancer:
         servers:
-          - url: "http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:3100"
+          - url: "http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.60.144') }}:3100"
 
 tls:
   certificates:

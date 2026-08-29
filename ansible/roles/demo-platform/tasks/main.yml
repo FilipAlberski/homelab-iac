@@ -1,0 +1,111 @@
+---
+- name: Require a dedicated Cloudflare Tunnel token
+  ansible.builtin.assert:
+    that:
+      - demo_platform_cloudflared_tunnel_token | length > 0
+    fail_msg: >-
+      Set vault_demo_cloudflared_tunnel_token in the encrypted production vault
+      before deploying public-02.
+  no_log: true
+
+- name: Create demo platform directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ demo_platform_dir }}"
+      owner: homelab
+      group: homelab
+      mode: '0755'
+    - path: "{{ demo_platform_dir }}/traefik"
+      owner: homelab
+      group: homelab
+      mode: '0755'
+    - path: "{{ demo_platform_dir }}/traefik/dynamic"
+      owner: homelab
+      group: homelab
+      mode: '0755'
+    - path: "{{ demo_platform_dir }}/nginx"
+      owner: homelab
+      group: homelab
+      mode: '0755'
+    - path: "{{ demo_platform_dir }}/system-pages"
+      owner: homelab
+      group: homelab
+      mode: '0755'
+    - path: "{{ demo_platform_dir }}/secrets"
+      owner: "{{ demo_platform_cloudflared_uid }}"
+      group: "{{ demo_platform_cloudflared_uid }}"
+      mode: '0700'
+    - path: "{{ demo_platform_sites_dir }}"
+      owner: homelab
+      group: homelab
+      mode: '0755'
+
+- name: Store demo Cloudflare Tunnel token
+  ansible.builtin.copy:
+    content: "{{ demo_platform_cloudflared_tunnel_token }}"
+    dest: "{{ demo_platform_dir }}/secrets/cloudflared-tunnel-token"
+    owner: "{{ demo_platform_cloudflared_uid }}"
+    group: "{{ demo_platform_cloudflared_uid }}"
+    mode: '0400'
+  no_log: true
+  notify: Restart demo platform
+
+- name: Deploy demo platform configuration
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: homelab
+    group: homelab
+    mode: '0644'
+  loop:
+    - src: traefik.yml.j2
+      dest: "{{ demo_platform_dir }}/traefik/traefik.yml"
+    - src: dynamic.yml.j2
+      dest: "{{ demo_platform_dir }}/traefik/dynamic/routes.yml"
+    - src: nginx.conf.j2
+      dest: "{{ demo_platform_dir }}/nginx/nginx.conf"
+    - src: unavailable.html.j2
+      dest: "{{ demo_platform_dir }}/system-pages/unavailable.html"
+    - src: docker-compose.yml.j2
+      dest: "{{ demo_platform_dir }}/docker-compose.yml"
+  notify: Restart demo platform
+
+- name: Install demo lifecycle controller
+  ansible.builtin.template:
+    src: democtl.py.j2
+    dest: /usr/local/bin/democtl
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Install demo cleanup service and timer
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - src: demo-cleanup.service.j2
+      dest: /etc/systemd/system/demo-cleanup.service
+    - src: demo-cleanup.timer.j2
+      dest: /etc/systemd/system/demo-cleanup.timer
+  notify: Reload systemd for demo cleanup
+
+- name: Ensure demo cleanup timer is enabled
+  ansible.builtin.systemd:
+    name: demo-cleanup.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Ensure demo platform compose is running
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: "{{ demo_platform_dir }}"
+  changed_when: true

@@ -8,6 +8,12 @@
 - name: Deploy reverse proxy
   ansible.builtin.import_playbook: proxy.yml
 
+- name: Deploy public web edge
+  ansible.builtin.import_playbook: public.yml
+
+- name: Deploy demo web edge
+  ansible.builtin.import_playbook: demo.yml
+
 - name: Deploy monitoring
   ansible.builtin.import_playbook: monitoring.yml
 

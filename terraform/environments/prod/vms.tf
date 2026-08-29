@@ -122,5 +122,20 @@ locals {
       tags = ["terraform", "public", "docker", "cloudflare-tunnel"]
     }
 
+    public-02 = {
+      vm_id              = 146
+      cpu_cores          = 2
+      memory_mb          = 4096
+      memory_floating_mb = 1024
+      disks = [
+        {
+          datastore_id = "local-lvm"
+          size         = 40
+          interface    = "scsi0"
+        },
+      ]
+      tags = ["terraform", "demo", "docker", "cloudflare-tunnel"]
+    }
+
   }
 }

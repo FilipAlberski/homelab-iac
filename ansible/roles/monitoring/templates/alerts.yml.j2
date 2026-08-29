@@ -112,18 +112,18 @@ groups:
           description: "ICMP ping probe failed for 2 minutes. Host may be down or network interface dead."
 
       - alert: ProxmoxUnreachable
-        expr: probe_success{job="blackbox_icmp",instance="192.168.40.10"} == 0
+        expr: probe_success{job="blackbox_icmp",instance="192.168.60.10"} == 0
         for: 2m
         labels:
           severity: critical
         annotations:
-          summary: "Proxmox host unreachable: 192.168.40.10"
+          summary: "Proxmox host unreachable: 192.168.60.10"
           description: "ICMP ping probe failed for 2 minutes. Proxmox host may be down or network dead."
 
   - name: homelab-services
     rules:
       - alert: TraefikDown
-        expr: probe_success{job="blackbox_tcp",instance=~"{{ hostvars['proxy-01']['ansible_host'] | default('192.168.40.142') }}:(80|443)"} == 0
+        expr: probe_success{job="blackbox_tcp",instance=~"{{ hostvars['proxy-01']['ansible_host'] | default('192.168.60.142') }}:(80|443)"} == 0
         for: 2m
         labels:
           severity: critical
@@ -133,7 +133,7 @@ groups:
           description: "Blackbox probe failed for {% raw %}{{ $labels.instance }}{% endraw %}."
 
       - alert: PiholeDown
-        expr: probe_success{job=~"blackbox_http|blackbox_tcp|blackbox_dns",instance=~"http://{{ hostvars['dns-01']['ansible_host'] | default('192.168.40.141') }}/admin/|{{ hostvars['dns-01']['ansible_host'] | default('192.168.40.141') }}(:53)?"} == 0
+        expr: probe_success{job=~"blackbox_http|blackbox_tcp|blackbox_dns",instance=~"http://{{ hostvars['dns-01']['ansible_host'] | default('192.168.60.141') }}/admin/|{{ hostvars['dns-01']['ansible_host'] | default('192.168.60.141') }}(:53)?"} == 0
         for: 2m
         labels:
           severity: critical
@@ -143,7 +143,7 @@ groups:
           description: "Blackbox probe failed for {% raw %}{{ $labels.instance }}{% endraw %}."
 
       - alert: MonitoringStackDown
-        expr: probe_success{job=~"blackbox_http|blackbox_tcp",instance=~"http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:(3000/login|9090/-/ready|9093/-/ready|3100/ready)|{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.40.144') }}:(9090|9093|3100)"} == 0
+        expr: probe_success{job=~"blackbox_http|blackbox_tcp",instance=~"http://{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.60.144') }}:(3000/login|9090/-/ready|9093/-/ready|3100/ready)|{{ hostvars['monitoring-01']['ansible_host'] | default('192.168.60.144') }}:(9090|9093|3100)"} == 0
         for: 2m
         labels:
           severity: critical
@@ -152,8 +152,18 @@ groups:
           summary: "Monitoring endpoint is down"
           description: "Blackbox probe failed for {% raw %}{{ $labels.instance }}{% endraw %}."
 
+      - alert: HomeAssistantDown
+        expr: probe_success{job="blackbox_http",instance="http://192.168.60.147:8123/"} == 0
+        for: 3m
+        labels:
+          severity: critical
+          host: homeassistant-01
+        annotations:
+          summary: "Home Assistant is down"
+          description: "Home Assistant did not answer on port 8123 for 3 minutes."
+
       - alert: SevenDaysToDieDown
-        expr: probe_success{job="blackbox_tcp",instance=~"{{ hostvars['games-01']['ansible_host'] | default('192.168.40.130') }}:26900"} == 0
+        expr: probe_success{job="blackbox_tcp",instance=~"{{ hostvars['games-01']['ansible_host'] | default('192.168.60.130') }}:26900"} == 0
         for: 2m
         labels:
           severity: critical
@@ -173,7 +183,7 @@ groups:
           description: "Container 7dtdserver restarted more than once in 5 minutes."
 
       - alert: MediaStackEndpointDown
-        expr: probe_success{job="blackbox_http",instance=~"http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.40.131') }}:(8096/health|5055/api/v1/settings/public|8989/ping|7878/ping|9696/ping|6767/|8080/)"} == 0
+        expr: probe_success{job="blackbox_http",instance=~"http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.60.131') }}:(8096/health|5055/api/v1/settings/public|8989/ping|7878/ping|9696/ping|6767/|8080/)"} == 0
         for: 3m
         labels:
           severity: warning
@@ -183,7 +193,7 @@ groups:
           description: "Blackbox probe failed for {% raw %}{{ $labels.instance }}{% endraw %}."
 
       - alert: MediaVpnDown
-        expr: probe_success{job="blackbox_http",instance="http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.40.131') }}:9999/"} == 0
+        expr: probe_success{job="blackbox_http",instance="http://{{ hostvars['jelly-01']['ansible_host'] | default('192.168.60.131') }}:9999/"} == 0
         for: 2m
         labels:
           severity: critical
@@ -203,3 +213,39 @@ groups:
         annotations:
           summary: "Cloudflare Tunnel is disconnected on public-01"
           description: "cloudflared has no active connection to the Cloudflare edge."
+
+      - alert: DemoCloudflareTunnelDown
+        expr: |
+          cloudflared_tunnel_ha_connections{instance="public-02"} < 1
+          or absent(cloudflared_tunnel_ha_connections{instance="public-02"})
+        for: 2m
+        labels:
+          severity: critical
+          host: public-02
+        annotations:
+          summary: "Demo Cloudflare Tunnel is disconnected on public-02"
+          description: "The dedicated demo tunnel has no active connection to the Cloudflare edge."
+
+      - alert: DemoTraefikDown
+        expr: |
+          up{job="demo-traefik",instance="public-02"} == 0
+          or absent(up{job="demo-traefik",instance="public-02"})
+        for: 2m
+        labels:
+          severity: critical
+          host: public-02
+        annotations:
+          summary: "Demo Traefik is down on public-02"
+          description: "Alloy cannot scrape the dedicated demo reverse proxy."
+
+      - alert: DemoStaticBackendDown
+        expr: |
+          traefik_service_server_up{instance="public-02",service="demo-static@file"} == 0
+          or absent(traefik_service_server_up{instance="public-02",service="demo-static@file"})
+        for: 2m
+        labels:
+          severity: critical
+          host: public-02
+        annotations:
+          summary: "Static demo backend is down on public-02"
+          description: "Traefik reports that the shared Nginx demo backend is unavailable."

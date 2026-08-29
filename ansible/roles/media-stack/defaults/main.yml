@@ -3,8 +3,8 @@ media_stack_dir: /opt/media-stack
 media_stack_config_dir: "{{ media_stack_dir }}/config"
 media_data_mount: /data
 media_data_disk: /dev/sdb
-media_lan_cidr: 192.168.40.0/24
-media_host_ip: "{{ ansible_host | default('192.168.40.131') }}"
+media_lan_cidr: 192.168.60.0/24
+media_host_ip: "{{ ansible_host | default('192.168.60.131') }}"
 media_puid: 1000
 media_pgid: 1000
 media_umask: "002"

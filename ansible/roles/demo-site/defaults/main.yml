@@ -1,0 +1,5 @@
+---
+demo_platform_sites_dir: /srv/demos
+demo_platform_domain: demo.alberski.pl
+demo_site_ttl_days: 30
+demo_site_source_repo: ""
