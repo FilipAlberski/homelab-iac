@@ -27,6 +27,8 @@
   hosts: apps
   become: true
   roles:
+    - role: homepage
+      when: deploy_homepage | bool
     - role: apps
       when: deploy_apps | bool
 

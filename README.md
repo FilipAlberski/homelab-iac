@@ -100,11 +100,11 @@ make site       # doprowadza systemy i usługi do oczekiwanego stanu
 make check      # waliduje Terraform i składnię Ansible
 ```
 
-Pi-hole, Traefik i Nagios są zarządzane przez nowe repo. Istniejące stosy
-Jellyfin i aplikacje nie są jeszcze automatycznie przejmowane. Odpowiadające im
-flagi `deploy_*` w `ansible/inventory/group_vars/all/main.yml` pozostają
-wyłączone do czasu sprawdzenia i przeniesienia ich obecnych plików Compose oraz
-danych.
+Pi-hole, Traefik, Homepage i Nagios są zarządzane przez nowe repo. Istniejące
+stosy Jellyfin oraz pozostałe aplikacje nie są jeszcze automatycznie
+przejmowane. Odpowiadające im flagi `deploy_*` w
+`ansible/inventory/group_vars/all/main.yml` pozostają wyłączone do czasu
+sprawdzenia i przeniesienia ich obecnych plików Compose oraz danych.
 
 Po każdym udanym `make apply` wykonaj zaszyfrowaną kopię lokalnego
 `terraform/prod/terraform.tfstate` poza tym hostem i poza Git.

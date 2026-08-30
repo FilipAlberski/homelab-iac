@@ -1,0 +1,71 @@
+---
+- Network:
+    - Pi-hole:
+        href: http://pihole.{{ homelab_domain }}/admin
+        icon: pi-hole
+        description: DNS Sinkhole & Ad Blocking
+        widget:
+          type: pihole
+          url: http://{{ hostvars['dns-01']['ansible_host'] }}
+          password: "{{ vault_pihole_web_password }}"
+
+    - Traefik:
+        href: http://traefik.{{ homelab_domain }}
+        icon: traefik
+        description: Reverse Proxy
+        widget:
+          type: traefik
+          url: http://{{ hostvars['proxy-01']['ansible_host'] }}:8080
+
+- Applications:
+    - Home Assistant:
+        href: http://homeassistant.{{ homelab_domain }}:8123
+        icon: home-assistant
+        description: Home automation
+
+    - Actual Budget:
+        href: https://actual.{{ homelab_domain }}
+        icon: actual-budget
+        description: Personal finance
+
+    - Portainer:
+        href: http://portainer.{{ homelab_domain }}
+        icon: portainer
+        description: Container Management
+
+    - Paperless-ngx:
+        href: http://paperless.{{ homelab_domain }}
+        icon: paperless-ngx
+        description: Document Management
+
+    - Seafile:
+        href: http://seafile.{{ homelab_domain }}
+        icon: seafile
+        description: File Sync & Share
+
+- Media:
+    - Jellyfin:
+        href: http://jellyfin.{{ homelab_domain }}
+        icon: jellyfin
+        description: Media streaming
+
+    - Seerr:
+        href: http://seerr.{{ homelab_domain }}
+        icon: overseerr
+        description: Media requests
+
+    - Sonarr:
+        href: http://sonarr.{{ homelab_domain }}:8989
+        icon: sonarr
+        description: TV automation
+
+    - Radarr:
+        href: http://radarr.{{ homelab_domain }}:7878
+        icon: radarr
+        description: Movie automation
+
+- Infrastructure:
+    - Proxmox:
+        href: https://192.168.60.10:8006
+        icon: proxmox
+        description: Hypervisor
