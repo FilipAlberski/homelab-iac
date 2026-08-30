@@ -115,7 +115,7 @@ variable "network_vlan_id" {
 }
 
 variable "ip_address" {
-  description = "Static IPv4 with CIDR mask, e.g. 192.168.40.101/24"
+  description = "Static IPv4 with CIDR mask, e.g. 192.168.60.101/24"
   type        = string
 }
 
@@ -137,6 +137,12 @@ variable "search_domain" {
 variable "ssh_public_key" {
   description = "SSH public key injected into the VM"
   type        = string
+}
+
+variable "user_data_file_id" {
+  description = "Optional Proxmox cloud-init user-data snippet ID"
+  type        = string
+  default     = null
 }
 
 variable "username" {

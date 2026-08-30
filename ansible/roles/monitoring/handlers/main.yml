@@ -1,6 +1,0 @@
----
-- name: Restart monitoring
-  ansible.builtin.command: docker compose up -d --force-recreate
-  args:
-    chdir: "{{ monitoring_dir }}"
-  changed_when: true

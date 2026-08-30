@@ -11,12 +11,6 @@
 - name: Deploy public web edge
   ansible.builtin.import_playbook: public.yml
 
-- name: Deploy demo web edge
-  ansible.builtin.import_playbook: demo.yml
-
-- name: Deploy monitoring
-  ansible.builtin.import_playbook: monitoring.yml
-
 - name: Deploy application stack
   ansible.builtin.import_playbook: apps.yml
 

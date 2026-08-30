@@ -1,15 +1,4 @@
 ---
-- name: Create Uptime Kuma directories
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: directory
-    owner: homelab
-    group: homelab
-    mode: '0755'
-  loop:
-    - /opt/uptime-kuma
-    - /opt/uptime-kuma/data
-
 - name: Create Portainer directories
   ansible.builtin.file:
     path: "{{ item }}"
@@ -20,21 +9,6 @@
   loop:
     - /opt/portainer
     - /opt/portainer/data
-
-- name: Deploy Uptime Kuma Docker Compose
-  ansible.builtin.template:
-    src: uptime-kuma.yml.j2
-    dest: /opt/uptime-kuma/docker-compose.yml
-    owner: homelab
-    group: homelab
-    mode: '0644'
-  notify: Restart uptime-kuma
-
-- name: Ensure Uptime Kuma compose is running
-  ansible.builtin.command: docker compose up -d
-  args:
-    chdir: /opt/uptime-kuma
-  changed_when: true
 
 - name: Deploy Portainer Docker Compose
   ansible.builtin.template:

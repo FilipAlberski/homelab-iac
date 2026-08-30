@@ -9,21 +9,18 @@ services:
       - "80:80/tcp"
     environment:
       TZ: 'Europe/Warsaw'
-      WEBPASSWORD: '{{ vault_pihole_webpassword | default("changeme") }}'
+      FTLCONF_webserver_api_password: '{{ vault_pihole_webpassword | default("changeme") }}'
       FTLCONF_LOCAL_IPV4: '{{ ansible_default_ipv4.address | default("127.0.0.1") }}'
       FTLCONF_dns_hosts: |-
         192.168.60.141 pihole.lab
+        192.168.60.148 puppet-01.lab puppet.lab
+        192.168.60.144 monitoring-01.lab
         192.168.60.142 traefik.lab
-        192.168.60.142 kuma.lab
         192.168.60.142 homepage.lab
         192.168.60.142 paperless.lab
         192.168.60.142 seafile.lab
         192.168.60.142 portainer.lab
         192.168.60.142 actual.lab
-        192.168.60.142 grafana.lab
-        192.168.60.142 prometheus.lab
-        192.168.60.142 alertmanager.lab
-        192.168.60.142 loki.lab
         192.168.60.142 jellyfin.lab
         192.168.60.142 seerr.lab
         192.168.60.131 jelly-01.lab

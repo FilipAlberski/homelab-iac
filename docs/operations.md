@@ -40,9 +40,7 @@ make homeassistant-network
 make dns
 make proxy
 make apps
-make monitoring
 make public
-make demo
 make paperless
 make seafile
 make actual
@@ -52,8 +50,8 @@ make games
 make update-apps
 ```
 
-`make update-apps` pulls and recreates the Uptime Kuma, Portainer, Homepage,
-Paperless-ngx, Actual Budget, and Seafile Compose stacks on `app-01`.
+`make update-apps` pulls and recreates the Portainer, Homepage, Paperless-ngx,
+Actual Budget, and Seafile Compose stacks on `app-01`.
 
 `make media` reconciles the complete stack on `jelly-01`. `make media-update`
 pulls its configured images before reconciliation, and `make media-verify`
@@ -75,23 +73,6 @@ The public edge does not expose host ports. The starter website in
 `sites/coming-soon` is deployed directly to `public-01` as an Nginx Docker
 container and is available at `alberski.pl` and `blog.alberski.pl`. Its
 container joins `public-proxy`; Traefik routes both hostnames to it.
-
-## Deploy Demo Websites
-
-Provision and configure `public-02` with `make plan`, `make apply`,
-`make inventory`, and `make demo`. Complete the one-time Cloudflare setup before
-publishing the first site. The complete runbook, lifecycle commands and recovery
-procedure are in [Demo Hosting](demo-hosting.md).
-
-Publish a static build with one command:
-
-```bash
-make demo-deploy SLUG=firma-a SOURCE=../firma-a/dist
-```
-
-Use `TTL_DAYS=60` to override the default 30-day lifetime. `make demo-list`
-shows the registry, while `make demo-status SLUG=firma-a STATUS=inactive`
-removes the public release without deleting its metadata immediately.
 
 ## Game Server
 

@@ -6,7 +6,7 @@ ENV          ?= prod
 TF_DIR       := terraform/environments/$(ENV)
 ANSIBLE_DIR  := ansible
 INVENTORY    := $(ANSIBLE_DIR)/inventories/$(ENV)/hosts.generated
-PVE          ?= root@192.168.40.10
+PVE          ?= root@192.168.60.10
 
 TF       := terraform -chdir=$(TF_DIR)
 ANSIBLE  := cd $(ANSIBLE_DIR) && ansible-playbook -i inventories/$(ENV)/hosts.generated
@@ -53,18 +53,18 @@ output:    ## terraform output
 
 ##@ Home Assistant
 .PHONY: homeassistant-network
-homeassistant-network: ## Set HAOS static address to 192.168.40.147 after first boot
+homeassistant-network: ## Set HAOS static address to 192.168.60.147 after first boot
 	@ssh $(PVE) qm guest exec 147 -- /usr/bin/ha network update enp6s18 \
 		--ipv4-method static \
-		--ipv4-address 192.168.40.147/24 \
-		--ipv4-gateway 192.168.40.1 \
-		--ipv4-nameserver 192.168.40.1 \
-		--ipv4-nameserver 1.1.1.1 \
+		--ipv4-address 192.168.60.147/24 \
+		--ipv4-gateway 192.168.60.1 \
+		--ipv4-nameserver 192.168.60.141 \
+		--ipv4-nameserver 192.168.60.1 \
 		| jq -e 'if .exitcode == 0 then . else error(.["err-data"] // "HAOS network update failed") end'
-	@echo "✓ Home Assistant network set to 192.168.40.147/24"
+	@echo "✓ Home Assistant network set to 192.168.60.147/24"
 
 ##@ Ansible
-.PHONY: deps inventory ping update update-check lint site bootstrap dns proxy monitoring public demo demo-deploy demo-status demo-list apps paperless seafile actual media media-verify media-update games update-apps resize
+.PHONY: deps inventory ping update update-check lint site bootstrap dns proxy public apps paperless seafile actual media media-verify media-update games update-apps resize
 deps:      ## Install Ansible collection dependencies
 	cd $(ANSIBLE_DIR) && ansible-galaxy collection install -r requirements.yml -p collections
 
@@ -95,34 +95,8 @@ dns:       ## Deploy Pi-hole on dns hosts
 proxy:     ## Deploy Traefik on proxy hosts
 	$(ANSIBLE) playbooks/proxy.yml
 
-monitoring: ## Deploy Grafana/Prometheus/Loki and Alloy agents
-	$(ANSIBLE) playbooks/monitoring.yml
-
 public:    ## Deploy public Cloudflare Tunnel and Traefik edge
 	$(ANSIBLE) playbooks/public.yml
-
-demo:      ## Deploy demo platform on public-02
-	$(ANSIBLE) playbooks/demo.yml
-
-demo-deploy: ## Publish static demo (SLUG=x SOURCE=dist [TTL_DAYS=30])
-	@test -n "$(SLUG)" || { echo "SLUG is required"; exit 2; }
-	@test -n "$(SOURCE)" || { echo "SOURCE is required"; exit 2; }
-	@test -d "$(SOURCE)" || { echo "SOURCE is not a directory: $(SOURCE)"; exit 2; }
-	$(ANSIBLE) playbooks/demo-deploy.yml \
-		-e "demo_slug=$(SLUG)" \
-		-e "demo_source=$(abspath $(SOURCE))" \
-		-e "demo_site_ttl_days=$(or $(TTL_DAYS),30)" \
-		-e "demo_site_source_repo=$(SOURCE_REPO)"
-
-demo-status: ## Change demo status (SLUG=x STATUS=active|inactive|sold|lost|expired)
-	@test -n "$(SLUG)" || { echo "SLUG is required"; exit 2; }
-	@test -n "$(STATUS)" || { echo "STATUS is required"; exit 2; }
-	$(ANSIBLE) playbooks/demo-status.yml \
-		-e "demo_slug=$(SLUG)" \
-		-e "demo_status=$(STATUS)"
-
-demo-list: ## List deployed demos and their expiry dates
-	$(ANSIBLE) playbooks/demo-list.yml
 
 apps:      ## Deploy apps on app-01
 	$(ANSIBLE) playbooks/apps.yml

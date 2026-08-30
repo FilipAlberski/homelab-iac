@@ -57,6 +57,21 @@ locals {
       tags = ["terraform", "network", "dns", "docker"]
     }
 
+    puppet-01 = {
+      vm_id              = 148
+      cpu_cores          = 2
+      memory_mb          = 4096
+      memory_floating_mb = 2048
+      disks = [
+        {
+          datastore_id = "local-lvm"
+          size         = 30
+          interface    = "scsi0"
+        },
+      ]
+      tags = ["terraform", "puppet", "control"]
+    }
+
     proxy-01 = {
       vm_id              = 142
       cpu_cores          = 2
@@ -93,10 +108,11 @@ locals {
     }
 
     monitoring-01 = {
-      vm_id              = 144
-      cpu_cores          = 2
-      memory_mb          = 6144
-      memory_floating_mb = 2048
+      vm_id                = 144
+      cpu_cores            = 2
+      memory_mb            = 6144
+      memory_floating_mb   = 2048
+      puppet_agent_enabled = true
       disks = [
         {
           datastore_id = "local-lvm"
@@ -104,7 +120,7 @@ locals {
           interface    = "scsi0"
         },
       ]
-      tags = ["terraform", "monitoring", "docker"]
+      tags = ["terraform", "monitoring", "puppet", "docker"]
     }
 
     public-01 = {
@@ -120,21 +136,6 @@ locals {
         },
       ]
       tags = ["terraform", "public", "docker", "cloudflare-tunnel"]
-    }
-
-    public-02 = {
-      vm_id              = 146
-      cpu_cores          = 2
-      memory_mb          = 4096
-      memory_floating_mb = 1024
-      disks = [
-        {
-          datastore_id = "local-lvm"
-          size         = 40
-          interface    = "scsi0"
-        },
-      ]
-      tags = ["terraform", "demo", "docker", "cloudflare-tunnel"]
     }
 
   }

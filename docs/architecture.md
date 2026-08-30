@@ -6,7 +6,7 @@
 - Guest OS: Rocky Linux 10 cloud-init template for general-purpose VMs; Home Assistant OS for the automation VM
 - Provisioning: Terraform with `bpg/proxmox`
 - Configuration: Ansible roles and Docker Compose
-- Network: flat `192.168.60.0/24`
+- Network: segmented MikroTik networks; see [`network.md`](network.md)
 - DNS suffix: `lab`
 
 ## VM Catalog
@@ -20,9 +20,7 @@ Production VMs are declared in `terraform/environments/prod/vms.tf`. The last oc
 | 141 | `dns-01` | `192.168.60.141` | `network`, `dns`, `docker` |
 | 142 | `proxy-01` | `192.168.60.142` | `network`, `proxy`, `docker` |
 | 143 | `app-01` | `192.168.60.143` | `apps`, `docker`, `seafile` |
-| 144 | `monitoring-01` | `192.168.60.144` | `monitoring`, `docker` |
 | 145 | `public-01` | `192.168.60.145` | `public`, `docker`, `cloudflare-tunnel` |
-| 146 | `public-02` | `192.168.60.146` | `demo`, `docker`, `cloudflare-tunnel` |
 | 147 | `homeassistant-01` | `192.168.60.147` | `automation`, `homeassistant` |
 
 Terraform tags generate Ansible inventory groups. Hyphens are converted to underscores, so `seven-days-to-die` becomes `seven_days_to_die`.
@@ -42,14 +40,10 @@ Individual service playbooks remain available for targeted deploys.
 
 ## DNS And Routing
 
-Pi-hole owns internal `*.lab` records. Traefik handles HTTP services on `proxy-01` and forwards them to `app-01` or `monitoring-01`. Game servers are direct DNS records to `games-01`, not Traefik HTTP routes.
+Pi-hole owns internal `*.lab` records. Traefik handles HTTP services on `proxy-01` and forwards them to `app-01`. Game servers are direct DNS records to `games-01`, not Traefik HTTP routes.
 
 | Service | Internal address | Backend |
 |---------|------------------|---------|
-| Grafana | `grafana.lab` | `monitoring-01:3000` |
-| Prometheus | `prometheus.lab` | `monitoring-01:9090` |
-| Alertmanager | `alertmanager.lab` | `monitoring-01:9093` |
-| Loki | `loki.lab` | `monitoring-01:3100` |
 | Jellyfin | `jellyfin.lab` | `jelly-01:8096` |
 | Seerr | `seerr.lab` | `jelly-01:5055` |
 | Home Assistant | `homeassistant.lab:8123` | `homeassistant-01:8123` (direct) |
@@ -73,22 +67,3 @@ The tunnel token is stored only as `vault_cloudflared_tunnel_token` in the
 encrypted production vault. Before deploying, create a remotely managed tunnel
 in Cloudflare and map `alberski.pl` and `*.alberski.pl` to `http://traefik:80`.
 Website roles will add Traefik routes and join the `public-proxy` network.
-
-## Demo Web Edge
-
-`public-02` repeats the proven outbound-only Tunnel and file-provider Traefik
-pattern, but shares no VM, tunnel token, Docker network, route files or site
-storage with `public-01`. Cloudflare sends only `*.demo.alberski.pl` to the
-dedicated tunnel and the host exposes no HTTP/S ports.
-
-One wildcard Traefik router sends DNS-safe slugs to a shared Nginx backend.
-Nginx maps the request hostname to `/srv/demos/<slug>/current`, which is an
-atomic symlink to an immutable release. This serves hundreds of small static
-sites without the per-project overhead of a container. Custom applications can
-later join the isolated `demo-proxy` network and add a file-provider route
-without changing the static path.
-
-Alloy on `public-02` reuses the central Prometheus/Loki stack. It forwards host
-CPU, memory, disk and logs, plus Cloudflare Tunnel and Traefik metrics. Traefik
-health-checks the shared static backend, and Alertmanager rules cover the host,
-tunnel, proxy and backend.

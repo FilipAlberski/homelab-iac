@@ -1,6 +1,0 @@
----
-- name: Restart alloy-agent
-  ansible.builtin.command: docker compose up -d --force-recreate
-  args:
-    chdir: "{{ alloy_agent_dir }}"
-  changed_when: true

@@ -10,8 +10,6 @@
       args:
         chdir: "{{ item.path }}"
       loop:
-        - name: Uptime Kuma
-          path: /opt/uptime-kuma
         - name: Portainer
           path: /opt/portainer
         - name: Homepage
@@ -31,8 +29,6 @@
       args:
         chdir: "{{ item.path }}"
       loop:
-        - name: Uptime Kuma
-          path: /opt/uptime-kuma
         - name: Portainer
           path: /opt/portainer
         - name: Homepage

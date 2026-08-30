@@ -44,12 +44,11 @@ resource.
    make homeassistant-network
    ```
 
-5. Deploy the internal DNS record and Homepage/monitoring integrations:
+5. Deploy the internal DNS record and Homepage integration:
 
    ```bash
    make dns
    make apps
-   make monitoring
    ```
 
 6. Wait several minutes for the initial Home Assistant preparation, then open

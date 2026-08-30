@@ -6,15 +6,13 @@ Infrastructure-as-Code for a small Proxmox homelab. Terraform owns VM lifecycle,
 
 | Host | IP | Role |
 |------|----|------|
-| `games-01` | `192.168.40.130` | 7 Days to Die server |
-| `jelly-01` | `192.168.40.131` | Jellyfin, Seerr, Servarr, qBittorrent through Mullvad |
-| `dns-01` | `192.168.40.141` | Pi-hole DNS |
-| `proxy-01` | `192.168.40.142` | Traefik reverse proxy |
-| `app-01` | `192.168.40.143` | Portainer, Uptime Kuma, Homepage, Paperless, Seafile, Actual |
-| `monitoring-01` | `192.168.40.144` | Grafana, Prometheus, Loki, Alertmanager, Blackbox Exporter |
-| `public-01` | `192.168.40.145` | Public web edge: Cloudflare Tunnel and Traefik |
-| `public-02` | `192.168.40.146` | Isolated wildcard demo hosting edge |
-| `homeassistant-01` | `192.168.40.147` | Home Assistant OS and home automation |
+| `games-01` | `192.168.60.130` | 7 Days to Die server |
+| `jelly-01` | `192.168.60.131` | Jellyfin, Seerr, Servarr, qBittorrent through Mullvad |
+| `dns-01` | `192.168.60.141` | Pi-hole DNS |
+| `proxy-01` | `192.168.60.142` | Traefik reverse proxy |
+| `app-01` | `192.168.60.143` | Portainer, Homepage, Paperless, Seafile, Actual |
+| `public-01` | `192.168.60.145` | Public web edge: Cloudflare Tunnel and Traefik |
+| `homeassistant-01` | `192.168.60.147` | Home Assistant OS and home automation |
 
 ## Layout
 
@@ -39,8 +37,6 @@ ansible/
     pihole/
     traefik/
     seven-days-to-die/           7 Days to Die server
-    monitoring/                  Grafana, Prometheus, Loki and Alertmanager
-    alloy-agent/                 host metrics and logs forwarding
     media-stack/                 Jellyfin and automated media acquisition
   playbooks/
     site.yml                    full desired-state deploy
@@ -81,10 +77,7 @@ make bootstrap
 make site
 make homeassistant-network
 make update
-make monitoring
 make public
-make demo
-make demo-deploy SLUG=kowalski-hydraulika SOURCE=../site/dist
 make apps
 make paperless
 make seafile
@@ -131,43 +124,23 @@ Website containers should join the external `public-proxy` Docker network and
 be added to Traefik's dynamic configuration. This keeps them unreachable from
 the VM network except through Cloudflare.
 
-## Demo Websites
-
-`public-02` is a separate edge for temporary client demos under
-`*.demo.alberski.pl`. Static builds share one small Nginx container and are
-routed by hostname, so publishing a new slug does not create DNS, proxy or
-certificate configuration and does not start another container.
-
-After the one-time Cloudflare and host setup described in
-[Demo Hosting](docs/demo-hosting.md), publish a built site with:
-
-```bash
-make demo-deploy \
-  SLUG=kowalski-hydraulika \
-  SOURCE=../kowalski-hydraulika/dist \
-  SOURCE_REPO=https://example.invalid/kowalski-hydraulika
-```
-
-The result is `https://kowalski-hydraulika.demo.alberski.pl`, active for 30
-days by default. Every response carries crawler-blocking headers, `robots.txt`
-disallows the whole site, and HTML pages receive a small global demo notice.
-
 ## Home Assistant
 
 Home Assistant runs as Home Assistant OS on a dedicated VM. It is intentionally
 outside the Rocky Linux/Ansible inventory and is updated through its own UI.
 Terraform fixes its MAC at `02:00:00:00:00:93`; after the initial boot,
 `make homeassistant-network` sets its HAOS-managed address to
-`192.168.40.147`. Follow the onboarding and backup runbook in
+`192.168.60.147`. Follow the onboarding and backup runbook in
 [Home Assistant](docs/home-assistant.md).
 
 ## Documentation
 
 - [Architecture](docs/architecture.md)
+- [Network](docs/network.md)
 - [Operations](docs/operations.md)
 - [Media stack](docs/media-stack.md)
-- [Demo hosting](docs/demo-hosting.md)
 - [Home Assistant](docs/home-assistant.md)
+- [TODO](docs/todo.md)
 
 ## Safety
 

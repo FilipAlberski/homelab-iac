@@ -62,6 +62,24 @@ variable "search_domain" {
   default     = "lab"
 }
 
+variable "puppet_server" {
+  description = "Puppet Server hostname configured on bootstrapped agents"
+  type        = string
+  default     = "puppet.lab"
+}
+
+variable "puppet_agent_package_url" {
+  description = "Pinned public Puppet agent RPM used by the cloud-init bootstrap"
+  type        = string
+  default     = "https://yum.puppet.com/puppet8/el/9/x86_64/puppet-agent-8.10.0-1.el9.x86_64.rpm"
+}
+
+variable "puppet_agent_dns_servers" {
+  description = "DNS servers used by the Puppet agent bootstrap"
+  type        = list(string)
+  default     = ["192.168.60.141", "192.168.60.1"]
+}
+
 variable "home_assistant_os_version" {
   description = "Pinned Home Assistant OS version used only for the VM's initial disk image"
   type        = string

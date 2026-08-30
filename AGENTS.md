@@ -2,21 +2,19 @@
 
 ## TL;DR
 
-IaC repo for a single-node Proxmox VE homelab at `192.168.40.10`. Terraform manages Rocky Linux 10 VMs from a cloud-init template. Ansible bootstraps hosts and deploys Docker Compose services. Use `make` targets as the operator interface.
+IaC repo for a single-node Proxmox VE homelab at `192.168.60.10`. Terraform manages Rocky Linux 10 VMs from a cloud-init template. Ansible bootstraps hosts and deploys Docker Compose services. Use `make` targets as the operator interface.
 
 ## Active VM Fleet
 
 | Host | VMID | IP | Purpose |
 |------|------|----|---------|
-| `games-01` | 130 | `192.168.40.130` | 7 Days to Die server |
-| `jelly-01` | 131 | `192.168.40.131` | Jellyfin media stack |
-| `dns-01` | 141 | `192.168.40.141` | Pi-hole DNS |
-| `proxy-01` | 142 | `192.168.40.142` | Traefik reverse proxy |
-| `app-01` | 143 | `192.168.40.143` | Homelab apps |
-| `monitoring-01` | 144 | `192.168.40.144` | Monitoring stack |
-| `public-01` | 145 | `192.168.40.145` | Public websites |
-| `public-02` | 146 | `192.168.40.146` | Client demo websites |
-| `homeassistant-01` | 147 | `192.168.40.147` | Home Assistant OS |
+| `games-01` | 130 | `192.168.60.130` | 7 Days to Die server |
+| `jelly-01` | 131 | `192.168.60.131` | Jellyfin media stack |
+| `dns-01` | 141 | `192.168.60.141` | Pi-hole DNS |
+| `proxy-01` | 142 | `192.168.60.142` | Traefik reverse proxy |
+| `app-01` | 143 | `192.168.60.143` | Homelab apps |
+| `public-01` | 145 | `192.168.60.145` | Public websites |
+| `homeassistant-01` | 147 | `192.168.60.147` | Home Assistant OS |
 
 ## Repository Layout
 
@@ -38,7 +36,7 @@ ansible/
   roles/docker/                Docker CE + Compose plugin
   roles/pihole/                Pi-hole DNS
   roles/traefik/               Traefik reverse proxy
-  roles/homelab-apps/          Uptime Kuma + Portainer
+  roles/homelab-apps/          Portainer
   roles/homepage/              Homepage dashboard
   roles/seven-days-to-die/     game server
   roles/media-stack/           Jellyfin + Servarr + VPN download stack
@@ -52,7 +50,7 @@ scripts/                       Proxmox/bootstrap host scripts
 - Production VMs live in `terraform/environments/prod/vms.tf`.
 - Home Assistant OS is the exception and lives in `terraform/environments/prod/homeassistant.tf`; it is not an Ansible host.
 - Shared prod locals such as network prefix live in `terraform/environments/prod/locals.tf`.
-- VM IPs follow `192.168.40.<VMID>`.
+- VM IPs follow `192.168.60.<VMID>`.
 - Proxmox tags generate Ansible inventory groups. Hyphens become underscores.
 - Do not manually edit `ansible/inventories/*/hosts.generated`; run `make inventory`.
 - Do not add empty Terraform modules just for structure. Add `network`, `storage`, or `kubernetes` modules only when there is real shared Terraform logic.
@@ -81,10 +79,7 @@ make site
 make update
 make dns
 make proxy
-make monitoring
 make public
-make demo
-make demo-deploy SLUG=name SOURCE=path
 make apps
 make paperless
 make seafile
@@ -105,7 +100,7 @@ Use `ENV=lab` for lab operations, for example `make ENV=lab plan`.
 
 ## 7 Days to Die — Map Switching
 
-Server runs in `vinanrra/7dtd-server` container on `games-01` (`192.168.40.130`, data at `/srv/data/games/7dtd`).
+Server runs in `vinanrra/7dtd-server` container on `games-01` (`192.168.60.130`, data at `/srv/data/games/7dtd`).
 
 ### Save Structure
 

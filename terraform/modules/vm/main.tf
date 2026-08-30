@@ -71,12 +71,16 @@ resource "proxmox_virtual_environment_vm" "this" {
   }
 
   initialization {
-    datastore_id = var.disks[0].datastore_id
-    interface    = "ide2"
+    datastore_id      = var.disks[0].datastore_id
+    interface         = "ide2"
+    user_data_file_id = var.user_data_file_id
 
-    user_account {
-      username = var.username
-      keys     = [var.ssh_public_key]
+    dynamic "user_account" {
+      for_each = var.user_data_file_id == null ? [1] : []
+      content {
+        username = var.username
+        keys     = [var.ssh_public_key]
+      }
     }
 
     dns {

@@ -92,7 +92,6 @@ make bootstrap
 make media
 make dns
 make proxy
-make monitoring
 make apps
 ```
 
