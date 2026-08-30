@@ -31,6 +31,8 @@
       when: deploy_homepage | bool
     - role: portainer
       when: deploy_portainer | bool
+    - role: actual
+      when: deploy_actual | bool
     - role: apps
       when: deploy_apps | bool
 

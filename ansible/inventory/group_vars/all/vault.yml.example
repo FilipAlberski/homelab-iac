@@ -3,3 +3,4 @@
 # a następnie umieść w nim te same klucze. vault.yml ma być zawsze zaszyfrowany.
 vault_pihole_web_password: "REPLACE_ME"
 vault_nagios_admin_password: "REPLACE_ME"
+vault_actual_password: "REPLACE_ME"

@@ -12,6 +12,7 @@ deploy_proxy: true
 deploy_apps: false
 deploy_homepage: true
 deploy_portainer: true
+deploy_actual: true
 deploy_nagios: true
 
 pihole_root: /opt/pihole
@@ -34,6 +35,10 @@ homepage_image: ghcr.io/gethomepage/homepage@sha256:d8d784e5090111b6e4c56dfd90e2
 
 portainer_root: /opt/portainer
 portainer_image: portainer/portainer-ce@sha256:bd8f7a6d98e2a512e18272c38914abd1e92d663451f3c925d502a8557a3b92d7
+
+actual_root: /opt/actual
+actual_port: 5006
+actual_image: actualbudget/actual-server@sha256:1aeeb3985db55556e716dec25e08f6ce09308c2571b65cddbc6746ee6d5e0d45
 
 jellyfin_data_device: /dev/sdb
 jellyfin_data_mount: /srv/jellyfin-data
