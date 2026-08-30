@@ -1,5 +1,0 @@
----
-homepage_port: 3000
-homepage_image: ghcr.io/gethomepage/homepage:latest
-homepage_dir: /opt/homepage
-homepage_config_dir: /opt/homepage/config

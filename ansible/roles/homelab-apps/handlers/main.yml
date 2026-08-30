@@ -1,6 +1,0 @@
----
-- name: Restart portainer
-  ansible.builtin.command: docker compose restart
-  args:
-    chdir: /opt/portainer
-  changed_when: true

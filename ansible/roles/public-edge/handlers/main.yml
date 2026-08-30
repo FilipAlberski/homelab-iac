@@ -1,6 +1,0 @@
----
-- name: Restart public edge
-  ansible.builtin.command: docker compose up -d --force-recreate
-  args:
-    chdir: "{{ public_edge_dir }}"
-  changed_when: true

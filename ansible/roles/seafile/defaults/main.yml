@@ -1,7 +1,0 @@
----
-seafile_dir: /srv/data/seafile
-seafile_hostname: seafile.lab
-seafile_admin_email: admin@lab
-seafile_admin_password: "{{ vault_seafile_admin_password | default('changeme') }}"
-seafile_db_password: "{{ vault_seafile_db_password | default('changeme') }}"
-seafile_jwt_key: "{{ vault_seafile_jwt_key | default('a7f3c9e1b2d4f6a8c0e2d4f6a8b0c2e4') }}"

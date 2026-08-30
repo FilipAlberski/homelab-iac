@@ -1,6 +1,0 @@
----
-- name: Restart traefik
-  ansible.builtin.command: docker compose up -d --force-recreate
-  args:
-    chdir: /opt/traefik
-  changed_when: true

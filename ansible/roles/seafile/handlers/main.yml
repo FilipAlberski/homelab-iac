@@ -1,6 +1,0 @@
----
-- name: Restart seafile
-  ansible.builtin.command: docker compose up -d
-  args:
-    chdir: "{{ seafile_dir }}"
-  changed_when: true

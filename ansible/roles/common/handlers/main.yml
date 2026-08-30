@@ -1,7 +1,0 @@
----
-- name: Reload systemd and enable VirtIO offload fix
-  ansible.builtin.systemd:
-    name: disable-virtio-offload
-    daemon_reload: true
-    enabled: true
-    state: started

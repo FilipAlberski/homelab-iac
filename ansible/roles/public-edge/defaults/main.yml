@@ -1,6 +1,0 @@
----
-public_edge_dir: /opt/public-edge
-public_edge_traefik_image: traefik:v3.3
-public_edge_cloudflared_image: cloudflare/cloudflared:latest
-public_edge_cloudflared_uid: '65532'
-public_edge_cloudflared_tunnel_token: "{{ vault_cloudflared_tunnel_token | default('') }}"
