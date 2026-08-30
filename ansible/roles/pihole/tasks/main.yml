@@ -14,8 +14,9 @@
     group: "{{ homelab_user }}"
     mode: "0755"
   loop:
-    - "{{ homelab_service_root }}/pihole"
-    - "{{ homelab_service_root }}/pihole/etc-pihole"
+    - "{{ pihole_root }}"
+    - "{{ pihole_root }}/etc-pihole"
+    - "{{ pihole_root }}/etc-dnsmasq.d"
 
 - name: Otwórz porty Pi-hole
   ansible.posix.firewalld:
@@ -31,13 +32,16 @@
 - name: Zapisz Compose Pi-hole
   ansible.builtin.template:
     src: compose.yml.j2
-    dest: "{{ homelab_service_root }}/pihole/compose.yml"
+    dest: "{{ pihole_root }}/docker-compose.yml"
     owner: "{{ homelab_user }}"
     group: "{{ homelab_user }}"
     mode: "0600"
+    backup: true
 
 - name: Uruchom Pi-hole
   community.docker.docker_compose_v2:
-    project_src: "{{ homelab_service_root }}/pihole"
+    project_src: "{{ pihole_root }}"
+    files:
+      - docker-compose.yml
     pull: missing
     state: present

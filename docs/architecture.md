@@ -32,7 +32,8 @@ storage.
 
 Podczas przejęcia istniejącego homelabu flagi `deploy_*` chronią działające
 stosy przed przypadkowym zastąpieniem. Usługę włącza się w nowym repo dopiero
-po przeniesieniu jej Compose, wolumenów i konfiguracji.
+po przeniesieniu jej Compose, wolumenów i konfiguracji. Pi-hole i Nagios zostały
+już przejęte; pozostałe flagi usług pozostają wyłączone.
 
 ## Świadomie odłożone
 

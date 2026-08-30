@@ -6,13 +6,21 @@ homelab_service_root: /srv
 
 # Istniejące stosy są przejmowane osobno. Ustawienie flagi na true oznacza,
 # że odpowiednia rola może zapisać Compose i zarządzać kontenerami usługi.
-deploy_pihole: false
+deploy_pihole: true
 deploy_jellyfin: false
 deploy_proxy: false
 deploy_apps: false
 deploy_nagios: true
 
-pihole_image: pihole/pihole:2026.07.2
+pihole_root: /opt/pihole
+pihole_image: pihole/pihole@sha256:1c32c36b862a12762656b6471c854cebc01fe945639ba3a893611337c2c95e99
+pihole_dns_hosts:
+  - "192.168.60.141 dns-01.lab pihole.lab"
+  - "192.168.60.144 monitor-01.lab monitoring-01.lab nagios.lab"
+  - "192.168.60.142 proxy-01.lab traefik.lab homepage.lab paperless.lab seafile.lab portainer.lab actual.lab jellyfin.lab seerr.lab"
+  - "192.168.60.143 app-01.lab app.lab"
+  - "192.168.60.131 jelly-01.lab sonarr.lab radarr.lab prowlarr.lab bazarr.lab qbittorrent.lab"
+  - "192.168.60.147 homeassistant-01.lab homeassistant.lab"
 jellyfin_image: jellyfin/jellyfin:10.11.11
 traefik_image: traefik:v3.7.1
 portainer_image: portainer/portainer-ce:lts
