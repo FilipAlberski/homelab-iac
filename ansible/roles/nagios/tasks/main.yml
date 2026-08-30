@@ -1,0 +1,47 @@
+---
+- name: Sprawdź sekret administratora Nagiosa
+  ansible.builtin.assert:
+    that:
+      - vault_nagios_admin_password is defined
+      - vault_nagios_admin_password | length >= 12
+    fail_msg: "Ustaw vault_nagios_admin_password w zaszyfrowanym inventory/group_vars/all/vault.yml."
+
+- name: Utwórz katalogi Nagiosa
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0755"
+  loop:
+    - "{{ homelab_service_root }}/nagios"
+    - "{{ homelab_service_root }}/nagios/objects"
+
+- name: Otwórz port panelu Nagiosa
+  ansible.posix.firewalld:
+    port: 80/tcp
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Zapisz definicje hostów Nagiosa
+  ansible.builtin.template:
+    src: homelab.cfg.j2
+    dest: "{{ homelab_service_root }}/nagios/objects/homelab.cfg"
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0644"
+
+- name: Zapisz Compose Nagiosa
+  ansible.builtin.template:
+    src: compose.yml.j2
+    dest: "{{ homelab_service_root }}/nagios/compose.yml"
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0600"
+
+- name: Uruchom Nagios
+  community.docker.docker_compose_v2:
+    project_src: "{{ homelab_service_root }}/nagios"
+    pull: missing
+    state: present

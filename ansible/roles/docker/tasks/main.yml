@@ -1,0 +1,37 @@
+---
+- name: Zainstaluj narzędzia repozytoriów DNF
+  ansible.builtin.dnf:
+    name: dnf-plugins-core
+    state: present
+    lock_timeout: 300
+
+- name: Dodaj repozytorium Docker CE
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/centos/docker-ce.repo
+    dest: /etc/yum.repos.d/docker-ce.repo
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Zainstaluj Docker Engine i Compose
+  ansible.builtin.dnf:
+    name:
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-ce
+      - docker-ce-cli
+      - docker-compose-plugin
+    state: present
+    lock_timeout: 300
+
+- name: Włącz Docker
+  ansible.builtin.systemd_service:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Dodaj operatora do grupy docker
+  ansible.builtin.user:
+    name: "{{ homelab_user }}"
+    groups: docker
+    append: true

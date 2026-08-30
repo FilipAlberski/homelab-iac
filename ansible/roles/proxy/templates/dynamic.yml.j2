@@ -1,0 +1,41 @@
+---
+http:
+  routers:
+    traefik:
+      rule: "Host(`traefik.{{ homelab_domain }}`)"
+      entryPoints: [web]
+      service: api@internal
+    pihole:
+      rule: "Host(`pihole.{{ homelab_domain }}`)"
+      entryPoints: [web]
+      service: pihole
+    jellyfin:
+      rule: "Host(`jellyfin.{{ homelab_domain }}`)"
+      entryPoints: [web]
+      service: jellyfin
+    app:
+      rule: "Host(`app.{{ homelab_domain }}`)"
+      entryPoints: [web]
+      service: app
+    nagios:
+      rule: "Host(`nagios.{{ homelab_domain }}`)"
+      entryPoints: [web]
+      service: nagios
+
+  services:
+    pihole:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.60.141"
+    jellyfin:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.60.131:8096"
+    app:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.60.143:9000"
+    nagios:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.60.144"

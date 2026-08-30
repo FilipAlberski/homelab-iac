@@ -1,0 +1,43 @@
+---
+- name: Sprawdź sekret panelu Pi-hole
+  ansible.builtin.assert:
+    that:
+      - vault_pihole_web_password is defined
+      - vault_pihole_web_password | length >= 12
+    fail_msg: "Ustaw vault_pihole_web_password w zaszyfrowanym inventory/group_vars/all/vault.yml."
+
+- name: Utwórz katalogi Pi-hole
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0755"
+  loop:
+    - "{{ homelab_service_root }}/pihole"
+    - "{{ homelab_service_root }}/pihole/etc-pihole"
+
+- name: Otwórz porty Pi-hole
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop:
+    - 53/tcp
+    - 53/udp
+    - 80/tcp
+
+- name: Zapisz Compose Pi-hole
+  ansible.builtin.template:
+    src: compose.yml.j2
+    dest: "{{ homelab_service_root }}/pihole/compose.yml"
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0600"
+
+- name: Uruchom Pi-hole
+  community.docker.docker_compose_v2:
+    project_src: "{{ homelab_service_root }}/pihole"
+    pull: missing
+    state: present

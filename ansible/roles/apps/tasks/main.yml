@@ -1,0 +1,35 @@
+---
+- name: Utwórz katalogi aplikacji
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0755"
+  loop:
+    - "{{ homelab_service_root }}/apps"
+    - "{{ homelab_service_root }}/apps/portainer-data"
+
+- name: Otwórz porty Portainera w LAN
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop:
+    - 9000/tcp
+    - 9443/tcp
+
+- name: Zapisz Compose aplikacji
+  ansible.builtin.template:
+    src: compose.yml.j2
+    dest: "{{ homelab_service_root }}/apps/compose.yml"
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0644"
+
+- name: Uruchom aplikacje
+  community.docker.docker_compose_v2:
+    project_src: "{{ homelab_service_root }}/apps"
+    pull: missing
+    state: present

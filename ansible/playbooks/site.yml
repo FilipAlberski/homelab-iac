@@ -1,0 +1,38 @@
+---
+- name: Wykonaj bootstrap systemów
+  ansible.builtin.import_playbook: bootstrap.yml
+
+- name: Wdróż Pi-hole
+  hosts: pihole
+  become: true
+  roles:
+    - role: pihole
+      when: deploy_pihole | bool
+
+- name: Wdróż Jellyfin
+  hosts: jellyfin
+  become: true
+  roles:
+    - role: jellyfin
+      when: deploy_jellyfin | bool
+
+- name: Wdróż Traefik
+  hosts: proxy
+  become: true
+  roles:
+    - role: proxy
+      when: deploy_proxy | bool
+
+- name: Wdróż aplikacje
+  hosts: apps
+  become: true
+  roles:
+    - role: apps
+      when: deploy_apps | bool
+
+- name: Wdróż Nagios
+  hosts: nagios
+  become: true
+  roles:
+    - role: nagios
+      when: deploy_nagios | bool

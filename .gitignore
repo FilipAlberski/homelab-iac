@@ -1,0 +1,21 @@
+.DS_Store
+
+# Terraform: lokalny state i dane operatora
+**/.terraform/
+.state-backups/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+terraform/prod/terraform.tfvars
+
+# Ansible: hasło Vaulta i artefakty runtime
+ansible/.vault_pass
+ansible/.ansible/
+ansible/.ansible_facts_cache/
+ansible/collections/
+*.retry
+
+# Lokalne pliki konfiguracyjne
+.env
+*.local

@@ -1,0 +1,16 @@
+---
+- name: Przygotuj wszystkie VM
+  hosts: all
+  become: true
+  gather_facts: true
+
+  roles:
+    - common
+
+- name: Zainstaluj Docker na hostach usługowych
+  hosts: docker_hosts
+  become: true
+  gather_facts: true
+
+  roles:
+    - docker

@@ -1,0 +1,22 @@
+---
+services:
+  pihole:
+    image: "{{ pihole_image }}"
+    container_name: pihole
+    environment:
+      TZ: "{{ homelab_timezone }}"
+      FTLCONF_webserver_api_password: "{{ vault_pihole_web_password }}"
+      FTLCONF_dns_listeningMode: ALL
+      FTLCONF_dns_hosts: |-
+        192.168.60.131 jelly-01.{{ homelab_domain }} jellyfin.{{ homelab_domain }}
+        192.168.60.141 dns-01.{{ homelab_domain }} pihole.{{ homelab_domain }}
+        192.168.60.142 proxy-01.{{ homelab_domain }}
+        192.168.60.143 app-01.{{ homelab_domain }} app.{{ homelab_domain }}
+        192.168.60.144 monitor-01.{{ homelab_domain }} nagios.{{ homelab_domain }}
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "80:80/tcp"
+    volumes:
+      - ./etc-pihole:/etc/pihole
+    restart: unless-stopped

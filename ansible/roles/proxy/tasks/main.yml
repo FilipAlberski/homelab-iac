@@ -1,0 +1,33 @@
+---
+- name: Utwórz katalog Traefika
+  ansible.builtin.file:
+    path: "{{ homelab_service_root }}/proxy"
+    state: directory
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0755"
+
+- name: Otwórz port HTTP Traefika
+  ansible.posix.firewalld:
+    port: 80/tcp
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Zapisz konfigurację Traefika
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ homelab_service_root }}/proxy/{{ item }}"
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0644"
+  loop:
+    - traefik.yml
+    - dynamic.yml
+    - compose.yml
+
+- name: Uruchom Traefik
+  community.docker.docker_compose_v2:
+    project_src: "{{ homelab_service_root }}/proxy"
+    pull: missing
+    state: present

@@ -1,0 +1,23 @@
+---
+- name: Poczekaj na zakończenie cloud-init
+  ansible.builtin.command: cloud-init status --wait
+  changed_when: false
+
+- name: Ustaw strefę czasową
+  community.general.timezone:
+    name: "{{ homelab_timezone }}"
+
+- name: Zainstaluj podstawowe pakiety
+  ansible.builtin.dnf:
+    name: "{{ common_packages }}"
+    state: present
+    lock_timeout: 300
+
+- name: Włącz qemu-guest-agent i firewalld
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - qemu-guest-agent
+    - firewalld

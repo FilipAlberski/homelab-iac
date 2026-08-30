@@ -1,0 +1,70 @@
+---
+- name: Sprawdź dysk danych Jellyfina
+  ansible.builtin.stat:
+    path: "{{ jellyfin_data_device }}"
+  register: jellyfin_device
+
+- name: Zatrzymaj wdrożenie, jeśli brakuje dysku danych
+  ansible.builtin.assert:
+    that:
+      - jellyfin_device.stat.exists
+      - jellyfin_device.stat.isblk | default(false)
+    fail_msg: "{{ jellyfin_data_device }} nie jest dyskiem blokowym. Sprawdź scsi1 w Proxmox."
+
+- name: Odczytaj filesystem dysku Jellyfina
+  ansible.builtin.command: "lsblk -no FSTYPE {{ jellyfin_data_device }}"
+  register: jellyfin_filesystem
+  changed_when: false
+
+- name: Nie nadpisuj nieoczekiwanego filesystemu Jellyfina
+  ansible.builtin.assert:
+    that: jellyfin_filesystem.stdout | trim in ['', 'xfs']
+    fail_msg: "Dysk {{ jellyfin_data_device }} ma filesystem inny niż XFS; wymagane jest ręczne sprawdzenie."
+
+- name: Utwórz XFS na pustym dysku Jellyfina
+  community.general.filesystem:
+    dev: "{{ jellyfin_data_device }}"
+    fstype: xfs
+  when: jellyfin_filesystem.stdout | trim == ''
+
+- name: Zamontuj dysk danych Jellyfina
+  ansible.posix.mount:
+    path: "{{ jellyfin_data_mount }}"
+    src: "{{ jellyfin_data_device }}"
+    fstype: xfs
+    opts: defaults,noatime
+    state: mounted
+
+- name: Utwórz katalogi Jellyfina
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0755"
+  loop:
+    - "{{ homelab_service_root }}/jellyfin"
+    - "{{ homelab_service_root }}/jellyfin/config"
+    - "{{ homelab_service_root }}/jellyfin/cache"
+    - "{{ jellyfin_data_mount }}/media"
+
+- name: Otwórz port Jellyfina
+  ansible.posix.firewalld:
+    port: 8096/tcp
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Zapisz Compose Jellyfina
+  ansible.builtin.template:
+    src: compose.yml.j2
+    dest: "{{ homelab_service_root }}/jellyfin/compose.yml"
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0644"
+
+- name: Uruchom Jellyfin
+  community.docker.docker_compose_v2:
+    project_src: "{{ homelab_service_root }}/jellyfin"
+    pull: missing
+    state: present

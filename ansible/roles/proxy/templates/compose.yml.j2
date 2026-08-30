@@ -1,0 +1,11 @@
+---
+services:
+  traefik:
+    image: "{{ traefik_image }}"
+    container_name: traefik
+    ports:
+      - "80:80"
+    volumes:
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic.yml:/etc/traefik/dynamic.yml:ro
+    restart: unless-stopped

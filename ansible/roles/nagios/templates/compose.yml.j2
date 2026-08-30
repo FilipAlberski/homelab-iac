@@ -1,0 +1,15 @@
+---
+services:
+  nagios:
+    image: "{{ nagios_image }}"
+    container_name: nagios
+    environment:
+      NAGIOSADMIN_USER: nagiosadmin
+      NAGIOSADMIN_PASS: "{{ vault_nagios_admin_password }}"
+    ports:
+      - "80:80"
+    volumes:
+      # Obraz domyślnie ładuje objects/localhost.cfg. Podmieniamy ten jeden
+      # plik, zachowując dostarczone przez obraz commands, contacts i templates.
+      - ./objects/homelab.cfg:/opt/nagios/etc/objects/localhost.cfg:ro
+    restart: unless-stopped

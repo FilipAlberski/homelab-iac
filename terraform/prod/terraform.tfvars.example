@@ -1,0 +1,8 @@
+proxmox_endpoint  = "https://192.168.60.10:8006/"
+proxmox_api_token = "terraform@pve!homelab=REPLACE_ME"
+proxmox_node      = "pve"
+template_id       = 9000
+storage_pool      = "tank-zfs"
+network_bridge    = "vmbr0"
+vlan_id           = null
+ssh_public_key    = "ssh-ed25519 REPLACE_ME operator"

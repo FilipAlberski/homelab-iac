@@ -1,0 +1,22 @@
+---
+homelab_user: homelab
+homelab_timezone: Europe/Warsaw
+homelab_domain: lab
+homelab_service_root: /srv
+
+# Istniejące stosy są przejmowane osobno. Ustawienie flagi na true oznacza,
+# że odpowiednia rola może zapisać Compose i zarządzać kontenerami usługi.
+deploy_pihole: false
+deploy_jellyfin: false
+deploy_proxy: false
+deploy_apps: false
+deploy_nagios: true
+
+pihole_image: pihole/pihole:2026.07.2
+jellyfin_image: jellyfin/jellyfin:10.11.11
+traefik_image: traefik:v3.7.1
+portainer_image: portainer/portainer-ce:lts
+nagios_image: jasonrivers/nagios:latest
+
+jellyfin_data_device: /dev/sdb
+jellyfin_data_mount: /srv/jellyfin-data

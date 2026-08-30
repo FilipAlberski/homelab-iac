@@ -1,0 +1,12 @@
+---
+common_packages:
+  - bash-completion
+  - bind-utils
+  - curl
+  - firewalld
+  - git
+  - qemu-guest-agent
+  - rsync
+  - tar
+  - vim
+  - xfsprogs
