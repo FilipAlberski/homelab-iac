@@ -3,39 +3,100 @@ http:
   routers:
     traefik:
       rule: "Host(`traefik.{{ homelab_domain }}`)"
-      entryPoints: [web]
       service: api@internal
-    pihole:
-      rule: "Host(`pihole.{{ homelab_domain }}`)"
-      entryPoints: [web]
-      service: pihole
+      entryPoints:
+        - web
+
+    homepage:
+      rule: "Host(`homepage.{{ homelab_domain }}`)"
+      service: homepage
+      entryPoints:
+        - web
+
+    paperless:
+      rule: "Host(`paperless.{{ homelab_domain }}`)"
+      service: paperless
+      entryPoints:
+        - web
+
+    portainer:
+      rule: "Host(`portainer.{{ homelab_domain }}`)"
+      service: portainer
+      entryPoints:
+        - web
+
+    seafile:
+      rule: "Host(`seafile.{{ homelab_domain }}`)"
+      service: seafile
+      entryPoints:
+        - web
+
     jellyfin:
       rule: "Host(`jellyfin.{{ homelab_domain }}`)"
-      entryPoints: [web]
       service: jellyfin
-    app:
-      rule: "Host(`app.{{ homelab_domain }}`)"
-      entryPoints: [web]
-      service: app
-    nagios:
-      rule: "Host(`nagios.{{ homelab_domain }}`)"
-      entryPoints: [web]
-      service: nagios
+      entryPoints:
+        - web
+
+    seerr:
+      rule: "Host(`seerr.{{ homelab_domain }}`)"
+      service: seerr
+      entryPoints:
+        - web
+
+    actual:
+      rule: "Host(`actual.{{ homelab_domain }}`)"
+      service: actual
+      entryPoints:
+        - web
+        - websecure
+      tls: {}
+      middlewares:
+        - actual-headers
+
+  middlewares:
+    actual-headers:
+      headers:
+        customResponseHeaders:
+          Cross-Origin-Opener-Policy: same-origin
+          Cross-Origin-Embedder-Policy: require-corp
 
   services:
-    pihole:
+    homepage:
       loadBalancer:
         servers:
-          - url: "http://192.168.60.141"
+          - url: "http://{{ hostvars['app-01']['ansible_host'] }}:3000"
+
+    paperless:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['app-01']['ansible_host'] }}:8001"
+
+    portainer:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['app-01']['ansible_host'] }}:8000"
+
+    seafile:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['app-01']['ansible_host'] }}:8002"
+
     jellyfin:
       loadBalancer:
         servers:
-          - url: "http://192.168.60.131:8096"
-    app:
+          - url: "http://{{ hostvars['jelly-01']['ansible_host'] }}:8096"
+
+    seerr:
       loadBalancer:
         servers:
-          - url: "http://192.168.60.143:9000"
-    nagios:
+          - url: "http://{{ hostvars['jelly-01']['ansible_host'] }}:5055"
+
+    actual:
       loadBalancer:
         servers:
-          - url: "http://192.168.60.144"
+          - url: "http://{{ hostvars['app-01']['ansible_host'] }}:5006"
+
+tls:
+  certificates:
+    - certFile: /certs/cert.pem
+      keyFile: /certs/key.pem

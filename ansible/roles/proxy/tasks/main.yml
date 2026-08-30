@@ -1,33 +1,94 @@
 ---
-- name: Utwórz katalog Traefika
+- name: Utwórz katalogi Traefika
   ansible.builtin.file:
-    path: "{{ homelab_service_root }}/proxy"
+    path: "{{ item }}"
     state: directory
     owner: "{{ homelab_user }}"
     group: "{{ homelab_user }}"
     mode: "0755"
+  loop:
+    - "{{ proxy_root }}"
+    - "{{ proxy_root }}/config"
+    - "{{ proxy_root }}/certs"
 
-- name: Otwórz port HTTP Traefika
+- name: Otwórz porty Traefika
   ansible.posix.firewalld:
-    port: 80/tcp
+    port: "{{ item }}"
     permanent: true
     immediate: true
     state: enabled
+  loop:
+    - 80/tcp
+    - 443/tcp
+    - 8080/tcp
+
+- name: Sprawdź certyfikat Traefika
+  ansible.builtin.stat:
+    path: "{{ proxy_root }}/certs/cert.pem"
+  register: proxy_certificate
+
+- name: Sprawdź klucz Traefika
+  ansible.builtin.stat:
+    path: "{{ proxy_root }}/certs/key.pem"
+  register: proxy_private_key
+
+- name: Utwórz certyfikat wildcard dla nowego wdrożenia
+  when:
+    - not proxy_certificate.stat.exists
+    - not proxy_private_key.stat.exists
+  block:
+    - name: Zapisz tymczasową konfigurację OpenSSL
+      ansible.builtin.copy:
+        content: |
+          [req]
+          distinguished_name = req_distinguished_name
+          x509_extensions = v3_req
+          prompt = no
+          [req_distinguished_name]
+          CN = *.{{ homelab_domain }}
+          [v3_req]
+          subjectAltName = @alt_names
+          [alt_names]
+          DNS.1 = *.{{ homelab_domain }}
+          DNS.2 = {{ homelab_domain }}
+        dest: "{{ proxy_root }}/certs/openssl.cnf"
+        owner: "{{ homelab_user }}"
+        group: "{{ homelab_user }}"
+        mode: "0644"
+
+    - name: Wygeneruj certyfikat i klucz Traefika
+      ansible.builtin.command: >-
+        openssl req -x509 -nodes -days 3650
+        -config {{ proxy_root }}/certs/openssl.cnf
+        -newkey rsa:2048
+        -keyout {{ proxy_root }}/certs/key.pem
+        -out {{ proxy_root }}/certs/cert.pem
+      args:
+        creates: "{{ proxy_root }}/certs/cert.pem"
+
+- name: Nie uruchamiaj Traefika z niepełną parą certyfikatu
+  ansible.builtin.assert:
+    that:
+      - proxy_certificate.stat.exists == proxy_private_key.stat.exists
+    fail_msg: "W {{ proxy_root }}/certs musi istnieć zarówno cert.pem, jak i key.pem."
 
 - name: Zapisz konfigurację Traefika
   ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "{{ homelab_service_root }}/proxy/{{ item }}"
+    src: "{{ item.src }}.j2"
+    dest: "{{ proxy_root }}/{{ item.dest }}"
     owner: "{{ homelab_user }}"
     group: "{{ homelab_user }}"
     mode: "0644"
+    backup: true
   loop:
-    - traefik.yml
-    - dynamic.yml
-    - compose.yml
+    - { src: traefik.yml, dest: traefik.yml }
+    - { src: dynamic.yml, dest: config/dynamic.yml }
+    - { src: docker-compose.yml, dest: docker-compose.yml }
 
 - name: Uruchom Traefik
   community.docker.docker_compose_v2:
-    project_src: "{{ homelab_service_root }}/proxy"
+    project_src: "{{ proxy_root }}"
+    files:
+      - docker-compose.yml
     pull: missing
     state: present

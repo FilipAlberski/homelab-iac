@@ -8,7 +8,7 @@ homelab_service_root: /srv
 # że odpowiednia rola może zapisać Compose i zarządzać kontenerami usługi.
 deploy_pihole: true
 deploy_jellyfin: false
-deploy_proxy: false
+deploy_proxy: true
 deploy_apps: false
 deploy_nagios: true
 
@@ -22,7 +22,8 @@ pihole_dns_hosts:
   - "192.168.60.131 jelly-01.lab sonarr.lab radarr.lab prowlarr.lab bazarr.lab qbittorrent.lab"
   - "192.168.60.147 homeassistant-01.lab homeassistant.lab"
 jellyfin_image: jellyfin/jellyfin:10.11.11
-traefik_image: traefik:v3.7.1
+proxy_root: /opt/traefik
+traefik_image: traefik@sha256:2cd5cc75530c8d07ae0587c743d23eb30cae2436d07017a5ff78498b1a43d09f
 portainer_image: portainer/portainer-ce:lts
 nagios_image: jasonrivers/nagios:latest
 
