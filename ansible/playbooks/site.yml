@@ -29,6 +29,8 @@
   roles:
     - role: homepage
       when: deploy_homepage | bool
+    - role: portainer
+      when: deploy_portainer | bool
     - role: apps
       when: deploy_apps | bool
 

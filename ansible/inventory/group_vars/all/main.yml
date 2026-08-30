@@ -11,6 +11,7 @@ deploy_jellyfin: false
 deploy_proxy: true
 deploy_apps: false
 deploy_homepage: true
+deploy_portainer: true
 deploy_nagios: true
 
 pihole_root: /opt/pihole
@@ -25,12 +26,14 @@ pihole_dns_hosts:
 jellyfin_image: jellyfin/jellyfin:10.11.11
 proxy_root: /opt/traefik
 traefik_image: traefik@sha256:2cd5cc75530c8d07ae0587c743d23eb30cae2436d07017a5ff78498b1a43d09f
-portainer_image: portainer/portainer-ce:lts
 nagios_image: jasonrivers/nagios:latest
 
 homepage_root: /opt/homepage
 homepage_port: 3000
 homepage_image: ghcr.io/gethomepage/homepage@sha256:d8d784e5090111b6e4c56dfd90e272d2953a2094e87349f647165df0fa6c4401
+
+portainer_root: /opt/portainer
+portainer_image: portainer/portainer-ce@sha256:bd8f7a6d98e2a512e18272c38914abd1e92d663451f3c925d502a8557a3b92d7
 
 jellyfin_data_device: /dev/sdb
 jellyfin_data_mount: /srv/jellyfin-data

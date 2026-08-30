@@ -1,0 +1,38 @@
+---
+- name: Utwórz katalogi Portainera
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0755"
+  loop:
+    - "{{ portainer_root }}"
+    - "{{ portainer_root }}/data"
+
+- name: Otwórz porty Portainera
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop:
+    - 8000/tcp
+    - 9443/tcp
+
+- name: Zapisz Compose Portainera
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ portainer_root }}/docker-compose.yml"
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0644"
+    backup: true
+
+- name: Uruchom Portainera
+  community.docker.docker_compose_v2:
+    project_src: "{{ portainer_root }}"
+    files:
+      - docker-compose.yml
+    pull: missing
+    state: present
