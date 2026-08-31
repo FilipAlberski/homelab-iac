@@ -1,0 +1,8 @@
+---
+- name: Uruchom ponownie Nagios
+  community.docker.docker_compose_v2:
+    project_src: "{{ homelab_service_root }}/nagios"
+    files:
+      - compose.yml
+    state: present
+    recreate: always

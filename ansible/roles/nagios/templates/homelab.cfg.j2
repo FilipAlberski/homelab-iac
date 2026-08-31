@@ -1,14 +1,13 @@
 define hostgroup {
     hostgroup_name  homelab
     alias           Homelab VMs
-    members         dns-01,proxy-01,app-01,jelly-01
+    members         dns-01,proxy-01,app-01
 }
 
 {% for host, address in {
   'dns-01': '192.168.60.141',
   'proxy-01': '192.168.60.142',
-  'app-01': '192.168.60.143',
-  'jelly-01': '192.168.60.131'
+  'app-01': '192.168.60.143'
 }.items() %}
 define host {
     use             linux-server

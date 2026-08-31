@@ -4,7 +4,6 @@
 
 | Host | VMID | Adres | Usługa |
 |---|---:|---|---|
-| `jelly-01` | 131 | `192.168.60.131` | Jellyfin |
 | `dns-01` | 141 | `192.168.60.141` | Pi-hole |
 | `proxy-01` | 142 | `192.168.60.142` | Traefik |
 | `app-01` | 143 | `192.168.60.143` | aplikacje |
@@ -21,7 +20,6 @@ ustawić `192.168.60.141` jako DNS dla klientów na MikroTiku.
 Lokalne nazwy usług:
 
 - `pihole.lab`
-- `jellyfin.lab`
 - `app.lab`
 - `nagios.lab`
 - `traefik.lab`

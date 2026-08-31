@@ -84,6 +84,7 @@
     - { src: traefik.yml, dest: traefik.yml }
     - { src: dynamic.yml, dest: config/dynamic.yml }
     - { src: docker-compose.yml, dest: docker-compose.yml }
+  notify: Uruchom ponownie Traefik
 
 - name: Uruchom Traefik
   community.docker.docker_compose_v2:

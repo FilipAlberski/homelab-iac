@@ -8,16 +8,15 @@ i wdraża każdą usługę z osobnego Docker Compose.
 
 | Host | IP | Rola |
 |---|---|---|
-| `jelly-01` | `192.168.60.131` | Jellyfin |
 | `dns-01` | `192.168.60.141` | Pi-hole |
 | `proxy-01` | `192.168.60.142` | Traefik |
 | `app-01` | `192.168.60.143` | Homepage, Portainer, Actual Budget, Paperless |
 | `monitor-01` | `192.168.60.144` | Nagios |
 
 Na etapie przejęcia repo opisuje faktyczne położenie dysków: systemowe na
-`local-lvm`, część danych nadal na `datav1`, a dysk danych Jellyfina już na
-`tank-zfs`. Dalsza migracja będzie wykonywana po jednej VM i po sprawdzeniu
-backupu. MikroTik i konfiguracja hosta Proxmox pozostają poza automatyzacją.
+`local-lvm`, a część danych nadal na `datav1`. Dalsza migracja będzie
+wykonywana po jednej VM i po sprawdzeniu backupu. MikroTik i konfiguracja hosta
+Proxmox pozostają poza automatyzacją.
 
 ## Struktura
 
@@ -100,11 +99,10 @@ make site       # doprowadza systemy i usługi do oczekiwanego stanu
 make check      # waliduje Terraform i składnię Ansible
 ```
 
-Pi-hole, Traefik, Homepage, Portainer, Actual Budget, Paperless i Nagios są zarządzane
-przez nowe repo. Istniejące stosy Jellyfin oraz pozostałe aplikacje nie są
-jeszcze automatycznie przejmowane. Odpowiadające im flagi `deploy_*` w
-`ansible/inventory/group_vars/all/main.yml` pozostają wyłączone do czasu
-sprawdzenia i przeniesienia ich obecnych plików Compose oraz danych.
+Pi-hole, Traefik, Homepage, Portainer, Actual Budget, Paperless i Nagios są
+zarządzane przez nowe repo. Stary Jellyfin został usunięty; wskazówki do jego
+przyszłej, świeżej wersji znajdują się w `docs/jellyfin-rebuild-notes.md`.
+Pozostałe nieprzejęte aplikacje nadal chronią wyłączone flagi `deploy_*`.
 
 Po każdym udanym `make apply` wykonaj zaszyfrowaną kopię lokalnego
 `terraform/prod/terraform.tfstate` poza tym hostem i poza Git.
@@ -115,6 +113,7 @@ Po każdym udanym `make apply` wykonaj zaszyfrowaną kopię lokalnego
 - [Sieć](docs/network.md)
 - [Backup](docs/backup.md)
 - [Rebuild](docs/rebuild.md)
+- [Notatki do świeżego media stacku](docs/jellyfin-rebuild-notes.md)
 
 ## Zasady bezpieczeństwa
 

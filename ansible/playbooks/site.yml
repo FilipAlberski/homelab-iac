@@ -9,13 +9,6 @@
     - role: pihole
       when: deploy_pihole | bool
 
-- name: Wdróż Jellyfin
-  hosts: jellyfin
-  become: true
-  roles:
-    - role: jellyfin
-      when: deploy_jellyfin | bool
-
 - name: Wdróż Traefik
   hosts: proxy
   become: true

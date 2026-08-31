@@ -2,22 +2,6 @@ locals {
   # Na etapie przejęcia istniejących VM opisujemy ich aktualny storage i
   # parametry. Migracja na tank-zfs będzie wykonywana później, po jednej VM.
   vms = {
-    jelly-01 = {
-      vm_id              = 131
-      cpu_cores          = 4
-      memory_mb          = 24576
-      memory_floating_mb = 24576
-      scsi_hardware      = "virtio-scsi-single"
-      disks = [
-        { datastore_id = "local-lvm", interface = "scsi0", size_gb = 50 },
-        { datastore_id = "tank-zfs", interface = "scsi1", size_gb = 1000 },
-      ]
-      hostpci_devices = [
-        { device = "hostpci0", mapping = "jellyfin-igpu", pcie = false },
-      ]
-      tags = ["terraform", "docker", "jellyfin", "media"]
-    }
-
     dns-01 = {
       vm_id              = 141
       cpu_cores          = 2

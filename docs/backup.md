@@ -11,7 +11,6 @@ chroni przed utratą hosta lub całej puli.
 | Terraform state | kopia `terraform.tfstate` po każdym apply | zaszyfrowany nośnik poza hostem |
 | Sekrety Ansible | zaszyfrowany `vault.yml` w Git | Git oraz osobny backup hasła Vault |
 | VM-y | backup Proxmox `vzdump` | fizycznie osobny dysk |
-| Media Jellyfina | backup dysku danych VM | fizycznie osobny dysk |
 | Paperless | `document_exporter`, dump PostgreSQL i `/srv/data/paperless` | fizycznie osobny dysk |
 | MikroTik | ręczny export i backup binarny | poza repozytorium |
 

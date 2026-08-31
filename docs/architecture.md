@@ -9,7 +9,6 @@ MikroTik (poza repo)
         │
         ▼
 Proxmox VE + tank-zfs
-        ├── jelly-01    Jellyfin
         ├── dns-01      Pi-hole
         ├── proxy-01    Traefik
         ├── app-01      Homepage, Portainer, Actual Budget, Paperless
@@ -23,13 +22,11 @@ Proxmox VE + tank-zfs
 - MikroTik zarządza routingiem i DHCP poza repozytorium.
 - Proxmox, fizyczne dyski i pula ZFS są przygotowywane ręcznie.
 - Terraform zachowuje faktyczne położenie dysków VM, ale nie zarządza samymi
-  storage'ami. Dysk danych Jellyfina jest już na `tank-zfs`; pozostałe migracje
-  odbędą się później, po jednej VM.
+  storage'ami. Migracje odbędą się później, po jednej VM.
 
 Każda usługa ma osobną rolę oraz osobny plik Compose w `/opt/<usługa>`.
 Duże dane aplikacji na `app-01` trafiają na osobny dysk pod `/srv/data`.
-Jellyfin ma zwykły dodatkowy dysk VM. Nie ma NFS, virtiofs ani osobnej VM
-storage.
+Nie ma NFS, virtiofs ani osobnej VM storage.
 
 Podczas przejęcia istniejącego homelabu flagi `deploy_*` chronią działające
 stosy przed przypadkowym zastąpieniem. Usługę włącza się w nowym repo dopiero

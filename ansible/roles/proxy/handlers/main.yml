@@ -1,0 +1,7 @@
+---
+- name: Uruchom ponownie Traefik
+  community.docker.docker_compose_v2:
+    project_src: "{{ proxy_root }}"
+    files:
+      - docker-compose.yml
+    state: restarted
