@@ -1,0 +1,7 @@
+---
+- name: Uruchom ponownie Pi-hole po zmianie DNS
+  community.docker.docker_compose_v2:
+    project_src: "{{ pihole_root }}"
+    files:
+      - docker-compose.yml
+    state: restarted

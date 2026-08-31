@@ -22,7 +22,6 @@ pihole_dns_hosts:
   - "192.168.60.144 monitor-01.lab monitoring-01.lab nagios.lab"
   - "192.168.60.142 proxy-01.lab traefik.lab homepage.lab paperless.lab portainer.lab actual.lab"
   - "192.168.60.143 app-01.lab app.lab"
-  - "192.168.60.147 homeassistant-01.lab homeassistant.lab"
 proxy_root: /opt/traefik
 traefik_image: traefik@sha256:2cd5cc75530c8d07ae0587c743d23eb30cae2436d07017a5ff78498b1a43d09f
 nagios_image: jasonrivers/nagios:latest

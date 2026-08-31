@@ -29,6 +29,16 @@
     - 53/udp
     - 80/tcp
 
+- name: Zapisz lokalne rekordy DNS Pi-hole
+  ansible.builtin.template:
+    src: custom.list.j2
+    dest: "{{ pihole_root }}/etc-pihole/custom.list"
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0644"
+    backup: true
+  notify: Uruchom ponownie Pi-hole po zmianie DNS
+
 - name: Zapisz Compose Pi-hole
   ansible.builtin.template:
     src: compose.yml.j2

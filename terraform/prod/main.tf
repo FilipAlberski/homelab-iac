@@ -40,7 +40,7 @@ locals {
       memory_floating_mb = 2048
       scsi_hardware      = "virtio-scsi-single"
       disks              = [{ datastore_id = "local-lvm", interface = "scsi0", size_gb = 80 }]
-      tags               = ["terraform", "docker", "monitoring", "puppet"]
+      tags               = ["terraform", "docker", "monitoring"]
     }
   }
 }

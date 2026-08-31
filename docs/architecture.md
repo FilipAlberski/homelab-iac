@@ -15,6 +15,10 @@ Proxmox VE + tank-zfs
         └── monitor-01  Nagios
 ```
 
+To jest pełny bieżący zestaw VM. `public-01`, `homeassistant-01` i `puppet-01`
+zostały usunięte wraz z dyskami; ich przyszłe wersje będą wdrażane od zera.
+VMID `9000` pozostaje szablonem Rocky Linux do tworzenia nowych hostów.
+
 ## Odpowiedzialności
 
 - Terraform zarządza VMID, CPU, RAM, dyskami, NIC i małym cloud-init.

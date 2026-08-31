@@ -18,11 +18,6 @@
           url: http://{{ hostvars['proxy-01']['ansible_host'] }}:8080
 
 - Applications:
-    - Home Assistant:
-        href: http://homeassistant.{{ homelab_domain }}:8123
-        icon: home-assistant
-        description: Home automation
-
     - Actual Budget:
         href: https://actual.{{ homelab_domain }}
         icon: actual-budget

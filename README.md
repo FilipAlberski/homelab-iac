@@ -6,12 +6,17 @@ i wdraża każdą usługę z osobnego Docker Compose.
 
 ## Zakres MVP
 
-| Host | IP | Rola |
-|---|---|---|
-| `dns-01` | `192.168.60.141` | Pi-hole |
-| `proxy-01` | `192.168.60.142` | Traefik |
-| `app-01` | `192.168.60.143` | Homepage, Portainer, Actual Budget, Paperless |
-| `monitor-01` | `192.168.60.144` | Nagios |
+| VMID | Host | IP | Rola |
+|---:|---|---|---|
+| 141 | `dns-01` | `192.168.60.141` | Pi-hole |
+| 142 | `proxy-01` | `192.168.60.142` | Traefik |
+| 143 | `app-01` | `192.168.60.143` | Homepage, Portainer, Actual Budget, Paperless |
+| 144 | `monitor-01` (`monitoring-01` w Proxmox) | `192.168.60.144` | Nagios |
+
+To jest cały aktywny zestaw VM zarządzany przez repo. Szablon Rocky Linux ma
+VMID `9000`. Stare VM-y `public-01` (145), `homeassistant-01` (147) i
+`puppet-01` (148) zostały świadomie usunięte 31 sierpnia 2026 wraz z dyskami;
+ich usługi będą w razie potrzeby budowane od zera.
 
 Na etapie przejęcia repo opisuje faktyczne położenie dysków: systemowe na
 `local-lvm`, a część danych nadal na `datav1`. Dalsza migracja będzie
