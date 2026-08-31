@@ -11,7 +11,7 @@ i wdraża każdą usługę z osobnego Docker Compose.
 | `jelly-01` | `192.168.60.131` | Jellyfin |
 | `dns-01` | `192.168.60.141` | Pi-hole |
 | `proxy-01` | `192.168.60.142` | Traefik |
-| `app-01` | `192.168.60.143` | aplikacje; na start Portainer |
+| `app-01` | `192.168.60.143` | Homepage, Portainer, Actual Budget, Paperless |
 | `monitor-01` | `192.168.60.144` | Nagios |
 
 Na etapie przejęcia repo opisuje faktyczne położenie dysków: systemowe na
@@ -100,7 +100,7 @@ make site       # doprowadza systemy i usługi do oczekiwanego stanu
 make check      # waliduje Terraform i składnię Ansible
 ```
 
-Pi-hole, Traefik, Homepage, Portainer, Actual Budget i Nagios są zarządzane
+Pi-hole, Traefik, Homepage, Portainer, Actual Budget, Paperless i Nagios są zarządzane
 przez nowe repo. Istniejące stosy Jellyfin oraz pozostałe aplikacje nie są
 jeszcze automatycznie przejmowane. Odpowiadające im flagi `deploy_*` w
 `ansible/inventory/group_vars/all/main.yml` pozostają wyłączone do czasu

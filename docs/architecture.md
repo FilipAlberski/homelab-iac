@@ -12,7 +12,7 @@ Proxmox VE + tank-zfs
         ├── jelly-01    Jellyfin
         ├── dns-01      Pi-hole
         ├── proxy-01    Traefik
-        ├── app-01      aplikacje, na start Portainer
+        ├── app-01      Homepage, Portainer, Actual Budget, Paperless
         └── monitor-01  Nagios
 ```
 
@@ -26,14 +26,15 @@ Proxmox VE + tank-zfs
   storage'ami. Dysk danych Jellyfina jest już na `tank-zfs`; pozostałe migracje
   odbędą się później, po jednej VM.
 
-Każda usługa ma osobną rolę oraz osobny plik Compose w `/srv/<usługa>`.
+Każda usługa ma osobną rolę oraz osobny plik Compose w `/opt/<usługa>`.
+Duże dane aplikacji na `app-01` trafiają na osobny dysk pod `/srv/data`.
 Jellyfin ma zwykły dodatkowy dysk VM. Nie ma NFS, virtiofs ani osobnej VM
 storage.
 
 Podczas przejęcia istniejącego homelabu flagi `deploy_*` chronią działające
 stosy przed przypadkowym zastąpieniem. Usługę włącza się w nowym repo dopiero
 po przeniesieniu jej Compose, wolumenów i konfiguracji. Pi-hole, Traefik,
-Homepage, Portainer, Actual Budget i Nagios zostały już przejęte; pozostałe
+Homepage, Portainer, Actual Budget, Paperless i Nagios zostały już przejęte; pozostałe
 flagi usług pozostają wyłączone.
 
 ## Świadomie odłożone

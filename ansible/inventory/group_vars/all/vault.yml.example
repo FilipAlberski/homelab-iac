@@ -4,3 +4,5 @@
 vault_pihole_web_password: "REPLACE_ME"
 vault_nagios_admin_password: "REPLACE_ME"
 vault_actual_password: "REPLACE_ME"
+vault_paperless_secret_key: "REPLACE_ME"
+vault_paperless_db_password: "REPLACE_ME"

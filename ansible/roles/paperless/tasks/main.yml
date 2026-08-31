@@ -1,0 +1,76 @@
+---
+- name: Sprawdź sekrety Paperless
+  ansible.builtin.assert:
+    that:
+      - vault_paperless_secret_key is defined
+      - vault_paperless_secret_key | length >= 32
+      - vault_paperless_db_password is defined
+      - vault_paperless_db_password | length >= 24
+    fail_msg: "Brakuje sekretów Paperless w zaszyfrowanym Vault."
+
+- name: Sprawdź osobny dysk danych aplikacji
+  ansible.builtin.command:
+    argv:
+      - findmnt
+      - -n
+      - -o
+      - TARGET
+      - /srv/data
+  register: paperless_data_mount
+  changed_when: false
+  failed_when: paperless_data_mount.stdout | trim != '/srv/data'
+
+- name: Utwórz główne katalogi Paperless
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0755"
+  loop:
+    - "{{ paperless_root }}"
+    - "{{ paperless_data_root }}"
+    - "{{ paperless_data_root }}/data"
+    - "{{ paperless_data_root }}/media"
+    - "{{ paperless_data_root }}/consume"
+    - "{{ paperless_data_root }}/export"
+
+- name: Utwórz katalogi baz Paperless
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "999"
+    group: "{{ homelab_user }}"
+    mode: "{{ '0700' if item.endswith('/pgdata') else '0755' }}"
+  loop:
+    - "{{ paperless_data_root }}/pgdata"
+    - "{{ paperless_data_root }}/redis"
+
+- name: Otwórz port Paperless
+  ansible.posix.firewalld:
+    port: "{{ paperless_port }}/tcp"
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Zapisz Compose Paperless
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ paperless_root }}/docker-compose.yml"
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0600"
+    backup: true
+
+- name: Uruchom Paperless
+  community.docker.docker_compose_v2:
+    project_src: "{{ paperless_root }}"
+    files:
+      - docker-compose.yml
+    pull: missing
+    state: present
+
+- name: Usuń zastąpiony plik poświadczeń Paperless
+  ansible.builtin.file:
+    path: "{{ paperless_root }}/.credentials"
+    state: absent

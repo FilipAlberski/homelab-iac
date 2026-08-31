@@ -33,6 +33,8 @@
       when: deploy_portainer | bool
     - role: actual
       when: deploy_actual | bool
+    - role: paperless
+      when: deploy_paperless | bool
     - role: apps
       when: deploy_apps | bool
 

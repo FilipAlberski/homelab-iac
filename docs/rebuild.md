@@ -25,7 +25,9 @@ Przed rozpoczęciem potrzebne są:
 8. Sprawdź SSH przez `make ping`.
 9. Uruchom `make bootstrap`, a następnie `make site`.
 10. Odtwórz media Jellyfina z backupu, jeśli odbudowany został jego dysk danych.
-11. Sprawdź DNS, routing Traefika, aplikacje i widoczność hostów w Nagiosie.
+11. Dla Paperless odtwórz `/srv/data/paperless`, sekrety z Vaulta i — zależnie
+    od rodzaju kopii — import `document_exporter` albo dump PostgreSQL.
+12. Sprawdź DNS, routing Traefika, aplikacje i widoczność hostów w Nagiosie.
 
 ## Bezpieczny test
 

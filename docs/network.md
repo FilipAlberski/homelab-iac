@@ -25,6 +25,10 @@ Lokalne nazwy usług:
 - `app.lab`
 - `nagios.lab`
 - `traefik.lab`
+- `homepage.lab`
+- `portainer.lab`
+- `actual.lab`
+- `paperless.lab`
 
 Ruch HTTP do paneli przechodzi przez `proxy-01`. Pierwsza wersja świadomie nie
 konfiguruje TLS; usługi są przeznaczone wyłącznie dla zaufanego LAN-u.

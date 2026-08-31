@@ -12,6 +12,7 @@ chroni przed utratą hosta lub całej puli.
 | Sekrety Ansible | zaszyfrowany `vault.yml` w Git | Git oraz osobny backup hasła Vault |
 | VM-y | backup Proxmox `vzdump` | fizycznie osobny dysk |
 | Media Jellyfina | backup dysku danych VM | fizycznie osobny dysk |
+| Paperless | `document_exporter`, dump PostgreSQL i `/srv/data/paperless` | fizycznie osobny dysk |
 | MikroTik | ręczny export i backup binarny | poza repozytorium |
 
 ## Terraform state
@@ -26,6 +27,11 @@ do zaszyfrowanego backupu. State może zawierać dane wrażliwe, dlatego nie nal
 wysyłać go do zwykłego repozytorium ani przechowywać bez szyfrowania.
 
 Przed odtworzeniem sprawdź, czy backup state odpowiada ostatniej zmianie VM.
+
+Paperless przechowuje wszystkie jawne wolumeny pod `/srv/data/paperless`.
+Przed większą zmianą wykonaj eksport dokumentów poleceniem `document_exporter`
+oraz logiczny dump PostgreSQL. Samo kopiowanie działającego katalogu `pgdata`
+nie gwarantuje spójnego backupu bazy.
 
 ## Test odtworzenia
 
