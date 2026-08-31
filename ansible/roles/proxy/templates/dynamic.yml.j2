@@ -25,12 +25,6 @@ http:
       entryPoints:
         - web
 
-    seafile:
-      rule: "Host(`seafile.{{ homelab_domain }}`)"
-      service: seafile
-      entryPoints:
-        - web
-
     actual:
       rule: "Host(`actual.{{ homelab_domain }}`)"
       service: actual
@@ -63,11 +57,6 @@ http:
       loadBalancer:
         servers:
           - url: "http://{{ hostvars['app-01']['ansible_host'] }}:8000"
-
-    seafile:
-      loadBalancer:
-        servers:
-          - url: "http://{{ hostvars['app-01']['ansible_host'] }}:8002"
 
     actual:
       loadBalancer:

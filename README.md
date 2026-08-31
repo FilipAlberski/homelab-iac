@@ -102,7 +102,9 @@ make check      # waliduje Terraform i składnię Ansible
 Pi-hole, Traefik, Homepage, Portainer, Actual Budget, Paperless i Nagios są
 zarządzane przez nowe repo. Stary Jellyfin został usunięty; wskazówki do jego
 przyszłej, świeżej wersji znajdują się w `docs/jellyfin-rebuild-notes.md`.
-Pozostałe nieprzejęte aplikacje nadal chronią wyłączone flagi `deploy_*`.
+Stary Seafile również został usunięty i wróci jako świeże wdrożenie na
+`tank-zfs`. Pozostałe nieprzejęte aplikacje nadal chronią wyłączone flagi
+`deploy_*`.
 
 Po każdym udanym `make apply` wykonaj zaszyfrowaną kopię lokalnego
 `terraform/prod/terraform.tfstate` poza tym hostem i poza Git.
@@ -114,6 +116,7 @@ Po każdym udanym `make apply` wykonaj zaszyfrowaną kopię lokalnego
 - [Backup](docs/backup.md)
 - [Rebuild](docs/rebuild.md)
 - [Notatki do świeżego media stacku](docs/jellyfin-rebuild-notes.md)
+- [Notatki do świeżego Seafile](docs/seafile-rebuild-notes.md)
 
 ## Zasady bezpieczeństwa
 
