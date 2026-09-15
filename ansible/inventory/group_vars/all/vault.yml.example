@@ -3,6 +3,23 @@
 # a następnie umieść w nim te same klucze. vault.yml ma być zawsze zaszyfrowany.
 vault_pihole_web_password: "REPLACE_ME"
 vault_nagios_admin_password: "REPLACE_ME"
-vault_actual_password: "REPLACE_ME"
+vault_grafana_admin_password: "REPLACE_ME"
 vault_paperless_secret_key: "REPLACE_ME"
 vault_paperless_db_password: "REPLACE_ME"
+# Wymagane dopiero po włączeniu media_download_enabled (Gluetun/WireGuard).
+vault_gluetun_wireguard_private_key: "REPLACE_ME"
+vault_gluetun_wireguard_public_key: "REPLACE_ME"
+vault_gluetun_wireguard_addresses: "REPLACE_ME"
+vault_qbittorrent_web_password: "REPLACE_ME"
+vault_radarr_admin_password: "REPLACE_ME"
+vault_sonarr_admin_password: "REPLACE_ME"
+vault_jellyfin_admin_password: "REPLACE_ME"
+vault_jellyfin_api_key: "REPLACE_ME"
+vault_prowlarr_admin_password: "REPLACE_ME"
+# Opcjonalne; wymagane dopiero po włączeniu odpowiedniego eksportera.
+vault_pve_exporter_token_name: "REPLACE_ME"
+vault_pve_exporter_token_value: "REPLACE_ME"
+vault_mikrotik_snmp_community: "REPLACE_ME"
+# Wymagane po ustawieniu monitoring_alertmanager_enabled: true.
+vault_monitoring_telegram_bot_token: "REPLACE_ME"
+vault_monitoring_telegram_chat_id: "REPLACE_ME"

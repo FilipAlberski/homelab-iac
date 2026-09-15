@@ -7,7 +7,7 @@ VAULT_ARGS := $(if $(wildcard $(ANSIBLE_DIR)/.vault_pass),--vault-password-file 
 
 .DEFAULT_GOAL := help
 
-.PHONY: help init fmt validate plan apply output deps ping bootstrap site vault-init check
+.PHONY: help init fmt validate plan apply output deps ping users bootstrap site backups vault-init check
 
 help:
 	@echo "Dostępne polecenia:"
@@ -16,8 +16,10 @@ help:
 	@echo "  make apply      - zastosuj zatwierdzony plan"
 	@echo "  make deps       - zainstaluj kolekcje Ansible"
 	@echo "  make ping       - sprawdź dostęp SSH do VM"
+	@echo "  make users      - utwórz i zaktualizuj konta administracyjne"
 	@echo "  make bootstrap  - skonfiguruj Rocky i Docker"
 	@echo "  make site       - wdróż cały homelab"
+	@echo "  make backups    - wdróż backupy VM i Paperless oraz ich monitoring"
 	@echo "  make vault-init - utwórz zaszyfrowany plik sekretów"
 	@echo "  make check      - sprawdź Terraform i Ansible"
 
@@ -46,11 +48,17 @@ deps:
 ping:
 	cd $(ANSIBLE_DIR) && ansible all $(VAULT_ARGS) -m ping
 
+users:
+	cd $(ANSIBLE_DIR) && $(PLAYBOOK) $(VAULT_ARGS) playbooks/users.yml
+
 bootstrap:
 	cd $(ANSIBLE_DIR) && $(PLAYBOOK) $(VAULT_ARGS) playbooks/bootstrap.yml
 
 site:
 	cd $(ANSIBLE_DIR) && $(PLAYBOOK) $(VAULT_ARGS) playbooks/site.yml
+
+backups:
+	cd $(ANSIBLE_DIR) && $(PLAYBOOK) $(VAULT_ARGS) playbooks/deploy-backups.yml
 
 vault-init:
 	@test -f $(ANSIBLE_DIR)/.vault_pass || (echo "Najpierw utwórz ansible/.vault_pass z prawami 0600."; exit 1)

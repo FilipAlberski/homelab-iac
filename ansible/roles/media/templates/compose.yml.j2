@@ -1,0 +1,144 @@
+name: media-stack
+
+services:
+  jellyfin:
+    image: {{ media_jellyfin_image }}
+    container_name: jellyfin
+    restart: unless-stopped
+    environment:
+      - TZ={{ homelab_timezone }}
+      - UMASK={{ media_umask }}
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+{% for gid in media_gpu_gids %}
+      - "{{ gid }}"
+{% endfor %}
+    volumes:
+      - {{ media_root }}/config/jellyfin:/config
+      - {{ media_root }}/cache/jellyfin:/cache
+      - {{ media_data_root }}/media:/data/media:ro
+    ports:
+      - "8096:8096"
+
+  seerr:
+    image: {{ media_seerr_image }}
+    container_name: seerr
+    restart: unless-stopped
+    environment:
+      - TZ={{ homelab_timezone }}
+      - UMASK={{ media_umask }}
+    volumes:
+      - {{ media_root }}/config/seerr:/app/config
+    ports:
+      - "5055:5055"
+    depends_on:
+      - jellyfin
+
+  sonarr:
+    image: {{ media_sonarr_image }}
+    container_name: sonarr
+    restart: unless-stopped
+    environment:
+      - PUID={{ media_config_user_id }}
+      - PGID={{ media_config_group_id }}
+      - TZ={{ homelab_timezone }}
+      - UMASK={{ media_umask }}
+    volumes:
+      - {{ media_root }}/config/sonarr:/config
+      - {{ media_data_root }}:/data
+    ports:
+      - "8989:8989"
+
+  radarr:
+    image: {{ media_radarr_image }}
+    container_name: radarr
+    restart: unless-stopped
+    environment:
+      - PUID={{ media_config_user_id }}
+      - PGID={{ media_config_group_id }}
+      - TZ={{ homelab_timezone }}
+      - UMASK={{ media_umask }}
+    volumes:
+      - {{ media_root }}/config/radarr:/config
+      - {{ media_data_root }}:/data
+    ports:
+      - "7878:7878"
+
+  prowlarr:
+    image: {{ media_prowlarr_image }}
+    container_name: prowlarr
+    restart: unless-stopped
+    environment:
+      - PUID={{ media_config_user_id }}
+      - PGID={{ media_config_group_id }}
+      - TZ={{ homelab_timezone }}
+      - UMASK={{ media_umask }}
+    volumes:
+      - {{ media_root }}/config/prowlarr:/config
+    ports:
+      - "9696:9696"
+
+  bazarr:
+    image: {{ media_bazarr_image }}
+    container_name: bazarr
+    restart: unless-stopped
+    environment:
+      - PUID={{ media_config_user_id }}
+      - PGID={{ media_config_group_id }}
+      - TZ={{ homelab_timezone }}
+      - UMASK={{ media_umask }}
+    volumes:
+      - {{ media_root }}/config/bazarr:/config
+      - {{ media_data_root }}:/data
+    ports:
+      - "6767:6767"
+
+  flaresolverr:
+    image: {{ media_flaresolverr_image }}
+    container_name: flaresolverr
+    restart: unless-stopped
+    environment:
+      - TZ={{ homelab_timezone }}
+      - LOG_LEVEL=info
+
+{% if media_download_enabled | bool %}
+  gluetun:
+    image: {{ media_gluetun_image }}
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - VPN_SERVICE_PROVIDER={{ gluetun_vpn_service_provider }}
+      - VPN_TYPE={{ gluetun_vpn_type }}
+      - WIREGUARD_ENDPOINT_IP={{ gluetun_vpn_endpoint_ip }}
+      - WIREGUARD_ENDPOINT_PORT={{ gluetun_vpn_endpoint_port }}
+      - WIREGUARD_PUBLIC_KEY={{ vault_gluetun_wireguard_public_key }}
+      - WIREGUARD_PRIVATE_KEY={{ vault_gluetun_wireguard_private_key }}
+      - WIREGUARD_ADDRESSES={{ vault_gluetun_wireguard_addresses }}
+    ports:
+      - "8080:8080"
+      - "9999:9999/tcp"
+
+  qbittorrent:
+    image: {{ media_qbittorrent_image }}
+    container_name: qbittorrent
+    restart: unless-stopped
+    mem_limit: {{ media_qbittorrent_memory_limit }}
+    memswap_limit: {{ media_qbittorrent_memswap_limit }}
+    network_mode: "service:gluetun"
+    environment:
+      - PUID={{ media_config_user_id }}
+      - PGID={{ media_config_group_id }}
+      - TZ={{ homelab_timezone }}
+      - UMASK={{ media_umask }}
+      - WEBUI_PORT=8080
+    volumes:
+      - {{ media_root }}/config/qbittorrent:/config
+      - {{ media_data_root }}:/data
+    depends_on:
+      - gluetun
+{% endif %}

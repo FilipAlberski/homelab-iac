@@ -2,7 +2,7 @@
 
 Stare wdrożenie Seafile na `app-01` zostało przeznaczone do całkowitego
 usunięcia wraz z bazą i plikami. Nowa wersja ma powstać od zera i korzystać z
-osobnego dysku danych na `tank-zfs`, a nie z obecnego `/srv/data` na `dataV1`.
+osobnego dysku danych na `tank-zfs`, a nie ze współdzielonego dysku `app-01`.
 
 ## Historyczny stack
 

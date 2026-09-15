@@ -1,0 +1,7 @@
+---
+- name: Wdróż monitor aktualizacji kontenerów
+  hosts: docker_hosts
+  become: true
+  roles:
+    - role: container_updates
+      when: container_updates_enabled | bool

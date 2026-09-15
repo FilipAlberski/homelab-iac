@@ -1,7 +1,11 @@
 ---
 - name: Poczekaj na zakończenie cloud-init
   ansible.builtin.command: cloud-init status --wait
+  register: cloud_init_wait
   changed_when: false
+  failed_when: >-
+    cloud_init_wait.rc not in [0, 2] or
+    'status: done' not in cloud_init_wait.stdout
 
 - name: Ustaw strefę czasową
   community.general.timezone:
@@ -12,6 +16,49 @@
     name: "{{ common_packages }}"
     state: present
     lock_timeout: 300
+
+- name: Rozszerz partycję LVM do rozmiaru dysku systemowego
+  ansible.builtin.command:
+    argv:
+      - growpart
+      - "{{ system_disk_device }}"
+      - "{{ system_disk_partition | string }}"
+  register: system_partition_grow
+  changed_when: "'CHANGED:' in system_partition_grow.stdout"
+  failed_when: >-
+    system_partition_grow.rc not in [0, 1] or
+    (system_partition_grow.rc == 1 and 'NOCHANGE:' not in system_partition_grow.stdout)
+
+- name: Rozszerz physical volume LVM
+  ansible.builtin.command:
+    argv:
+      - pvresize
+      - "{{ system_disk_device }}{{ system_disk_partition }}"
+  register: system_pvresize
+  changed_when: "'changed' in system_pvresize.stdout"
+
+- name: Odczytaj wolne miejsce volume group
+  ansible.builtin.command:
+    argv:
+      - vgs
+      - --noheadings
+      - --units
+      - b
+      - --nosuffix
+      - -o
+      - vg_free
+      - "{{ system_volume_group }}"
+  register: system_vg_free
+  changed_when: false
+
+- name: Rozszerz root LVM i filesystem
+  community.general.lvol:
+    vg: "{{ system_volume_group }}"
+    lv: "{{ system_root_logical_volume }}"
+    size: +100%FREE
+    resizefs: true
+    shrink: false
+  when: system_vg_free.stdout | trim | float > 16777216
 
 - name: Włącz qemu-guest-agent i firewalld
   ansible.builtin.systemd_service:

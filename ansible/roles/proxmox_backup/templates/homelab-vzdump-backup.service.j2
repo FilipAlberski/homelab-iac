@@ -1,0 +1,10 @@
+[Unit]
+Description=Backup VM homelabu na RAID i dysk 1 TB
+After=pve-cluster.service
+RequiresMountsFor={{ proxmox_backup_primary_root }} {{ proxmox_backup_secondary_root }}
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/homelab-vzdump-backup
+Nice=10
+IOSchedulingClass=best-effort

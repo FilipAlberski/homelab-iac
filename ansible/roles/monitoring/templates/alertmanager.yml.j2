@@ -1,0 +1,34 @@
+global:
+  resolve_timeout: {{ monitoring_alertmanager_resolve_timeout }}
+
+route:
+  receiver: telegram
+  group_by:
+    - alertname
+    - severity
+    - job
+  group_wait: {{ monitoring_alertmanager_group_wait }}
+  group_interval: {{ monitoring_alertmanager_group_interval }}
+  repeat_interval: {{ monitoring_alertmanager_repeat_interval }}
+
+receivers:
+  - name: telegram
+    telegram_configs:
+      - bot_token: {{ vault_monitoring_telegram_bot_token | to_json }}
+        chat_id: {{ vault_monitoring_telegram_chat_id | int }}
+        send_resolved: true
+        message: |
+          {% raw %}{{ if eq .Status "firing" }}ALERT{{ else }}RESOLVED{{ end }}
+          {{ range .Alerts }}
+          {{ .Labels.alertname }}: {{ .Annotations.summary }}
+          {{ .Annotations.description }}
+          {{ end }}{% endraw %}
+
+inhibit_rules:
+  - source_matchers:
+      - alertname="TargetDown"
+      - job="linux"
+    target_matchers:
+      - severity=~"warning|critical"
+    equal:
+      - host

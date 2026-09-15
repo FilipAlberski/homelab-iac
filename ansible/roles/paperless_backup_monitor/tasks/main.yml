@@ -1,0 +1,47 @@
+---
+- name: Utwórz katalog konfiguracji monitora backupu Paperless
+  ansible.builtin.file:
+    path: /opt/paperless-backup-monitor
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Zapisz skrypt metryk backupu Paperless
+  ansible.builtin.template:
+    src: paperless-backup-metrics.sh.j2
+    dest: /usr/local/sbin/paperless-backup-metrics
+    owner: root
+    group: root
+    mode: "0755"
+    backup: true
+  notify: Uruchom jednorazowo monitor backupu Paperless
+
+- name: Zapisz usługę monitora backupu Paperless
+  ansible.builtin.template:
+    src: paperless-backup-metrics.service.j2
+    dest: /etc/systemd/system/paperless-backup-metrics.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Przeładuj systemd dla monitora backupu Paperless
+    - Uruchom jednorazowo monitor backupu Paperless
+
+- name: Zapisz timer monitora backupu Paperless
+  ansible.builtin.template:
+    src: paperless-backup-metrics.timer.j2
+    dest: /etc/systemd/system/paperless-backup-metrics.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Przeładuj systemd dla monitora backupu Paperless
+    - Włącz timer monitora backupu Paperless
+
+- name: Włącz timer monitora backupu Paperless
+  ansible.builtin.systemd:
+    name: paperless-backup-metrics.timer
+    enabled: true
+    state: started
+    daemon_reload: true

@@ -24,12 +24,16 @@ Przed rozpoczęciem potrzebne są:
    `make deps`.
 8. Sprawdź SSH przez `make ping`.
 9. Uruchom `make bootstrap`, a następnie `make site`.
-10. Dla Paperless odtwórz `/srv/data/paperless`, sekrety z Vaulta i — zależnie
+   Rola `common` rozszerzy partycję i root LVM do pełnego rozmiaru dysku
+   systemowego przydzielonego przez Terraform.
+10. Na świeżym `app-01` rola `app_storage` przygotuje pusty dysk `scsi1` jako
+    XFS i zamontuje go pod `/srv/data` po UUID.
+11. Dla Paperless odtwórz `/srv/data/paperless`, sekrety z Vaulta i — zależnie
     od rodzaju kopii — import `document_exporter` albo dump PostgreSQL.
-11. Sprawdź DNS, routing Traefika, aplikacje i widoczność hostów w Nagiosie.
+12. Sprawdź DNS, routing Traefika, aplikacje i widoczność hostów w Nagiosie.
 
 ## Bezpieczny test
 
 Pierwszy test wykonaj na `monitor-01` albo innej niekrytycznej VM. Nie zaczynaj
-od `dns-01`. `dataV1` nie może być montowany,
+od `dns-01`. `dataV1` pozostaje poza aktywną konfiguracją i nie może być
 formatowany ani dodawany do Terraform podczas rebuilda.

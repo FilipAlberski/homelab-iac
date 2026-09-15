@@ -1,0 +1,7 @@
+[Unit]
+Description=Eksport metryk świeżości backupu Paperless
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/paperless-backup-metrics

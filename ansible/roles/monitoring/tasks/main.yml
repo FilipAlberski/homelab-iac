@@ -1,0 +1,266 @@
+---
+- name: Sprawdź sekret administratora Grafany
+  ansible.builtin.assert:
+    that:
+      - vault_grafana_admin_password is defined
+      - vault_grafana_admin_password | length >= 16
+    fail_msg: >-
+      Ustaw co najmniej 16-znakowe vault_grafana_admin_password w zaszyfrowanym
+      inventory/group_vars/all/vault.yml.
+    quiet: true
+  no_log: true
+
+- name: Sprawdź sekret eksportera Pi-hole
+  ansible.builtin.assert:
+    that:
+      - vault_pihole_web_password is defined
+      - vault_pihole_web_password | length >= 12
+    fail_msg: "Włączony pihole-exporter wymaga vault_pihole_web_password."
+    quiet: true
+  when: monitoring_pihole_exporter_enabled | bool
+  no_log: true
+
+- name: Sprawdź token API Proxmoxa
+  ansible.builtin.assert:
+    that:
+      - vault_pve_exporter_token_name is defined
+      - vault_pve_exporter_token_name | length > 0
+      - vault_pve_exporter_token_value is defined
+      - vault_pve_exporter_token_value | length >= 16
+    fail_msg: >-
+      Włączony PVE exporter wymaga vault_pve_exporter_token_name oraz
+      vault_pve_exporter_token_value.
+    quiet: true
+  when: monitoring_pve_enabled | bool
+  no_log: true
+
+- name: Sprawdź community SNMP MikroTika
+  ansible.builtin.assert:
+    that:
+      - vault_mikrotik_snmp_community is defined
+      - vault_mikrotik_snmp_community | length >= 12
+    fail_msg: "Włączony SNMP exporter wymaga vault_mikrotik_snmp_community."
+    quiet: true
+  when: monitoring_mikrotik_snmp_enabled | bool
+  no_log: true
+
+- name: Sprawdź dane odbiorcy Telegrama
+  ansible.builtin.assert:
+    that:
+      - vault_monitoring_telegram_bot_token is defined
+      - vault_monitoring_telegram_bot_token | length >= 20
+      - vault_monitoring_telegram_chat_id is defined
+      - (vault_monitoring_telegram_chat_id | string) is match('^-?[0-9]+$')
+    fail_msg: >-
+      Włączony Alertmanager wymaga vault_monitoring_telegram_bot_token oraz
+      numerycznego vault_monitoring_telegram_chat_id.
+    quiet: true
+  when: monitoring_alertmanager_enabled | bool
+  no_log: true
+
+- name: Odczytaj aktywne połączenie sieciowe monitoringu
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - -g
+      - GENERAL.CONNECTION
+      - device
+      - show
+      - "{{ ansible_facts['default_ipv4']['interface'] }}"
+  register: monitoring_network_connection
+  changed_when: false
+  check_mode: false
+
+- name: Odczytaj DNS aktywnego połączenia monitoringu
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - -g
+      - ipv4.dns
+      - connection
+      - show
+      - "{{ monitoring_network_connection.stdout | trim }}"
+  register: monitoring_dns_current
+  changed_when: false
+  check_mode: false
+  when: monitoring_network_connection.stdout | trim | length > 0
+
+- name: Odczytaj ustawienie automatycznego DNS monitoringu
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - -g
+      - ipv4.ignore-auto-dns
+      - connection
+      - show
+      - "{{ monitoring_network_connection.stdout | trim }}"
+  register: monitoring_ignore_auto_dns
+  changed_when: false
+  check_mode: false
+  when: monitoring_network_connection.stdout | trim | length > 0
+
+- name: Odczytaj domenę wyszukiwania DNS monitoringu
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - -g
+      - ipv4.dns-search
+      - connection
+      - show
+      - "{{ monitoring_network_connection.stdout | trim }}"
+  register: monitoring_dns_search
+  changed_when: false
+  check_mode: false
+  when: monitoring_network_connection.stdout | trim | length > 0
+
+- name: Ustaw Pi-hole jako DNS monitoringu z fallbackiem publicznym
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - connection
+      - modify
+      - "{{ monitoring_network_connection.stdout | trim }}"
+      - ipv4.dns
+      - "{{ hostvars['dns-01']['ansible_host'] }} 1.1.1.1"
+      - ipv4.ignore-auto-dns
+      - "yes"
+      - ipv4.dns-search
+      - "{{ homelab_domain }}"
+  register: monitoring_dns_config
+  changed_when: true
+  when:
+    - monitoring_network_connection.stdout | trim | length > 0
+    - hostvars['dns-01']['ansible_host'] not in monitoring_dns_current.stdout
+      or '1.1.1.1' not in monitoring_dns_current.stdout
+      or monitoring_ignore_auto_dns.stdout | trim != 'yes'
+      or monitoring_dns_search.stdout | trim != homelab_domain
+
+- name: Zastosuj DNS monitoringu bez restartu VM
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - device
+      - reapply
+      - "{{ ansible_facts['default_ipv4']['interface'] }}"
+  register: monitoring_dns_reapply
+  changed_when: "'successfully reapplied' in monitoring_dns_reapply.stdout | lower"
+  failed_when: false
+  when: monitoring_dns_config is changed
+
+- name: Utwórz katalogi konfiguracji monitoringu
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0755"
+  loop:
+    - "{{ monitoring_root }}"
+    - "{{ monitoring_root }}/prometheus"
+    - "{{ monitoring_root }}/prometheus/rules"
+    - "{{ monitoring_root }}/blackbox"
+    - "{{ monitoring_root }}/snmp"
+    - "{{ monitoring_root }}/alertmanager"
+    - "{{ monitoring_root }}/alertmanager/templates"
+    - "{{ monitoring_root }}/grafana"
+    - "{{ monitoring_root }}/grafana/provisioning"
+    - "{{ monitoring_root }}/grafana/provisioning/datasources"
+    - "{{ monitoring_root }}/grafana/provisioning/dashboards"
+    - "{{ monitoring_root }}/grafana/provisioning/plugins"
+    - "{{ monitoring_root }}/grafana/provisioning/alerting"
+    - "{{ monitoring_root }}/grafana/dashboards"
+
+- name: Utwórz katalog danych Prometheusa
+  ansible.builtin.file:
+    path: "{{ monitoring_root }}/prometheus/data"
+    state: directory
+    owner: "65534"
+    group: "65534"
+    mode: "0750"
+
+- name: Utwórz katalog danych Grafany
+  ansible.builtin.file:
+    path: "{{ monitoring_root }}/grafana/data"
+    state: directory
+    owner: "472"
+    group: "472"
+    mode: "0750"
+
+- name: Utwórz katalog danych Alertmanagera
+  ansible.builtin.file:
+    path: "{{ monitoring_root }}/alertmanager/data"
+    state: directory
+    owner: "65534"
+    group: "65534"
+    mode: "0750"
+  when: monitoring_alertmanager_enabled | bool
+
+- name: Zezwól Traefikowi na dostęp do Grafany
+  ansible.posix.firewalld:
+    rich_rule: >-
+      rule family="ipv4"
+      source address="{{ hostvars['proxy-01']['ansible_host'] }}/32"
+      port port="{{ monitoring_grafana_port }}" protocol="tcp" accept
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Zapisz konfigurację monitoringu
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0644"
+    backup: true
+    validate: "{{ item.validate | default(omit) }}"
+  loop:
+    - src: prometheus.yml.j2
+      dest: "{{ monitoring_root }}/prometheus/prometheus.yml"
+    - src: alerts.yml.j2
+      dest: "{{ monitoring_root }}/prometheus/rules/alerts.yml"
+      validate: >-
+        /usr/bin/docker run --rm --entrypoint=/bin/promtool
+        -v %s:/tmp/alerts.yml:ro {{ monitoring_prometheus_image }}
+        check rules /tmp/alerts.yml
+    - src: blackbox.yml.j2
+      dest: "{{ monitoring_root }}/blackbox/blackbox.yml"
+    - src: snmp-auth.yml.j2
+      dest: "{{ monitoring_root }}/snmp/auth.yml"
+    - src: grafana-datasource.yml.j2
+      dest: "{{ monitoring_root }}/grafana/provisioning/datasources/prometheus.yml"
+    - src: grafana-dashboards.yml.j2
+      dest: "{{ monitoring_root }}/grafana/provisioning/dashboards/homelab.yml"
+    - src: homelab-overview.json.j2
+      dest: "{{ monitoring_root }}/grafana/dashboards/homelab-overview.json"
+    - src: compose.yml.j2
+      dest: "{{ monitoring_root }}/compose.yml"
+  notify: Uruchom ponownie monitoring
+
+- name: Zapisz konfigurację Alertmanagera
+  ansible.builtin.template:
+    src: alertmanager.yml.j2
+    dest: "{{ monitoring_root }}/alertmanager/alertmanager.yml"
+    owner: "65534"
+    group: "65534"
+    mode: "0600"
+    backup: true
+  when: monitoring_alertmanager_enabled | bool
+  notify: Uruchom ponownie monitoring
+
+- name: Zapisz sekrety monitoringu
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ monitoring_root }}/.env"
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0600"
+    backup: true
+  notify: Uruchom ponownie monitoring
+  no_log: true
+
+- name: Uruchom centralny monitoring
+  community.docker.docker_compose_v2:
+    project_src: "{{ monitoring_root }}"
+    pull: missing
+    state: present

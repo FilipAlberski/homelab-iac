@@ -1,0 +1,12 @@
+[Unit]
+Description=Dwa dzienne eksporty Paperless przed backupem VM
+
+[Timer]
+{% for schedule in paperless_backup_schedules %}
+OnCalendar={{ schedule }}
+{% endfor %}
+Persistent=true
+RandomizedDelaySec=10m
+
+[Install]
+WantedBy=timers.target

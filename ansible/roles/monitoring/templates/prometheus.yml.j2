@@ -1,0 +1,179 @@
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    environment: homelab
+
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+{% if monitoring_alertmanager_enabled | bool %}
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - "127.0.0.1:{{ monitoring_alertmanager_port }}"
+{% endif %}
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - 127.0.0.1:9090
+
+{% if monitoring_alertmanager_enabled | bool %}
+  - job_name: alertmanager
+    static_configs:
+      - targets:
+          - "127.0.0.1:{{ monitoring_alertmanager_port }}"
+{% endif %}
+
+  - job_name: linux
+    static_configs:
+{% for host in groups['docker_hosts'] %}
+      - targets:
+          - "{{ hostvars[host]['ansible_host'] }}:{{ node_exporter_port }}"
+        labels:
+          instance: "{{ host }}"
+          host: "{{ host }}"
+{% endfor %}
+
+  - job_name: containers
+    static_configs:
+{% for host in groups['docker_hosts'] %}
+      - targets:
+          - "{{ hostvars[host]['ansible_host'] }}:{{ cadvisor_port }}"
+        labels:
+          instance: "{{ host }}"
+          host: "{{ host }}"
+{% endfor %}
+
+  - job_name: container-updates
+    metrics_path: /metrics
+    static_configs:
+{% for host in groups['docker_hosts'] %}
+      - targets:
+          - "{{ hostvars[host]['ansible_host'] }}:{{ container_updates_metrics_port }}"
+        labels:
+          instance: "{{ host }}"
+          host: "{{ host }}"
+{% endfor %}
+
+  - job_name: blackbox-http
+    metrics_path: /probe
+    params:
+      module:
+        - http_2xx
+    static_configs:
+{% for target in monitoring_http_targets %}
+      - targets:
+          - "{{ target.target }}"
+        labels:
+          service: "{{ target.name }}"
+          host: "{{ target.host }}"
+          blackbox_module: "{{ target.module | default('http_2xx') }}"
+{% endfor %}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - source_labels: [blackbox_module]
+        target_label: __param_module
+      - action: labeldrop
+        regex: blackbox_module
+      - target_label: __address__
+        replacement: 127.0.0.1:9115
+
+  - job_name: blackbox-icmp
+    metrics_path: /probe
+    params:
+      module:
+        - icmp
+    static_configs:
+{% for host in groups['docker_hosts'] %}
+      - targets:
+          - "{{ hostvars[host]['ansible_host'] }}"
+        labels:
+          host: "{{ host }}"
+{% endfor %}
+      - targets:
+          - "{{ monitoring_pve_host }}"
+        labels:
+          host: proxmox
+      - targets:
+          - "{{ monitoring_mikrotik_host }}"
+        labels:
+          host: mikrotik
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9115
+
+{% if monitoring_pve_enabled | bool %}
+  - job_name: proxmox
+    metrics_path: /pve
+    params:
+      module:
+        - default
+      cluster:
+        - "1"
+      node:
+        - "1"
+    static_configs:
+      - targets:
+          - "{{ monitoring_pve_host }}"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9221
+{% endif %}
+
+{% if monitoring_mikrotik_snmp_enabled | bool %}
+  - job_name: mikrotik
+    metrics_path: /snmp
+    params:
+      auth:
+        - mikrotik_v2
+      module:
+        - if_mib
+        - system
+    static_configs:
+      - targets:
+          - "{{ monitoring_mikrotik_host }}"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9116
+{% endif %}
+
+{% if monitoring_pihole_exporter_enabled | bool %}
+  - job_name: pihole
+    static_configs:
+      - targets:
+          - 127.0.0.1:9617
+        labels:
+          instance: dns-01
+          host: dns-01
+{% endif %}
+
+{% if monitoring_custom_metrics_targets | length > 0 %}
+  - job_name: custom-apps
+    metrics_path: /metrics
+    static_configs:
+{% for application in monitoring_custom_metrics_targets %}
+      - targets:
+          - "{{ application.target }}"
+        labels:
+          application: "{{ application.name }}"
+{% endfor %}
+{% endif %}

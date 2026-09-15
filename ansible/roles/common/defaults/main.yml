@@ -2,6 +2,7 @@
 common_packages:
   - bash-completion
   - bind-utils
+  - cloud-utils-growpart
   - curl
   - firewalld
   - git
@@ -10,3 +11,8 @@ common_packages:
   - tar
   - vim
   - xfsprogs
+
+system_disk_device: /dev/sda
+system_disk_partition: 3
+system_volume_group: rl_device-1047
+system_root_logical_volume: root

@@ -1,0 +1,61 @@
+---
+- name: Sprawdź sekrety powiadomień aktualizacji kontenerów
+  ansible.builtin.assert:
+    that:
+      - vault_monitoring_telegram_bot_token is defined
+      - vault_monitoring_telegram_bot_token | length >= 20
+      - vault_monitoring_telegram_chat_id is defined
+      - (vault_monitoring_telegram_chat_id | string) is match('^-?[0-9]+$')
+    fail_msg: >-
+      Monitor aktualizacji kontenerów wymaga vault_monitoring_telegram_bot_token
+      oraz numerycznego vault_monitoring_telegram_chat_id w zaszyfrowanym Vault.
+    quiet: true
+  no_log: true
+
+- name: Utwórz katalogi monitora aktualizacji kontenerów
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0750"
+  loop:
+    - "{{ container_updates_root }}"
+    - "{{ container_updates_root }}/data"
+
+- name: Zezwól monitor-01 na odczyt metryk Diun
+  ansible.posix.firewalld:
+    rich_rule: >-
+      rule family="ipv4"
+      source address="{{ hostvars['monitor-01']['ansible_host'] }}/32"
+      port port="{{ container_updates_metrics_port }}" protocol="tcp" accept
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Zapisz Compose monitora aktualizacji kontenerów
+  ansible.builtin.template:
+    src: compose.yml.j2
+    dest: "{{ container_updates_root }}/compose.yml"
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0644"
+    backup: true
+  notify: Uruchom ponownie monitor aktualizacji kontenerów
+
+- name: Zapisz sekrety monitora aktualizacji kontenerów
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ container_updates_root }}/.env"
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0600"
+    backup: true
+  notify: Uruchom ponownie monitor aktualizacji kontenerów
+  no_log: true
+
+- name: Uruchom monitor aktualizacji kontenerów
+  community.docker.docker_compose_v2:
+    project_src: "{{ container_updates_root }}"
+    pull: missing
+    state: present

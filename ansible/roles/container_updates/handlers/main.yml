@@ -1,0 +1,5 @@
+---
+- name: Uruchom ponownie monitor aktualizacji kontenerów
+  community.docker.docker_compose_v2:
+    project_src: "{{ container_updates_root }}"
+    state: restarted

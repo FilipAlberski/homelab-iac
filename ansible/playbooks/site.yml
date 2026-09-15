@@ -1,4 +1,7 @@
 ---
+- name: Zarządzaj kontami administracyjnymi
+  ansible.builtin.import_playbook: users.yml
+
 - name: Wykonaj bootstrap systemów
   ansible.builtin.import_playbook: bootstrap.yml
 
@@ -16,20 +19,39 @@
     - role: proxy
       when: deploy_proxy | bool
 
+- name: Wdróż eksportery metryk na VM
+  hosts: docker_hosts
+  become: true
+  roles:
+    - role: metrics_agent
+      when: deploy_metrics_agents | bool
+
 - name: Wdróż aplikacje
   hosts: apps
   become: true
   roles:
+    - role: app_storage
     - role: homepage
       when: deploy_homepage | bool
     - role: portainer
       when: deploy_portainer | bool
-    - role: actual
-      when: deploy_actual | bool
     - role: paperless
       when: deploy_paperless | bool
-    - role: apps
-      when: deploy_apps | bool
+    - role: paperless_backup
+      when:
+        - deploy_paperless | bool
+        - paperless_backup_enabled | bool
+    - role: paperless_backup_monitor
+      when:
+        - deploy_paperless | bool
+        - paperless_backup_monitor_enabled | bool
+- name: Wdróż media stack
+  hosts: media
+  become: true
+  roles:
+    - role: app_storage
+    - role: media
+      when: deploy_media | bool
 
 - name: Wdróż Nagios
   hosts: nagios
@@ -37,3 +59,17 @@
   roles:
     - role: nagios
       when: deploy_nagios | bool
+
+- name: Wdróż centralny monitoring
+  hosts: monitoring
+  become: true
+  roles:
+    - role: monitoring
+      when: deploy_monitoring | bool
+
+- name: Wdróż monitor aktualizacji kontenerów
+  hosts: docker_hosts
+  become: true
+  roles:
+    - role: container_updates
+      when: container_updates_enabled | bool

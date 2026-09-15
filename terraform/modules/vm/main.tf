@@ -7,6 +7,7 @@ resource "proxmox_virtual_environment_vm" "this" {
   on_boot       = true
   started       = true
   scsi_hardware = var.scsi_hardware
+  machine       = var.machine
 
   agent {
     enabled = true
@@ -37,6 +38,7 @@ resource "proxmox_virtual_environment_vm" "this" {
       datastore_id = disk.value.datastore_id
       interface    = disk.value.interface
       size         = disk.value.size_gb
+      backup       = disk.value.backup
       discard      = "on"
       file_format  = "raw"
       iothread     = true
@@ -69,6 +71,7 @@ resource "proxmox_virtual_environment_vm" "this" {
   initialization {
     datastore_id = var.disks[0].datastore_id
     interface    = "ide2"
+    upgrade      = false
 
     user_account {
       username = var.admin_user

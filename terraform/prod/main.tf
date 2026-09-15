@@ -1,13 +1,13 @@
 locals {
-  # Na etapie przejęcia istniejących VM opisujemy ich aktualny storage i
-  # parametry. Migracja na tank-zfs będzie wykonywana później, po jednej VM.
+  # Wszystkie świeże dyski VM trafiają na tank-zfs. app-01 ma osobny dysk
+  # danych, aby dane aplikacji nie współdzieliły systemowego filesystemu.
   vms = {
     dns-01 = {
       vm_id              = 141
       cpu_cores          = 2
       memory_mb          = 2048
       memory_floating_mb = 1024
-      disks              = [{ datastore_id = "local-lvm", interface = "scsi0", size_gb = 30 }]
+      disks              = [{ datastore_id = "tank-zfs", interface = "scsi0", size_gb = 30 }]
       tags               = ["terraform", "docker", "dns", "network"]
     }
 
@@ -16,7 +16,7 @@ locals {
       cpu_cores          = 2
       memory_mb          = 2048
       memory_floating_mb = 1024
-      disks              = [{ datastore_id = "local-lvm", interface = "scsi0", size_gb = 30 }]
+      disks              = [{ datastore_id = "tank-zfs", interface = "scsi0", size_gb = 30 }]
       tags               = ["terraform", "docker", "proxy", "network"]
     }
 
@@ -26,10 +26,10 @@ locals {
       memory_mb          = 12288
       memory_floating_mb = 2048
       disks = [
-        { datastore_id = "local-lvm", interface = "scsi0", size_gb = 30 },
-        { datastore_id = "datav1", interface = "scsi1", size_gb = 200 },
+        { datastore_id = "tank-zfs", interface = "scsi0", size_gb = 30 },
+        { datastore_id = "tank-zfs", interface = "scsi1", size_gb = 200 },
       ]
-      tags = ["terraform", "docker", "apps", "seafile"]
+      tags = ["terraform", "docker", "apps"]
     }
 
     monitor-01 = {
@@ -39,8 +39,50 @@ locals {
       memory_mb          = 6144
       memory_floating_mb = 2048
       scsi_hardware      = "virtio-scsi-single"
-      disks              = [{ datastore_id = "local-lvm", interface = "scsi0", size_gb = 80 }]
+      disks              = [{ datastore_id = "tank-zfs", interface = "scsi0", size_gb = 80 }]
       tags               = ["terraform", "docker", "monitoring"]
+    }
+
+    # GPU iGPU jest podpinane jednorazowo przez qm (legacy-IGD nie jest wspierane
+    # przez providera); hostpci jest w ignore_changes, więc drift nie jest korygowany.
+    jelly-01 = {
+      vm_id              = 131
+      machine            = "pc"
+      cpu_cores          = 2
+      memory_mb          = 8192
+      memory_floating_mb = 2048
+      disks = [
+        { datastore_id = "tank-zfs", interface = "scsi0", size_gb = 30 },
+        { datastore_id = "tank-zfs", interface = "scsi1", size_gb = 200, backup = false },
+      ]
+      tags = ["terraform", "docker", "media"]
+    }
+
+    k8s-cp1 = {
+      vm_id              = 151
+      cpu_cores          = 2
+      memory_mb          = 4096
+      memory_floating_mb = 0
+      disks              = [{ datastore_id = "tank-zfs", interface = "scsi0", size_gb = 32 }]
+      tags               = ["terraform", "kubernetes", "control-plane"]
+    }
+
+    k8s-w1 = {
+      vm_id              = 152
+      cpu_cores          = 2
+      memory_mb          = 4096
+      memory_floating_mb = 0
+      disks              = [{ datastore_id = "tank-zfs", interface = "scsi0", size_gb = 32 }]
+      tags               = ["terraform", "kubernetes", "worker"]
+    }
+
+    k8s-w2 = {
+      vm_id              = 153
+      cpu_cores          = 2
+      memory_mb          = 4096
+      memory_floating_mb = 0
+      disks              = [{ datastore_id = "tank-zfs", interface = "scsi0", size_gb = 32 }]
+      tags               = ["terraform", "kubernetes", "worker"]
     }
   }
 }
@@ -57,6 +99,7 @@ module "vm" {
   memory_mb          = each.value.memory_mb
   memory_floating_mb = each.value.memory_floating_mb
   scsi_hardware      = try(each.value.scsi_hardware, "virtio-scsi-pci")
+  machine            = try(each.value.machine, null)
   hostpci_devices    = try(each.value.hostpci_devices, [])
   network_bridge     = var.network_bridge
   vlan_id            = var.vlan_id
@@ -72,6 +115,7 @@ module "vm" {
       datastore_id = try(disk.datastore_id, var.storage_pool)
       interface    = disk.interface
       size_gb      = disk.size_gb
+      backup       = try(disk.backup, true)
     }
   ]
 }

@@ -1,0 +1,42 @@
+---
+- name: Zaktualizuj DNS dla dashboardów
+  hosts: pihole
+  become: true
+  roles:
+    - role: pihole
+      when: deploy_pihole | bool
+
+- name: Zaktualizuj reverse proxy dla Grafany i Homepage
+  hosts: proxy
+  become: true
+  roles:
+    - role: proxy
+      when: deploy_proxy | bool
+
+- name: Wdróż Homepage
+  hosts: apps
+  become: true
+  roles:
+    - role: homepage
+      when: deploy_homepage | bool
+
+- name: Wdróż eksportery metryk
+  hosts: docker_hosts
+  become: true
+  roles:
+    - role: metrics_agent
+      when: deploy_metrics_agents | bool
+
+- name: Wdróż monitor aktualizacji kontenerów
+  hosts: docker_hosts
+  become: true
+  roles:
+    - role: container_updates
+      when: container_updates_enabled | bool
+
+- name: Wdróż Grafanę i centralny monitoring
+  hosts: monitoring
+  become: true
+  roles:
+    - role: monitoring
+      when: deploy_monitoring | bool

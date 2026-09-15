@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+compose_dir={{ paperless_root | quote }}
+export_root={{ paperless_backup_export_root | quote }}
+container_export_root=/usr/src/paperless/export
+state_root=/var/lib/paperless-backup
+lock_file=/run/lock/paperless-backup.lock
+keep={{ paperless_backup_keep }}
+
+log() {
+  logger -t paperless-backup -- "$*"
+  printf '%s\n' "$*"
+}
+
+write_last_run() {
+  local success=$1
+  local temporary_file="${state_root}/last-run.$$"
+  printf '%s %s\n' "$(date +%s)" "${success}" > "${temporary_file}"
+  mv -f "${temporary_file}" "${state_root}/last-run"
+}
+
+exec 9>"${lock_file}"
+flock -n 9 || { log 'Inny backup Paperless już działa'; exit 0; }
+
+run_id="$(date +%F-%H%M%S)"
+staging_name=".paperless-${run_id}.incomplete"
+final_name="paperless-${run_id}"
+staging_dir="${export_root}/${staging_name}"
+final_dir="${export_root}/${final_name}"
+
+cleanup_on_error() {
+  local exit_code=$?
+  if (( exit_code != 0 )); then
+    write_last_run 0
+    log "Backup Paperless nieudany; dane robocze pozostawiono w ${staging_dir}"
+  fi
+  exit "${exit_code}"
+}
+trap cleanup_on_error EXIT
+
+install -d -o root -g root -m 0700 "${state_root}"
+install -d \
+  -o {{ paperless_backup_export_uid | quote }} \
+  -g {{ paperless_backup_export_gid | quote }} \
+  -m 0700 \
+  "${staging_dir}"
+write_last_run 0
+
+if [[ "$(findmnt -n -o TARGET -T "${export_root}")" != {{ app_data_mount | quote }} ]]; then
+  log "Katalog eksportu nie znajduje się na oczekiwanym dysku {{ app_data_mount }}"
+  exit 1
+fi
+
+cd "${compose_dir}"
+for service in db webserver; do
+  if ! docker compose ps --status running --services | grep -Fxq "${service}"; then
+    log "Kontener ${service} nie działa"
+    exit 1
+  fi
+done
+
+log "Start eksportu Paperless do ${final_dir}"
+docker compose exec -T webserver \
+  document_exporter --skip-checks --no-progress-bar --use-folder-prefix \
+  "${container_export_root}/${staging_name}"
+
+docker compose exec -T db \
+  pg_dump --username=paperless --dbname=paperless --format=custom \
+  --serializable-deferrable --no-owner --no-privileges \
+  > "${staging_dir}/paperless.dump"
+
+if [[ ! -s "${staging_dir}/manifest.json" \
+  || ! -s "${staging_dir}/metadata.json" \
+  || ! -s "${staging_dir}/paperless.dump" ]]; then
+  log 'Eksport nie zawiera manifestu, metadanych albo dumpu PostgreSQL'
+  exit 1
+fi
+
+(
+  cd "${staging_dir}"
+  find . -type f ! -name SHA256SUMS -print0 \
+    | sort -z \
+    | xargs -0 sha256sum > SHA256SUMS
+)
+
+mv -- "${staging_dir}" "${final_dir}"
+
+while IFS= read -r old_backup; do
+  log "Usuwam starszy eksport ${old_backup}"
+  rm -rf -- "${old_backup}"
+done < <(
+  find "${export_root}" -mindepth 1 -maxdepth 1 -type d \
+    -name 'paperless-????-??-??-??????' -printf '%p\n' \
+    | sort -r \
+    | tail -n "+$((keep + 1))"
+)
+
+printf '%s\n' "$(date +%s)" > "${state_root}/last-success"
+write_last_run 1
+log "Backup Paperless zakończony poprawnie: ${final_dir}"
+trap - EXIT

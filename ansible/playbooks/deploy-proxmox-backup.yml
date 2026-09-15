@@ -1,0 +1,7 @@
+---
+- name: Wdróż automatyczny backup VM na hoście Proxmox
+  hosts: proxmox
+  become: false
+  roles:
+    - role: proxmox_backup
+      when: proxmox_backup_enabled | bool

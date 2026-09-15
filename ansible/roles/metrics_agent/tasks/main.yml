@@ -1,0 +1,44 @@
+---
+- name: Utwórz katalog eksportera metryk
+  ansible.builtin.file:
+    path: "{{ metrics_agent_root }}"
+    state: directory
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0755"
+
+- name: Utwórz katalog textfile collectora node_exporter
+  ansible.builtin.file:
+    path: /var/lib/node_exporter/textfile_collector
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Zezwól monitor-01 na odczyt metryk
+  ansible.posix.firewalld:
+    rich_rule: >-
+      rule family="ipv4"
+      source address="{{ hostvars['monitor-01']['ansible_host'] }}/32"
+      port port="{{ item }}" protocol="tcp" accept
+    permanent: true
+    immediate: true
+    state: enabled
+  loop:
+    - "{{ node_exporter_port }}"
+    - "{{ cadvisor_port }}"
+
+- name: Zapisz Compose eksporterów metryk
+  ansible.builtin.template:
+    src: compose.yml.j2
+    dest: "{{ metrics_agent_root }}/compose.yml"
+    owner: "{{ homelab_user }}"
+    group: "{{ homelab_user }}"
+    mode: "0644"
+    backup: true
+
+- name: Uruchom eksportery metryk
+  community.docker.docker_compose_v2:
+    project_src: "{{ metrics_agent_root }}"
+    pull: missing
+    state: present

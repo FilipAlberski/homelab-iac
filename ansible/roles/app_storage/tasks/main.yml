@@ -1,0 +1,97 @@
+---
+- name: Sprawdź urządzenie dysku danych
+  ansible.builtin.stat:
+    path: "{{ app_data_device }}"
+    follow: true
+  register: app_data_device_stat
+
+- name: Wymagaj jawnie wskazanego dysku danych
+  ansible.builtin.assert:
+    that:
+      - app_data_device_stat.stat.exists
+      - app_data_device_stat.stat.isblk
+    fail_msg: "Brakuje oczekiwanego dysku danych {{ app_data_device }}; nie formatuję żadnego urządzenia."
+
+- name: Sprawdź typ urządzenia
+  ansible.builtin.command:
+    argv:
+      - lsblk
+      - -dn
+      - -o
+      - TYPE
+      - "{{ app_data_device }}"
+  register: app_data_device_type
+  changed_when: false
+
+- name: Wymagaj całego dysku zamiast partycji
+  ansible.builtin.assert:
+    that:
+      - app_data_device_type.stdout | trim == 'disk'
+    fail_msg: "{{ app_data_device }} nie jest całym dyskiem; zatrzymuję przygotowanie storage."
+
+- name: Odczytaj istniejący filesystem
+  ansible.builtin.command:
+    argv:
+      - blkid
+      - -p
+      - -s
+      - TYPE
+      - -o
+      - value
+      - "{{ app_data_device }}"
+  register: app_data_blkid
+  changed_when: false
+  failed_when: app_data_blkid.rc not in [0, 2]
+
+- name: Nie formatuj nieznanego filesystemu
+  ansible.builtin.assert:
+    that:
+      - app_data_blkid.stdout | trim in ['', app_data_fstype]
+    fail_msg: >-
+      {{ app_data_device }} zawiera filesystem {{ app_data_blkid.stdout | trim }};
+      oczekiwano pustego dysku albo {{ app_data_fstype }}. Niczego nie formatuję.
+
+- name: Utwórz filesystem na świeżym pustym dysku
+  community.general.filesystem:
+    dev: "{{ app_data_device }}"
+    fstype: "{{ app_data_fstype }}"
+    force: false
+  when: app_data_blkid.stdout | trim == ''
+
+- name: Utwórz punkt montowania danych
+  ansible.builtin.file:
+    path: "{{ app_data_mount }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Odczytaj UUID filesystemu danych
+  ansible.builtin.command:
+    argv:
+      - blkid
+      - -s
+      - UUID
+      - -o
+      - value
+      - "{{ app_data_device }}"
+  register: app_data_uuid
+  changed_when: false
+
+- name: Zamontuj dysk danych po UUID
+  ansible.posix.mount:
+    path: "{{ app_data_mount }}"
+    src: "UUID={{ app_data_uuid.stdout | trim }}"
+    fstype: "{{ app_data_fstype }}"
+    opts: defaults,nofail,x-systemd.device-timeout=30s
+    state: mounted
+
+- name: Przywróć etykietę SELinux punktu montowania danych
+  ansible.builtin.command:
+    argv:
+      - restorecon
+      - -v
+      - "{{ app_data_mount }}"
+  register: app_data_restorecon
+  changed_when: app_data_restorecon.stdout | length > 0
+  when: ansible_facts.selinux.status == 'enabled'

@@ -1,0 +1,34 @@
+---
+- name: Wdróż backup aplikacyjny Paperless
+  hosts: apps
+  become: true
+  roles:
+    - role: app_storage
+    - role: paperless_backup
+      when:
+        - deploy_paperless | bool
+        - paperless_backup_enabled | bool
+    - role: paperless_backup_monitor
+      when:
+        - deploy_paperless | bool
+        - paperless_backup_monitor_enabled | bool
+
+- name: Napraw obsługę snapshotów dysku danych media
+  hosts: media
+  become: true
+  roles:
+    - role: app_storage
+
+- name: Wdróż backup VM na Proxmox
+  hosts: proxmox
+  become: false
+  roles:
+    - role: proxmox_backup
+      when: proxmox_backup_enabled | bool
+
+- name: Wdróż alerty backupu
+  hosts: monitoring
+  become: true
+  roles:
+    - role: monitoring
+      when: deploy_monitoring | bool

@@ -1,0 +1,4 @@
+---
+- name: Przeładuj systemd dla backupu Paperless
+  ansible.builtin.systemd_service:
+    daemon_reload: true

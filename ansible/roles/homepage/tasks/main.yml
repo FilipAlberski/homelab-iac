@@ -1,10 +1,10 @@
 ---
-- name: Sprawdź sekret widgetu Pi-hole
+- name: Sprawdź klucz API Jellyfina dla Homepage
   ansible.builtin.assert:
     that:
-      - vault_pihole_web_password is defined
-      - vault_pihole_web_password | length >= 12
-    fail_msg: "Brakuje vault_pihole_web_password dla widgetu Homepage."
+      - vault_jellyfin_api_key is defined
+      - vault_jellyfin_api_key | length >= 32
+    fail_msg: "Brakuje vault_jellyfin_api_key dla widgetu Homepage."
 
 - name: Utwórz katalogi Homepage
   ansible.builtin.file:

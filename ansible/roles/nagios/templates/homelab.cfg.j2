@@ -1,13 +1,14 @@
 define hostgroup {
     hostgroup_name  homelab
     alias           Homelab VMs
-    members         dns-01,proxy-01,app-01
+    members         dns-01,proxy-01,app-01,jelly-01
 }
 
 {% for host, address in {
   'dns-01': '192.168.60.141',
   'proxy-01': '192.168.60.142',
-  'app-01': '192.168.60.143'
+  'app-01': '192.168.60.143',
+  'jelly-01': '192.168.60.131'
 }.items() %}
 define host {
     use             linux-server
@@ -21,6 +22,24 @@ define service {
     host_name               {{ host }}
     service_description     PING
     check_command           check_ping!100.0,20%!500.0,60%
+}
+
+{% endfor %}
+
+{% for description, port, uri in [
+  ('Jellyfin HTTP', 8096, '/health'),
+  ('Seerr HTTP', 5055, '/api/v1/status'),
+  ('Sonarr HTTP', 8989, '/ping'),
+  ('Radarr HTTP', 7878, '/ping'),
+  ('Prowlarr HTTP', 9696, '/ping'),
+  ('Bazarr HTTP', 6767, '/'),
+  ('qBittorrent HTTP', 8080, '/')
+] %}
+define service {
+    use                     generic-service
+    host_name               jelly-01
+    service_description     {{ description }}
+    check_command           check_http!-p {{ port }} -u {{ uri }}
 }
 
 {% endfor %}

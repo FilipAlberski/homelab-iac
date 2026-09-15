@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+PRIMARY_ROOT={{ proxmox_backup_primary_root | quote }}
+SECONDARY_ROOT={{ proxmox_backup_secondary_root | quote }}
+RUN_ID="$(date +%F-%H%M%S)"
+STAGING_DIR="${PRIMARY_ROOT}/.homelab-${RUN_ID}.incomplete"
+PRIMARY_DIR="${PRIMARY_ROOT}/homelab-${RUN_ID}"
+SECONDARY_DIR="${SECONDARY_ROOT}/homelab-${RUN_ID}"
+LOCK_FILE=/run/lock/homelab-vzdump-backup.lock
+VMIDS=({% for vmid in proxmox_backup_vmids %}{{ vmid }} {% endfor %})
+
+log() {
+  logger -t homelab-vzdump-backup -- "$*"
+  printf '%s\n' "$*"
+}
+
+cleanup_on_error() {
+  local exit_code=$?
+  if (( exit_code != 0 )); then
+    log "Backup nieudany; niekompletne dane pozostawiono do ręcznego sprawdzenia: ${STAGING_DIR} ${SECONDARY_DIR}"
+  fi
+  exit "${exit_code}"
+}
+trap cleanup_on_error EXIT
+
+exec 9>"${LOCK_FILE}"
+flock -n 9 || { log 'Inny backup już działa'; exit 1; }
+
+mountpoint -q /tank
+mountpoint -q /mnt/pve/datav1
+zpool status tank | grep -q 'state: ONLINE'
+zpool status tank | grep -q 'errors: No known data errors'
+
+mkdir -p "${STAGING_DIR}"
+log "Start backupu VM: ${VMIDS[*]}"
+
+vzdump "${VMIDS[@]}" \
+  --dumpdir "${STAGING_DIR}" \
+  --mode snapshot \
+  --compress zstd
+
+for vmid in "${VMIDS[@]}"; do
+  if ! find "${STAGING_DIR}" -maxdepth 1 -type f -name "vzdump-qemu-${vmid}-*.vma.zst" -print -quit | grep -q .; then
+    log "Brak archiwum VM ${vmid} po zakończeniu vzdump"
+    exit 1
+  fi
+done
+
+(cd "${STAGING_DIR}" && sha256sum *.vma.zst > SHA256SUMS)
+mv -- "${STAGING_DIR}" "${PRIMARY_DIR}"
+
+mkdir -p "${SECONDARY_DIR}"
+rsync -aH --numeric-ids "${PRIMARY_DIR}/" "${SECONDARY_DIR}/"
+(cd "${SECONDARY_DIR}" && sha256sum -c SHA256SUMS)
+
+prune_backups() {
+  local root=$1
+  local daily_kept=0
+  local weekly_kept=0
+  local name date_part weekday
+  declare -A weekly_dates=()
+
+  while IFS= read -r name; do
+    if [[ ! "${name}" =~ ^homelab-([0-9]{4}-[0-9]{2}-[0-9]{2})-[0-9]{6}$ ]]; then
+      log "Zostawiam nierozpoznany katalog backupu ${root}/${name}"
+      continue
+    fi
+
+    if (( daily_kept < {{ proxmox_backup_keep_daily }} )); then
+      daily_kept=$((daily_kept + 1))
+      continue
+    fi
+
+    date_part="${BASH_REMATCH[1]}"
+    weekday="$(date -d "${date_part}" +%u 2>/dev/null || true)"
+    if [[ "${weekday}" == 7 ]] && (( weekly_kept < {{ proxmox_backup_keep_weekly }} )); then
+      if [[ -z "${weekly_dates[${date_part}]+x}" ]]; then
+        weekly_dates["${date_part}"]=1
+        weekly_kept=$((weekly_kept + 1))
+        continue
+      fi
+    fi
+
+    log "Usuwam starą kopię ${root}/${name} zgodnie z retencją"
+    rm -rf -- "${root:?}/${name}"
+  done < <(find "${root}" -mindepth 1 -maxdepth 1 -type d -name 'homelab-*' -printf '%f\n' | sort -r)
+}
+
+prune_backups "${PRIMARY_ROOT}"
+prune_backups "${SECONDARY_ROOT}"
+log "Backup zakończony poprawnie: ${PRIMARY_DIR} oraz ${SECONDARY_DIR}"
+trap - EXIT

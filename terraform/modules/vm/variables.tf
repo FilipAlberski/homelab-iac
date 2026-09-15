@@ -46,6 +46,7 @@ variable "disks" {
     datastore_id = string
     interface    = string
     size_gb      = number
+    backup       = optional(bool, true)
   }))
 
   validation {
@@ -95,6 +96,12 @@ variable "admin_user" {
 variable "ssh_public_key" {
   description = "Publiczny klucz SSH operatora"
   type        = string
+}
+
+variable "machine" {
+  description = "Typ maszyny QEMU; i440fx jest wymagany dla legacy-IGD passthrough"
+  type        = string
+  default     = null
 }
 
 variable "hostpci_devices" {

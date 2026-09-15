@@ -1,0 +1,38 @@
+name: container-updates
+
+services:
+  diun:
+    image: {{ container_updates_image }}
+    container_name: diun
+    command: serve
+    restart: unless-stopped
+    environment:
+      TZ: {{ homelab_timezone }}
+      LOG_LEVEL: info
+      LOG_JSON: "false"
+      DIUN_DB_PATH: /data/diun.db
+      DIUN_WATCH_SCHEDULE: "{{ container_updates_schedule }}"
+      DIUN_WATCH_WORKERS: "{{ container_updates_workers }}"
+      DIUN_PROVIDERS_DOCKER: "true"
+      DIUN_PROVIDERS_DOCKER_ENDPOINT: unix:///var/run/docker.sock
+      DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT: "{{ container_updates_watch_by_default | bool | lower }}"
+      DIUN_PROVIDERS_DOCKER_WATCHSTOPPED: "{{ container_updates_watch_stopped | bool | lower }}"
+      DIUN_METRICS_ENABLED: "true"
+      DIUN_METRICS_ADDR: ":{{ container_updates_metrics_port }}"
+      DIUN_METRICS_PATH: /metrics
+      DIUN_NOTIF_TELEGRAM_TOKEN: ${DIUN_TELEGRAM_TOKEN}
+      DIUN_NOTIF_TELEGRAM_CHATIDS: ${DIUN_TELEGRAM_CHAT_ID}
+      DIUN_NOTIF_TELEGRAM_TEMPLATEBODY: >-
+        Obraz {{ "{{ .Entry.Image }}" }} został
+        {{ "{{ if eq .Entry.Status \"new\" }}dodany{{ else }}zaktualizowany{{ end }}" }}
+        na hoście {{ "{{ .Meta.Hostname }}" }}.
+    volumes:
+      - {{ container_updates_root }}/data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "{{ container_updates_metrics_port }}:{{ container_updates_metrics_port }}"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp

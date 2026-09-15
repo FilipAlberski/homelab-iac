@@ -1,0 +1,13 @@
+[Unit]
+Description=Spójny eksport Paperless i logiczny dump PostgreSQL
+After=docker.service local-fs.target
+RequiresMountsFor={{ paperless_backup_export_root }}
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/paperless-backup
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+TimeoutStartSec=2h
+UMask=0077

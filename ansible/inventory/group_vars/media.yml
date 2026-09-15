@@ -1,0 +1,5 @@
+---
+# Grupa media (jelly-01): dysk danych montowany jako /data zgodnie z układem
+# opisanym w docs/jellyfin-rebuild-notes.md (jeden filesystem, hardlinki).
+app_data_mount: /data
+app_data_fstype: xfs

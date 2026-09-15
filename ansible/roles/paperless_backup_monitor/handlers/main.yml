@@ -1,0 +1,15 @@
+---
+- name: Przeładuj systemd dla monitora backupu Paperless
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Uruchom jednorazowo monitor backupu Paperless
+  ansible.builtin.systemd:
+    name: paperless-backup-metrics.service
+    state: started
+
+- name: Włącz timer monitora backupu Paperless
+  ansible.builtin.systemd:
+    name: paperless-backup-metrics.timer
+    enabled: true
+    state: started

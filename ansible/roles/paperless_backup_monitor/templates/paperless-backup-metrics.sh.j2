@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+set -u
+
+export_root={{ paperless_backup_export_root | quote }}
+metrics_file=/var/lib/node_exporter/textfile_collector/paperless_backup.prom
+temporary_file="${metrics_file}.$$"
+state_root=/var/lib/paperless-backup
+
+latest_dir=""
+latest_mtime=0
+
+if [[ -d "${export_root}" ]]; then
+  while IFS= read -r -d '' candidate; do
+    candidate_mtime="$(stat -c '%Y' "${candidate}" 2>/dev/null || echo 0)"
+    if (( candidate_mtime > latest_mtime )); then
+      latest_mtime="${candidate_mtime}"
+      latest_dir="${candidate}"
+    fi
+  done < <(find "${export_root}" -mindepth 1 -maxdepth 1 -type d ! -name '.*.incomplete' -print0 2>/dev/null)
+fi
+
+present=0
+valid=0
+last_success=0
+
+if [[ -n "${latest_dir}" ]]; then
+  present=1
+  last_success="${latest_mtime}"
+  if [[ -s "${latest_dir}/manifest.json" \
+    && -s "${latest_dir}/metadata.json" \
+    && -s "${latest_dir}/paperless.dump" ]]; then
+    valid=1
+  fi
+fi
+
+now="$(date +%s)"
+if (( last_success > 0 )); then
+  age=$(( now - last_success ))
+else
+  age=2147483647
+fi
+
+last_run_timestamp=0
+last_run_success=-1
+if [[ -r "${state_root}/last-run" ]]; then
+  read -r last_run_timestamp last_run_success < "${state_root}/last-run" || true
+fi
+
+{
+  echo '# HELP homelab_paperless_backup_present Whether a Paperless export directory exists.'
+  echo '# TYPE homelab_paperless_backup_present gauge'
+  echo "homelab_paperless_backup_present ${present}"
+  echo '# HELP homelab_paperless_backup_valid Whether the newest Paperless export contains all required files.'
+  echo '# TYPE homelab_paperless_backup_valid gauge'
+  echo "homelab_paperless_backup_valid ${valid}"
+  echo '# HELP homelab_paperless_backup_last_success_timestamp_seconds Unix timestamp of the newest Paperless export.'
+  echo '# TYPE homelab_paperless_backup_last_success_timestamp_seconds gauge'
+  echo "homelab_paperless_backup_last_success_timestamp_seconds ${last_success}"
+  echo '# HELP homelab_paperless_backup_age_seconds Age of the newest Paperless export in seconds.'
+  echo '# TYPE homelab_paperless_backup_age_seconds gauge'
+  echo "homelab_paperless_backup_age_seconds ${age}"
+  echo '# HELP homelab_paperless_backup_last_run_timestamp_seconds Unix timestamp of the last scheduled backup attempt.'
+  echo '# TYPE homelab_paperless_backup_last_run_timestamp_seconds gauge'
+  echo "homelab_paperless_backup_last_run_timestamp_seconds ${last_run_timestamp}"
+  echo '# HELP homelab_paperless_backup_last_run_success Whether the last scheduled backup attempt succeeded; -1 means it has not run yet.'
+  echo '# TYPE homelab_paperless_backup_last_run_success gauge'
+  echo "homelab_paperless_backup_last_run_success ${last_run_success}"
+} > "${temporary_file}"
+
+mv -f "${temporary_file}" "${metrics_file}"

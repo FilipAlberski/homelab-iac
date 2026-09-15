@@ -4,44 +4,205 @@ homelab_timezone: Europe/Warsaw
 homelab_domain: lab
 homelab_service_root: /srv
 
+# Konta administracyjne utrzymywane na każdym hoście z inventory.
+# Dodawaj kolejne wpisy tutaj; publiczne klucze SSH mogą bezpiecznie być w Git.
+managed_users:
+  - name: filip.alberski
+    authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB0vsPvYopUzDtd16dKayzsYS6f0DtoWKEv/CsOjsCo4
+    sudo: true
+
 # Istniejące stosy są przejmowane osobno. Ustawienie flagi na true oznacza,
 # że odpowiednia rola może zapisać Compose i zarządzać kontenerami usługi.
 deploy_pihole: true
 deploy_proxy: true
-deploy_apps: false
 deploy_homepage: true
 deploy_portainer: true
-deploy_actual: true
 deploy_paperless: true
 deploy_nagios: true
+deploy_media: true
+# Monitoring jest przygotowany, ale pozostaje wyłączony do czasu powrotu labu.
+# Po uzupełnieniu sekretów w Vault włącz obie flagi.
+deploy_metrics_agents: true
+deploy_monitoring: true
+# Download stack (Gluetun + qBittorrent); sekrety w vault_gluetun_wireguard_*.
+media_download_enabled: true
 
 pihole_root: /opt/pihole
-pihole_image: pihole/pihole@sha256:1c32c36b862a12762656b6471c854cebc01fe945639ba3a893611337c2c95e99
+pihole_image: pihole/pihole@sha256:f7d1be836e3bc608b56d82fc9904f5a831cdfbc0dc9c6d58f94e4c985c70038b
 pihole_dns_hosts:
   - "192.168.60.141 dns-01.lab pihole.lab"
   - "192.168.60.144 monitor-01.lab monitoring-01.lab nagios.lab"
-  - "192.168.60.142 proxy-01.lab traefik.lab homepage.lab paperless.lab portainer.lab actual.lab"
+  - "192.168.60.142 proxy-01.lab traefik.lab homepage.lab paperless.lab portainer.lab grafana.lab"
+  - "192.168.60.142 jellyfin.lab seerr.lab sonarr.lab radarr.lab prowlarr.lab bazarr.lab qbittorrent.lab"
   - "192.168.60.143 app-01.lab app.lab"
+  - "192.168.60.131 jelly-01.lab"
+  - "192.168.60.147 homeassistant-01.lab homeassistant.lab"
 proxy_root: /opt/traefik
-traefik_image: traefik@sha256:2cd5cc75530c8d07ae0587c743d23eb30cae2436d07017a5ff78498b1a43d09f
+traefik_image: traefik@sha256:f86a2cab1b5c649070c49f883c743dd32d8485a56e3368c5f93b9e91f1e91259
 nagios_image: jasonrivers/nagios:latest
 
 homepage_root: /opt/homepage
 homepage_port: 3000
-homepage_image: ghcr.io/gethomepage/homepage@sha256:d8d784e5090111b6e4c56dfd90e272d2953a2094e87349f647165df0fa6c4401
+homepage_image: ghcr.io/gethomepage/homepage@sha256:753eeb0cc22ab7baad39ed47cbd1aae14e193dd1b264e965f193a9ea1d1e1bdd
 
 portainer_root: /opt/portainer
-portainer_image: portainer/portainer-ce@sha256:bd8f7a6d98e2a512e18272c38914abd1e92d663451f3c925d502a8557a3b92d7
-
-actual_root: /opt/actual
-actual_port: 5006
-actual_image: actualbudget/actual-server@sha256:1aeeb3985db55556e716dec25e08f6ce09308c2571b65cddbc6746ee6d5e0d45
+portainer_image: portainer/portainer-ce@sha256:511f3f06c96fe3b993ebeaafde311c1959cae73a7ef825dba6397d51b450dffa
 
 paperless_root: /opt/paperless
 paperless_data_root: /srv/data/paperless
 paperless_port: 8001
-paperless_redis_image: redis@sha256:3e1b24a1a8f24ff926b15e5ace8c38a03e5657fb66e1fc7e5188e315aa5fa094
+paperless_redis_image: redis@sha256:298e5b3bc566bade82f46ad5511777a4a07a294097ce16ada2f6a42be5239df5
 paperless_postgres_image: postgres@sha256:972eeb4e0a5fee4c3046cf868896719227e845aa9e38ff79a353efb3b2b2c10a
-paperless_gotenberg_image: gotenberg/gotenberg@sha256:a40c5a46b79d812ce2f5e139278163142a054050bfd1e5f162da36d3d11c7138
-paperless_tika_image: apache/tika@sha256:2a565f1ea1290bdcb74a7d35957d16a989ed44ef98790dcdcc28121d728fa583
-paperless_image: ghcr.io/paperless-ngx/paperless-ngx@sha256:6c86cad803970ea782683a8e80e7403444c5bf3cf70de63b4d3c8e87500db92f
+paperless_gotenberg_image: gotenberg/gotenberg@sha256:87c16b9f364279d321bc9772d31fa58aa6abe036423c270698bd636c3a8e9466
+paperless_tika_image: apache/tika@sha256:a8b442501f601fb15015de974f9afe13dd242b0f14e49a2b144fadcb214a555b
+paperless_image: ghcr.io/paperless-ngx/paperless-ngx@sha256:aa810a36942c63d4ee70d00eda7236cd3d6acfb7eb3f7987fb568ed14df8817a
+paperless_backup_monitor_enabled: true
+paperless_backup_export_root: /srv/data/paperless/export
+paperless_backup_max_age_seconds: 172800
+paperless_backup_enabled: true
+paperless_backup_schedules:
+  - "*-*-* 06:00:00"
+  - "*-*-* 19:00:00"
+paperless_backup_keep: 1
+paperless_backup_export_uid: "1000"
+paperless_backup_export_gid: "1000"
+
+# Nocny backup VM na obecny RAID i niezależną kopię na dysk 1 TB.
+proxmox_backup_enabled: true
+proxmox_backup_schedules:
+  - "*-*-* 07:00:00"
+  - "*-*-* 20:00:00"
+proxmox_backup_primary_root: /tank/backup
+proxmox_backup_secondary_root: /mnt/pve/datav1/dump
+proxmox_backup_keep_daily: 14
+proxmox_backup_keep_weekly: 4
+proxmox_backup_vmids:
+  - 131
+  - 141
+  - 142
+  - 143
+  - 144
+  - 147
+
+media_root: /opt/media-stack
+media_data_root: /data
+media_config_user_id: "1000"
+media_config_group_id: "1000"
+media_umask: "002"
+media_flaresolverr_port: 8191
+media_jellyfin_image: jellyfin/jellyfin@sha256:aefb67e6a7ff1debdd154a78a7bbb780fd0c873d8639210a7f6a2016ad2b35db
+media_seerr_image: ghcr.io/seerr-team/seerr@sha256:f4768de5f616248d723e05891f3345a1402123775d03bf0890dbfedc0831bda1
+media_sonarr_image: lscr.io/linuxserver/sonarr@sha256:4d9df314875e1249ab7d6170c2b9b3dc1d8e6383f168ceb10dc9a5ad9b324739
+media_radarr_image: lscr.io/linuxserver/radarr@sha256:119aaa4a4f7349bcd2a136c5373a0d7925b5479915c7dfe0c0ad352db2a6d438
+media_prowlarr_image: lscr.io/linuxserver/prowlarr@sha256:91844fa2c927ad6ede5630127183cc7868b175f6223e83e6a5da1fffea2aa782
+media_bazarr_image: lscr.io/linuxserver/bazarr@sha256:a20fb11a440d704a9d61c283aa26462aad33dc63223b173f8d8c77d33e8e9d59
+media_flaresolverr_image: ghcr.io/flaresolverr/flaresolverr@sha256:139dfee1c6f89249c8d665d1333a42e8ec74ec0a86bc6bb1c8461e10d3a66a47
+media_gluetun_image: qmcgaw/gluetun@sha256:89e3cbe22e0d6f09a18d3e86269392fd9f7f08e8991040741e577f8f127cdfe4
+media_qbittorrent_image: lscr.io/linuxserver/qbittorrent@sha256:a00b6a597a3832a1814cde0ef60abc55c94644f3f80902c3432f6af6de8d4a96
+# qBittorrent nie może wyczerpać pamięci całej VM; przy przekroczeniu limitu
+# Docker ubije i automatycznie uruchomi kontener, a pobierania wznowią się z dysku.
+media_qbittorrent_memory_limit: 1536m
+media_qbittorrent_memswap_limit: 1536m
+media_qbittorrent_memory_alert_bytes: 1342177280
+
+# Konfiguracja Gluetun poza sekretami; klucz prywatny VPN trafia do vault.
+gluetun_vpn_service_provider: custom
+gluetun_vpn_type: wireguard
+gluetun_vpn_endpoint_ip: 45.134.212.66
+gluetun_vpn_endpoint_port: 51820
+
+# Eksportery instalowane na każdej VM z grupy docker_hosts.
+metrics_agent_root: /opt/metrics-agent
+node_exporter_port: 9100
+cadvisor_port: 8081
+node_exporter_image: prom/node-exporter:v1.12.1
+cadvisor_image: ghcr.io/google/cadvisor:v0.60.5
+
+# Centralny stack na monitor-01.
+monitoring_root: /srv/monitoring
+monitoring_grafana_port: 3000
+monitoring_prometheus_retention_time: 30d
+monitoring_prometheus_retention_size: 20GB
+monitoring_prometheus_image: prom/prometheus:v3.13.2
+monitoring_grafana_image: grafana/grafana:13.2.0
+monitoring_blackbox_image: prom/blackbox-exporter:v0.28.0
+monitoring_alertmanager_image: prom/alertmanager:v0.29.0
+monitoring_snmp_image: prom/snmp-exporter:v0.30.1
+monitoring_pve_image: prompve/prometheus-pve-exporter:3.9.0
+monitoring_pihole_image: ekofr/pihole-exporter:v1.2.0
+
+# Diun tylko wykrywa zmiany obrazów i wysyła powiadomienia; nie aktualizuje
+# ani nie restartuje kontenerów automatycznie.
+container_updates_enabled: true
+container_updates_root: /opt/diun
+container_updates_image: crazymax/diun:4.33.0
+container_updates_schedule: "0 */6 * * *"
+container_updates_metrics_port: 9095
+container_updates_workers: 10
+container_updates_watch_by_default: true
+container_updates_watch_stopped: false
+
+# Alertmanager pozostaje wyłączony do czasu wpisania tokena bota i odbiorcy
+# Telegrama do zaszyfrowanego Vaulta.
+monitoring_alertmanager_enabled: true
+monitoring_alertmanager_port: 9093
+monitoring_alertmanager_group_wait: 30s
+monitoring_alertmanager_group_interval: 5m
+monitoring_alertmanager_repeat_interval: 4h
+monitoring_alertmanager_resolve_timeout: 5m
+
+# Moduły wymagające dostępu do zewnętrznego API/SNMP można uruchamiać osobno.
+monitoring_pve_enabled: true
+monitoring_pve_host: 192.168.60.10
+monitoring_pve_user: prometheus@pve
+monitoring_pve_verify_ssl: false
+monitoring_mikrotik_snmp_enabled: false
+monitoring_mikrotik_host: 192.168.60.1
+monitoring_pihole_exporter_enabled: true
+
+# Własne aplikacje z /metrics dopisuj jako { name: nazwa, target: host:port }.
+monitoring_custom_metrics_targets: []
+
+# Blackbox sprawdza usługi z perspektywy monitor-01 przez reverse proxy.
+monitoring_http_targets:
+  - name: pihole
+    target: "http://pihole.{{ homelab_domain }}/admin"
+    host: dns-01
+  - name: traefik
+    target: "http://traefik.{{ homelab_domain }}"
+    host: proxy-01
+  - name: homepage
+    target: "http://homepage.{{ homelab_domain }}"
+    host: app-01
+  - name: grafana
+    target: "http://grafana.{{ homelab_domain }}/api/health"
+    host: monitor-01
+  - name: paperless
+    target: "http://paperless.{{ homelab_domain }}"
+    host: app-01
+  - name: portainer
+    target: "http://portainer.{{ homelab_domain }}"
+    host: app-01
+  - name: jellyfin
+    target: "http://jellyfin.{{ homelab_domain }}"
+    host: jelly-01
+  - name: seerr
+    target: "http://seerr.{{ homelab_domain }}"
+    host: jelly-01
+  - name: sonarr
+    target: "http://sonarr.{{ homelab_domain }}"
+    host: jelly-01
+  - name: radarr
+    target: "http://radarr.{{ homelab_domain }}"
+    host: jelly-01
+  - name: prowlarr
+    target: "http://prowlarr.{{ homelab_domain }}"
+    host: jelly-01
+  - name: bazarr
+    target: "http://bazarr.{{ homelab_domain }}"
+    host: jelly-01
+  - name: nagios
+    target: "http://nagios.{{ homelab_domain }}"
+    host: monitor-01
+    module: http_401

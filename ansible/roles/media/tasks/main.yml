@@ -1,0 +1,122 @@
+---
+- name: Wymagaj urządzenia GPU w gościu
+  ansible.builtin.stat:
+    path: /dev/dri/renderD128
+  register: media_gpu_device
+
+- name: Zablokuj wdrożenie bez passthrough GPU
+  ansible.builtin.assert:
+    that:
+      - media_gpu_device.stat.exists
+    fail_msg: >-
+      Brak /dev/dri/renderD128; passthrough legacy-IGD nie działa.
+      Sprawdź hostpci0 i vga w /etc/pve/qemu-server/131.conf zanim wdrożysz media stack.
+
+- name: Odczytaj GID grup uprawniających do GPU
+  ansible.builtin.command:
+    argv: ["getent", "group", "{{ item }}"]
+  loop:
+    - render
+    - video
+  register: media_gpu_groups
+  changed_when: false
+
+- name: Wyodrębnij numeryczne GID
+  ansible.builtin.set_fact:
+    media_gpu_gids: >-
+      {{ media_gpu_groups.results
+         | selectattr('rc', 'equalto', 0)
+         | map(attribute='stdout')
+         | map('regex_replace', '^([^:]+):[^:]*:(\d+):.*$', '\2')
+         | list }}
+
+- name: Utwórz katalogi konfiguracji media stacku
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ media_config_user_id }}"
+    group: "{{ media_config_group_id }}"
+    mode: "0755"
+  loop:
+    - "{{ media_root }}"
+    - "{{ media_root }}/config"
+    - "{{ media_root }}/config/jellyfin"
+    - "{{ media_root }}/cache/jellyfin"
+    - "{{ media_root }}/config/seerr"
+    - "{{ media_root }}/config/sonarr"
+    - "{{ media_root }}/config/radarr"
+    - "{{ media_root }}/config/prowlarr"
+    - "{{ media_root }}/config/bazarr"
+
+- name: Utwórz katalog konfiguracji qBittorrent
+  ansible.builtin.file:
+    path: "{{ media_root }}/config/qbittorrent"
+    state: directory
+    owner: "{{ media_config_user_id }}"
+    group: "{{ media_config_group_id }}"
+    mode: "0755"
+  when: media_download_enabled | bool
+
+- name: Utwórz układ danych na /data
+  ansible.builtin.file:
+    path: "{{ media_data_root }}/{{ item }}"
+    state: directory
+    owner: "{{ media_config_user_id }}"
+    group: "{{ media_config_group_id }}"
+    mode: "0775"
+  loop:
+    - torrents/movies
+    - torrents/tv
+    - media/movies
+    - media/tv
+
+- name: Otwórz porty mediów dla Traefika
+  ansible.posix.firewalld:
+    port: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop:
+    - 8096/tcp
+    - 5055/tcp
+    - 8989/tcp
+    - 7878/tcp
+    - 9696/tcp
+    - 6767/tcp
+
+- name: Otwórz port panelu qBittorrent
+  ansible.posix.firewalld:
+    port: 8080/tcp
+    permanent: true
+    immediate: true
+    state: enabled
+  when: media_download_enabled | bool
+
+- name: Zwaliduj sekrety Gluetun przed włączeniem downloadu
+  ansible.builtin.assert:
+    that:
+      - vault_gluetun_wireguard_private_key is defined
+      - vault_gluetun_wireguard_private_key | length >= 32
+      - vault_gluetun_wireguard_public_key is defined
+      - vault_gluetun_wireguard_addresses is defined
+    fail_msg: >-
+      media_download_enabled wymaga vault_gluetun_wireguard_private_key,
+      vault_gluetun_wireguard_public_key i vault_gluetun_wireguard_addresses w vault.yml.
+  when: media_download_enabled | bool
+
+- name: Zapisz Compose media stacku
+  ansible.builtin.template:
+    src: compose.yml.j2
+    dest: "{{ media_root }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0600"
+    backup: true
+
+- name: Uruchom media stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ media_root }}"
+    files:
+      - docker-compose.yml
+    pull: missing
+    state: present

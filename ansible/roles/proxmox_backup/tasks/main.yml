@@ -1,0 +1,58 @@
+---
+- name: Sprawdź filesystem głównego backupu
+  ansible.builtin.command: findmnt -rn -o FSTYPE -T {{ proxmox_backup_primary_root | quote }}
+  register: proxmox_backup_primary_fs
+  changed_when: false
+
+- name: Sprawdź filesystem drugiego backupu
+  ansible.builtin.command: findmnt -rn -o FSTYPE -T {{ proxmox_backup_secondary_root | quote }}
+  register: proxmox_backup_secondary_fs
+  changed_when: false
+
+- name: Sprawdź stan puli RAID
+  ansible.builtin.command: zpool status tank
+  register: proxmox_backup_zpool
+  changed_when: false
+
+- name: Nie uruchamiaj backupu na nieznanych punktach montowania
+  ansible.builtin.assert:
+    that:
+      - proxmox_backup_primary_fs.stdout | trim == 'zfs'
+      - proxmox_backup_secondary_fs.stdout | trim in ['ext4', 'xfs', 'zfs']
+      - "'state: ONLINE' in proxmox_backup_zpool.stdout"
+      - "'errors: No known data errors' in proxmox_backup_zpool.stdout"
+    fail_msg: >-
+      Nie udało się potwierdzić bezpiecznego stanu RAID lub docelowych filesystemów;
+      backup nie został skonfigurowany.
+
+- name: Zapisz skrypt automatycznego backupu VM
+  ansible.builtin.template:
+    src: homelab-vzdump-backup.sh.j2
+    dest: /usr/local/sbin/homelab-vzdump-backup
+    owner: root
+    group: root
+    mode: "0755"
+    backup: true
+
+- name: Zapisz usługę systemd backupu VM
+  ansible.builtin.template:
+    src: homelab-vzdump-backup.service.j2
+    dest: /etc/systemd/system/homelab-vzdump-backup.service
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Zapisz timer systemd backupu VM
+  ansible.builtin.template:
+    src: homelab-vzdump-backup.timer.j2
+    dest: /etc/systemd/system/homelab-vzdump-backup.timer
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Przeładuj systemd i włącz timer backupu VM
+  ansible.builtin.systemd:
+    name: homelab-vzdump-backup.timer
+    enabled: true
+    state: started
+    daemon_reload: true

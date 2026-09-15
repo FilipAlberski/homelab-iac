@@ -5,9 +5,26 @@
         icon: pi-hole
         description: DNS Sinkhole & Ad Blocking
         widget:
-          type: pihole
-          url: http://{{ hostvars['dns-01']['ansible_host'] }}
-          password: "{{ vault_pihole_web_password }}"
+          type: customapi
+          url: "http://{{ hostvars['monitor-01']['ansible_host'] }}:9090/api/v1/query?query=pihole_dns_queries_today"
+          refreshInterval: 30000
+          mappings:
+            - field: data.result.0.value.1
+              label: Zapytania dziś
+              format: number
+
+    - Zablokowane dziś:
+        href: http://pihole.{{ homelab_domain }}/admin
+        icon: mdi-shield-check
+        description: Zapytania zatrzymane przez Pi-hole
+        widget:
+          type: customapi
+          url: "http://{{ hostvars['monitor-01']['ansible_host'] }}:9090/api/v1/query?query=pihole_ads_blocked_today"
+          refreshInterval: 30000
+          mappings:
+            - field: data.result.0.value.1
+              label: Zablokowane
+              format: number
 
     - Traefik:
         href: http://traefik.{{ homelab_domain }}
@@ -18,11 +35,6 @@
           url: http://{{ hostvars['proxy-01']['ansible_host'] }}:8080
 
 - Applications:
-    - Actual Budget:
-        href: https://actual.{{ homelab_domain }}
-        icon: actual-budget
-        description: Personal finance
-
     - Portainer:
         href: http://portainer.{{ homelab_domain }}
         icon: portainer
@@ -32,6 +44,106 @@
         href: http://paperless.{{ homelab_domain }}
         icon: paperless-ngx
         description: Document Management
+
+- Monitoring:
+    - Blocklista:
+        href: http://pihole.{{ homelab_domain }}/admin
+        icon: mdi-format-list-bulleted
+        description: Domeny na liście blokad
+        widget:
+          type: customapi
+          url: "http://{{ hostvars['monitor-01']['ansible_host'] }}:9090/api/v1/query?query=pihole_domains_being_blocked"
+          refreshInterval: 60000
+          mappings:
+            - field: data.result.0.value.1
+              label: Domen
+              format: number
+
+    - Najczęstsze domeny:
+        href: http://pihole.{{ homelab_domain }}/admin
+        icon: mdi-chart-bar
+        description: Najczęściej odpytane domeny DNS
+        widget:
+          type: customapi
+          url: "http://{{ hostvars['monitor-01']['ansible_host'] }}:9090/api/v1/query?query=topk(5,%20pihole_top_queries)"
+          refreshInterval: 60000
+          display: dynamic-list
+          mappings:
+            items: data.result
+            name: metric.domain
+            label: value.1
+            format: number
+            limit: 5
+
+    - Aktywne alerty:
+        href: http://grafana.{{ homelab_domain }}
+        icon: mdi-bell-alert
+        description: Alerty Prometheusa
+        widget:
+          type: customapi
+          url: http://{{ hostvars['monitor-01']['ansible_host'] }}:9090/api/v1/alerts
+          refreshInterval: 30000
+          display: dynamic-list
+          mappings:
+            items: data.alerts
+            name: annotations.summary
+            label: state
+            limit: 5
+
+    - Grafana:
+        href: http://grafana.{{ homelab_domain }}
+        icon: grafana
+        description: Metryki, wykresy i alerty
+
+    - Nagios:
+        href: http://nagios.{{ homelab_domain }}
+        icon: nagios
+        description: Kontrole hostów i usług
+
+- Media:
+    - Jellyfin:
+        href: http://jellyfin.{{ homelab_domain }}
+        icon: jellyfin
+        description: Media Server
+        widget:
+          type: jellyfin
+          url: http://{{ hostvars['jelly-01']['ansible_host'] }}:8096
+          key: "{{ vault_jellyfin_api_key }}"
+
+    - Seerr:
+        href: http://seerr.{{ homelab_domain }}
+        icon: jellyseerr
+        description: Request Management
+
+    - Sonarr:
+        href: http://sonarr.{{ homelab_domain }}
+        icon: sonarr
+        description: TV Shows
+
+    - Radarr:
+        href: http://radarr.{{ homelab_domain }}
+        icon: radarr
+        description: Movies
+
+    - Prowlarr:
+        href: http://prowlarr.{{ homelab_domain }}
+        icon: prowlarr
+        description: Indexer Management
+
+    - Bazarr:
+        href: http://bazarr.{{ homelab_domain }}
+        icon: bazarr
+        description: Subtitles
+
+    - qBittorrent:
+        href: http://qbittorrent.{{ homelab_domain }}
+        icon: qbittorrent
+        description: Torrent Client
+        widget:
+          type: qbittorrent
+          url: http://{{ hostvars['jelly-01']['ansible_host'] }}:8080
+          username: admin
+          password: "{{ vault_qbittorrent_web_password }}"
 
 - Infrastructure:
     - Proxmox:

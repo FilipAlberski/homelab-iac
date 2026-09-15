@@ -15,6 +15,18 @@ variable "proxmox_insecure" {
   default     = true
 }
 
+variable "proxmox_ssh_username" {
+  description = "Istniejący użytkownik SSH Proxmoxa używany przy imporcie obrazów"
+  type        = string
+  default     = "root"
+}
+
+variable "proxmox_ssh_private_key_path" {
+  description = "Lokalna ścieżka do klucza SSH autoryzowanego już na Proxmoxie"
+  type        = string
+  default     = "~/.ssh/id_ed25519"
+}
+
 variable "proxmox_node" {
   description = "Nazwa pojedynczego węzła Proxmox"
   type        = string

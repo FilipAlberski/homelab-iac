@@ -13,6 +13,12 @@ http:
       entryPoints:
         - web
 
+    grafana:
+      rule: "Host(`grafana.{{ homelab_domain }}`)"
+      service: grafana
+      entryPoints:
+        - web
+
     paperless:
       rule: "Host(`paperless.{{ homelab_domain }}`)"
       service: paperless
@@ -25,28 +31,59 @@ http:
       entryPoints:
         - web
 
-    actual:
-      rule: "Host(`actual.{{ homelab_domain }}`)"
-      service: actual
+    jellyfin:
+      rule: "Host(`jellyfin.{{ homelab_domain }}`)"
+      service: jellyfin
       entryPoints:
         - web
-        - websecure
-      tls: {}
-      middlewares:
-        - actual-headers
 
-  middlewares:
-    actual-headers:
-      headers:
-        customResponseHeaders:
-          Cross-Origin-Opener-Policy: same-origin
-          Cross-Origin-Embedder-Policy: require-corp
+    seerr:
+      rule: "Host(`seerr.{{ homelab_domain }}`)"
+      service: seerr
+      entryPoints:
+        - web
+
+    sonarr:
+      rule: "Host(`sonarr.{{ homelab_domain }}`)"
+      service: sonarr
+      entryPoints:
+        - web
+
+    radarr:
+      rule: "Host(`radarr.{{ homelab_domain }}`)"
+      service: radarr
+      entryPoints:
+        - web
+
+    prowlarr:
+      rule: "Host(`prowlarr.{{ homelab_domain }}`)"
+      service: prowlarr
+      entryPoints:
+        - web
+
+    bazarr:
+      rule: "Host(`bazarr.{{ homelab_domain }}`)"
+      service: bazarr
+      entryPoints:
+        - web
+{% if hostvars['jelly-01']['media_download_enabled'] | bool %}
+    qbittorrent:
+      rule: "Host(`qbittorrent.{{ homelab_domain }}`)"
+      service: qbittorrent
+      entryPoints:
+        - web
+{% endif %}
 
   services:
     homepage:
       loadBalancer:
         servers:
           - url: "http://{{ hostvars['app-01']['ansible_host'] }}:3000"
+
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['monitor-01']['ansible_host'] }}:{{ hostvars['monitor-01']['monitoring_grafana_port'] }}"
 
     paperless:
       loadBalancer:
@@ -58,10 +95,41 @@ http:
         servers:
           - url: "http://{{ hostvars['app-01']['ansible_host'] }}:8000"
 
-    actual:
+    jellyfin:
       loadBalancer:
         servers:
-          - url: "http://{{ hostvars['app-01']['ansible_host'] }}:5006"
+          - url: "http://{{ hostvars['jelly-01']['ansible_host'] }}:8096"
+
+    seerr:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['jelly-01']['ansible_host'] }}:5055"
+
+    sonarr:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['jelly-01']['ansible_host'] }}:8989"
+
+    radarr:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['jelly-01']['ansible_host'] }}:7878"
+
+    prowlarr:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['jelly-01']['ansible_host'] }}:9696"
+
+    bazarr:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['jelly-01']['ansible_host'] }}:6767"
+{% if hostvars['jelly-01']['media_download_enabled'] | bool %}
+    qbittorrent:
+      loadBalancer:
+        servers:
+          - url: "http://{{ hostvars['jelly-01']['ansible_host'] }}:8080"
+{% endif %}
 
 tls:
   certificates:

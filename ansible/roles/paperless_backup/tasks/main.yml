@@ -1,0 +1,64 @@
+---
+- name: Sprawdź filesystem docelowy backupu Paperless
+  ansible.builtin.command:
+    argv:
+      - findmnt
+      - -n
+      - -o
+      - TARGET
+      - -T
+      - "{{ paperless_backup_export_root }}"
+  register: paperless_backup_mount
+  changed_when: false
+  failed_when: paperless_backup_mount.stdout | trim != app_data_mount
+
+- name: Utwórz katalogi automatycznego backupu Paperless
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - path: /var/lib/paperless-backup
+      owner: root
+      group: root
+      mode: "0700"
+    - path: "{{ paperless_backup_export_root }}"
+      owner: "{{ homelab_user }}"
+      group: "{{ homelab_user }}"
+      mode: "0755"
+
+- name: Zapisz skrypt automatycznego backupu Paperless
+  ansible.builtin.template:
+    src: paperless-backup.sh.j2
+    dest: /usr/local/sbin/paperless-backup
+    owner: root
+    group: root
+    mode: "0750"
+    backup: true
+
+- name: Zapisz usługę backupu Paperless
+  ansible.builtin.template:
+    src: paperless-backup.service.j2
+    dest: /etc/systemd/system/paperless-backup.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Przeładuj systemd dla backupu Paperless
+
+- name: Zapisz timer backupu Paperless
+  ansible.builtin.template:
+    src: paperless-backup.timer.j2
+    dest: /etc/systemd/system/paperless-backup.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Przeładuj systemd dla backupu Paperless
+
+- name: Włącz timer backupu Paperless
+  ansible.builtin.systemd_service:
+    name: paperless-backup.timer
+    enabled: true
+    state: started
+    daemon_reload: true

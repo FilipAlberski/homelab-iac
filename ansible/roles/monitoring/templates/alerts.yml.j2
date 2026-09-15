@@ -1,0 +1,182 @@
+{% raw %}
+groups:
+  - name: homelab-hosts
+    rules:
+      - alert: TargetDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Target {{ $labels.instance }} nie odpowiada"
+          description: "Prometheus nie może zebrać metryk z job={{ $labels.job }} przez co najmniej 5 minut."
+
+      - alert: HostHighCpuUsage
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Wysokie użycie CPU na {{ $labels.instance }}"
+          description: "Średnie użycie CPU przekracza 90% od 15 minut."
+
+      - alert: HostLowAvailableMemory
+        expr: 100 * node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Mało wolnej pamięci na {{ $labels.instance }}"
+          description: "Dostępna pamięć spadła poniżej 10%."
+
+      - alert: QbittorrentHighMemoryUsage
+        expr: container_memory_working_set_bytes{name="qbittorrent"} > {% endraw %}{{ media_qbittorrent_memory_alert_bytes }}{% raw %}
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "qBittorrent zużywa dużo pamięci na {{ $labels.instance }}"
+          description: "qBittorrent przekracza 1,25 GiB pamięci przez co najmniej 10 minut."
+
+      - alert: HostHighSwapUsage
+        expr: >-
+          node_memory_SwapTotal_bytes > 0
+          and 100 * (1 - node_memory_SwapFree_bytes / node_memory_SwapTotal_bytes) > 80
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Wysokie użycie swapu na {{ $labels.instance }}"
+          description: "Swap jest zajęty w ponad 80% przez co najmniej 10 minut."
+
+      - alert: HostFilesystemAlmostFull
+        expr: >-
+          100 * node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|nsfs"}
+          / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|nsfs"} < 10
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kończy się miejsce na {{ $labels.instance }}"
+          description: "Na {{ $labels.mountpoint }} zostało mniej niż 10% miejsca."
+
+  - name: homelab-probes
+    rules:
+      - alert: ProbeFailed
+        expr: probe_success == 0
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Test dostępności {{ $labels.instance }} nie przechodzi"
+          description: "Test {{ $labels.job }} kończy się błędem od co najmniej 3 minut."
+
+      - alert: HttpCertificateExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 14 * 24 * 3600
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Certyfikat {{ $labels.instance }} niedługo wygaśnie"
+          description: "Do wygaśnięcia certyfikatu pozostało mniej niż 14 dni."
+
+  - name: homelab-container-updates
+    rules:
+      - alert: ContainerImageUpdateAvailable
+        expr: diun_image_update_available == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Dostępna aktualizacja obrazu {{ $labels.image }} na {{ $labels.instance }}"
+          description: "Diun wykrył nowy digest obrazu. Zaktualizuj digest w repozytorium i uruchom wdrożenie Ansible."
+
+  - name: homelab-backups
+    rules:
+      - alert: PaperlessBackupMissing
+        expr: homelab_paperless_backup_present{instance="app-01"} == 0
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Brak eksportu backupu Paperless"
+          description: "Na app-01 nie znaleziono żadnego eksportu Paperless w katalogu backupu."
+
+      - alert: PaperlessBackupStale
+        expr: homelab_paperless_backup_age_seconds{instance="app-01"} > {% endraw %}{{ paperless_backup_max_age_seconds }}{% raw %}
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backup Paperless jest nieaktualny"
+          description: "Najnowszy kompletny eksport Paperless ma więcej niż 48 godzin."
+
+      - alert: PaperlessBackupIncomplete
+        expr: homelab_paperless_backup_valid{instance="app-01"} == 0
+        for: 15m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Niekompletny backup Paperless"
+          description: "Najnowszy eksport Paperless nie zawiera manifestu, metadanych albo dumpu bazy."
+
+      - alert: PaperlessBackupJobFailed
+        expr: homelab_paperless_backup_last_run_success{instance="app-01"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Automatyczny backup Paperless nie powiódł się"
+          description: "Ostatnia próba eksportu Paperless lub logicznego dumpu PostgreSQL zakończyła się błędem."
+
+  - name: homelab-filesystems
+    rules:
+      - alert: HostFilesystemReadOnly
+        expr: node_filesystem_readonly{fstype!~"tmpfs|overlay|squashfs|nsfs"} == 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Filesystem tylko do odczytu na {{ $labels.instance }}"
+          description: "{{ $labels.mountpoint }} został zamontowany w trybie read-only."
+
+      - alert: HostFilesystemInodesAlmostFull
+        expr: >-
+          100 * node_filesystem_files_free{fstype!~"tmpfs|overlay|squashfs|nsfs"}
+          / node_filesystem_files{fstype!~"tmpfs|overlay|squashfs|nsfs"} < 10
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kończą się inode’y na {{ $labels.instance }}"
+          description: "Na {{ $labels.mountpoint }} zostało mniej niż 10% wolnych inode’ów."
+
+  - name: homelab-proxmox
+    rules:
+      - alert: ProxmoxNodeUnavailable
+        expr: pve_up{id=~"node/.*"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node Proxmox nie odpowiada"
+          description: "Exporter Proxmoxa zgłasza niedostępność noda {{ $labels.id }}."
+
+      - alert: ProxmoxStorageUnavailable
+        expr: pve_up{id=~"storage/.*"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Storage Proxmoxa niedostępny"
+          description: "Storage {{ $labels.id }} nie jest dostępny według Proxmoxa."
+
+      - alert: HomelabVmUnavailable
+        expr: pve_up{id=~"qemu/(131|141|142|143|144|147)"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ważna VM Proxmoxa jest wyłączona"
+          description: "VM {{ $labels.id }} nie jest zgłaszana jako działająca."
+{% endraw %}

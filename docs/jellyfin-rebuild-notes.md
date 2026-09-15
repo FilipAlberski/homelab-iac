@@ -1,5 +1,14 @@
 # Notatki do świeżego media stacku
 
+> **Status 31 sierpnia 2026:** nowa VM `jelly-01` (VMID 131, 2 vCPU / 8 GiB,
+> system 30 GiB + dane 200 GiB na `tank-zfs`) została wdrożona z tego repo.
+> Passthrough GPU zrealizowano przez `qm set 131 --hostpci0
+> host=0000:00:02.0,legacy-igd=1,rombar=1` oraz `--vga none` (provider Terraform
+> nie wspiera `legacy_igd`); `vainfo` w kontenerze potwierdza H264 EncSlice/LP.
+> Download stack (Gluetun + qBittorrent) jest w compose, ale wyłączony do czasu
+> danych VPN (`media_download_enabled`). Authentik/LDAP pozostaje do przyszłej
+> decyzji.
+
 Ten dokument zachowuje użyteczne elementy usuwanej VM `jelly-01`. Nie jest
 instrukcją odtworzenia starej VM 1:1. Nowa instalacja ma powstać od zera, bez
 starych konfiguracji i bez zachowywania mediów.
