@@ -38,6 +38,9 @@ pihole_dns_hosts:
   - "192.168.60.143 app-01.lab app.lab"
   - "192.168.60.131 jelly-01.lab"
   - "192.168.60.147 homeassistant-01.lab homeassistant.lab"
+  - "192.168.60.151 k8s-cp1.lab"
+  - "192.168.60.152 k8s-w1.lab"
+  - "192.168.60.153 k8s-w2.lab"
 proxy_root: /opt/traefik
 traefik_image: traefik@sha256:f86a2cab1b5c649070c49f883c743dd32d8485a56e3368c5f93b9e91f1e91259
 nagios_image: jasonrivers/nagios:latest

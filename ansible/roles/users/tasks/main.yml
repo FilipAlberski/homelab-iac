@@ -27,10 +27,22 @@
     state: present
   when: managed_users | default([]) | selectattr('sudo', 'defined') | selectattr('sudo') | list | length > 0
 
+- name: Usuń nieobsługiwane pliki sudoers z kropką w nazwie
+  ansible.builtin.file:
+    path: "/etc/sudoers.d/{{ item.name }}"
+    state: absent
+  loop: "{{ managed_users | default([]) }}"
+  when:
+    - item.sudo | default(false) | bool
+    - item.name is search('\\.')
+  loop_control:
+    label: "{{ item.name }}"
+
 - name: Nadaj bezhasłowy dostęp sudo kontom administracyjnym
   ansible.builtin.copy:
     content: "{{ item.name }} ALL=(ALL:ALL) NOPASSWD: ALL\n"
-    dest: "/etc/sudoers.d/{{ item.name }}"
+    # sudo ignoruje pliki z kropką w nazwie w katalogu includedir.
+    dest: "/etc/sudoers.d/{{ item.name | regex_replace('[^A-Za-z0-9_-]', '_') }}"
     owner: root
     group: root
     mode: "0440"

@@ -20,7 +20,9 @@ za routing, reguły sieciowe i DNS przekazywany klientom LAN.
 
 Podczas bootstrapu VM używają routera i publicznego resolvera, dlatego awaria
 lub rebuild `dns-01` nie blokuje Ansible. Po uruchomieniu Pi-hole należy ręcznie
-ustawić `192.168.60.141` jako DNS dla klientów na MikroTiku.
+ustawić `192.168.60.141` jako DNS dla klientów na MikroTiku. Aby skrócone nazwy,
+na przykład `k8s-cp1`, rozwiązywały się do `k8s-cp1.lab` również na klientach LAN,
+MikroTik musi przekazywać przez DHCP domenę wyszukiwania `lab` (opcja 15).
 
 Lokalne nazwy usług:
 
@@ -39,6 +41,9 @@ Lokalne nazwy usług:
 - `prowlarr.lab`
 - `bazarr.lab`
 - `homeassistant.lab`
+- `k8s-cp1.lab`
+- `k8s-w1.lab`
+- `k8s-w2.lab`
 
 Ruch HTTP do paneli przechodzi przez `proxy-01`. Pierwsza wersja świadomie nie
 konfiguruje TLS; usługi są przeznaczone wyłącznie dla zaufanego LAN-u.

@@ -7,7 +7,7 @@ VAULT_ARGS := $(if $(wildcard $(ANSIBLE_DIR)/.vault_pass),--vault-password-file 
 
 .DEFAULT_GOAL := help
 
-.PHONY: help init fmt validate plan apply output deps ping users bootstrap site backups vault-init check
+.PHONY: help init fmt validate plan apply output deps ping users pihole bootstrap site backups vault-init check
 
 help:
 	@echo "Dostępne polecenia:"
@@ -17,6 +17,7 @@ help:
 	@echo "  make deps       - zainstaluj kolekcje Ansible"
 	@echo "  make ping       - sprawdź dostęp SSH do VM"
 	@echo "  make users      - utwórz i zaktualizuj konta administracyjne"
+	@echo "  make pihole     - wdróż Pi-hole i lokalne rekordy DNS"
 	@echo "  make bootstrap  - skonfiguruj Rocky i Docker"
 	@echo "  make site       - wdróż cały homelab"
 	@echo "  make backups    - wdróż backupy VM i Paperless oraz ich monitoring"
@@ -50,6 +51,9 @@ ping:
 
 users:
 	cd $(ANSIBLE_DIR) && $(PLAYBOOK) $(VAULT_ARGS) playbooks/users.yml
+
+pihole:
+	cd $(ANSIBLE_DIR) && $(PLAYBOOK) $(VAULT_ARGS) playbooks/deploy-pihole.yml
 
 bootstrap:
 	cd $(ANSIBLE_DIR) && $(PLAYBOOK) $(VAULT_ARGS) playbooks/bootstrap.yml

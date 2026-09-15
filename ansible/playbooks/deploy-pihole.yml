@@ -1,0 +1,9 @@
+---
+- name: Wdróż Pi-hole
+  hosts: pihole
+  become: true
+  gather_facts: true
+
+  roles:
+    - role: pihole
+      when: deploy_pihole | bool
